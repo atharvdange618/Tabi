@@ -1,4 +1,6 @@
-# Tabi 旅
+<!-- # Tabi 旅 -->
+
+![alt text](logo.png)
 
 > **A collaborative itinerary planning platform. Plan trips together, not in separate chat threads.**
 
