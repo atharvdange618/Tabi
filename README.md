@@ -272,8 +272,6 @@ Role checks run server-side in Express middleware. The UI reflects permissions, 
 **Live:** [tabi.vercel.app](https://tabi.vercel.app)  
 **API:** [tabi-api.hogyoku.cloud](https://tabi-api.hogyoku.cloud)
 
-> Note: The Render free tier spins down after 15 minutes of inactivity. First request after idle may take 20-30 seconds to warm up.
-
 ---
 
 ## Design
