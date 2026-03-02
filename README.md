@@ -1,6 +1,4 @@
-<!-- # Tabi 旅 -->
-
-![alt text](logo.png)
+# <img src="social-avatar.png" alt="alt text" height="64" align="center" /> Tabi 旅
 
 > **A collaborative itinerary planning platform. Plan trips together, not in separate chat threads.**
 
