@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import logger from "./logger.ts";
 
 export async function connectDB(): Promise<void> {
   const MONGODB_URI = process.env.MONGODB_URI;
@@ -13,17 +14,17 @@ export async function connectDB(): Promise<void> {
 
   try {
     await mongoose.connect(MONGODB_URI);
-    console.log("[db] Connected to MongoDB");
+    logger.info("Connected to MongoDB");
   } catch (error) {
-    console.error("[db] Connection failed:", error);
+    logger.error("MongoDB connection failed", { err: error });
     throw error;
   }
 
   mongoose.connection.on("error", (err) => {
-    console.error("[db] MongoDB connection error:", err);
+    logger.error("MongoDB connection error", { err });
   });
 
   mongoose.connection.on("disconnected", () => {
-    console.warn("[db] MongoDB disconnected");
+    logger.warn("MongoDB disconnected");
   });
 }

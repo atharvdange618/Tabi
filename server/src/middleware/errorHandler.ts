@@ -1,25 +1,45 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../lib/errors.ts";
+import logger from "../lib/logger.ts";
 
+/**
+ * Centralized Express error-handling middleware.
+ */
 export const errorHandler = (
   err: Error,
   _req: Request,
   res: Response,
   _next: NextFunction,
 ) => {
-  console.error("[server] Error:", err);
-
   if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      error: err.message,
+    logger.warn(err.message, {
+      context: "errorHandler",
+      statusCode: err.statusCode,
+      name: err.name,
     });
+
+    res.status(err.statusCode).json({ error: err.message });
+    return;
   }
 
   if (err.name === "CastError") {
-    return res.status(400).json({ error: "Invalid ID format" });
+    logger.warn("Invalid ID format", {
+      context: "errorHandler",
+      originalMessage: err.message,
+    });
+
+    res.status(400).json({ error: "Invalid ID format" });
+    return;
   }
+
+  logger.error("Unhandled server error", {
+    context: "errorHandler",
+    err,
+    stack: err.stack,
+  });
 
   res.status(500).json({
     error: "Internal server error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };
