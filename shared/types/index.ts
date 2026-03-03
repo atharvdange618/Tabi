@@ -244,3 +244,24 @@ export interface BudgetSummary {
   currency: string;
   byCategory: Record<ExpenseCategory, number>;
 }
+
+// --- Types for Clerk webhook payloads ---
+
+export interface ClerkEmailAddress {
+  id: string;
+  email_address: string;
+}
+
+export interface ClerkUserPayload {
+  id: string;
+  email_addresses: ClerkEmailAddress[];
+  primary_email_address_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  image_url: string;
+}
+
+export interface ClerkWebhookEvent {
+  type: string;
+  data: ClerkUserPayload;
+}
