@@ -1,12 +1,13 @@
 import { Router } from "express";
 import webhookRoutes from "./webhook.ts";
+import tripRoutes from "./trips.ts";
 
 const router = Router();
 
+// Clerk webhook — no auth middleware
 router.use("/webhooks", webhookRoutes);
 
-// Routes will be registered here as features are built
-// import tripRoutes from "./trips.ts";
-// router.use("/trips", tripRoutes);
+// Trip CRUD
+router.use("/trips", tripRoutes);
 
 export { router };
