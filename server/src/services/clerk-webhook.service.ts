@@ -1,7 +1,10 @@
 import { getFullName, getPrimaryEmail } from "../lib/helpers.ts";
 import { User } from "../models/User.ts";
+import type { ClerkUserPayload } from "../../../shared/types/index.ts";
 
-export const processUserCreated = async (data: any): Promise<void> => {
+export const processUserCreated = async (
+  data: ClerkUserPayload,
+): Promise<void> => {
   const email = getPrimaryEmail(data);
   const name = getFullName(data);
 
@@ -19,11 +22,13 @@ export const processUserCreated = async (data: any): Promise<void> => {
   );
 };
 
-export const processUserUpdated = async (data: any): Promise<void> => {
+export const processUserUpdated = async (
+  data: ClerkUserPayload,
+): Promise<void> => {
   const email = getPrimaryEmail(data);
   const name = getFullName(data);
 
-  const updated = await User.findOneAndUpdate(
+  await User.findOneAndUpdate(
     { clerkId: data.id },
     {
       $set: {
@@ -31,16 +36,8 @@ export const processUserUpdated = async (data: any): Promise<void> => {
         name,
         avatarUrl: data.image_url ?? "",
       },
+      $setOnInsert: { clerkId: data.id },
     },
-    { returnDocument: "after" },
+    { upsert: true, returnDocument: "after" },
   );
-
-  if (!updated) {
-    await User.create({
-      clerkId: data.id,
-      email,
-      name,
-      avatarUrl: data.image_url ?? "",
-    });
-  }
 };

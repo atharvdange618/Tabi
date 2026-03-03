@@ -2,15 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import { TripMember } from "../models/index.ts";
 import { TripMemberStatus } from "../../../shared/types/index.ts";
 
-/**
- * Role-based permission middleware.
- * Checks if the authenticated user has one of the required roles
- * for the given trip.
- *
- * Usage: router.patch("/:id", requireRole(["owner"]), controller.update)
- *
- * Returns 404 (not 403) to avoid leaking trip existence per PRD security rules.
- */
 export function requireRole(allowedRoles: string[]) {
   return async (
     req: Request,
@@ -50,10 +41,6 @@ export function requireRole(allowedRoles: string[]) {
   };
 }
 
-/**
- * Verify the user is a member of the trip (any role).
- * Returns 404 if not a member.
- */
 export function requireMembership() {
   return requireRole(["owner", "editor", "viewer"]);
 }

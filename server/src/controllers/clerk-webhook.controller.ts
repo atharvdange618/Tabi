@@ -4,7 +4,8 @@ import type { ClerkWebhookEvent } from "../../../shared/types/index.ts";
 import {
   processUserCreated,
   processUserUpdated,
-} from "../services/webhookService.ts";
+} from "../services/clerk-webhook.service.ts";
+import logger from "../lib/logger.ts";
 
 const verifyWebhookSignature = (
   req: Request,
@@ -19,10 +20,12 @@ const verifyWebhookSignature = (
   }
 
   const wh = new Webhook(secret);
-  const payload =
-    req.body instanceof Buffer
-      ? req.body.toString("utf8")
-      : JSON.stringify(req.body);
+  if (!(req.body instanceof Buffer)) {
+    throw new Error(
+      "Request body must be raw Buffer for signature verification",
+    );
+  }
+  const payload = req.body.toString("utf8");
 
   return wh.verify(payload, {
     "svix-id": svixId as string,
@@ -38,9 +41,7 @@ export const handleClerkWebhook = async (
   const secret = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!secret) {
-    console.error("[webhook] CLERK_WEBHOOK_SECRET is not set");
-    console.log(secret);
-
+    logger.error("CLERK_WEBHOOK_SECRET is not set");
     res.status(500).json({ error: "Webhook secret not configured" });
     return;
   }
@@ -50,7 +51,9 @@ export const handleClerkWebhook = async (
   try {
     event = verifyWebhookSignature(req, secret);
   } catch (err) {
-    console.error("[webhook] Signature verification failed:", err);
+    logger.warn("Webhook signature verification failed", {
+      err,
+    });
     res.status(400).json({ error: "Invalid webhook signature" });
     return;
   }
@@ -61,22 +64,31 @@ export const handleClerkWebhook = async (
     switch (type) {
       case "user.created":
         await processUserCreated(data);
-        console.log(`[webhook] user.created → synced user ${data.id}`);
+        logger.info("user.created — synced user", {
+          clerkId: data.id,
+        });
         break;
 
       case "user.updated":
         await processUserUpdated(data);
-        console.log(`[webhook] user.updated → synced user ${data.id}`);
+        logger.info("user.updated — synced user", {
+          clerkId: data.id,
+        });
         break;
 
       default:
-        console.log(`[webhook] Unhandled event type: ${type}`);
+        logger.debug("Unhandled webhook event type", {
+          type,
+        });
         break;
     }
 
     res.status(200).json({ received: true });
   } catch (err) {
-    console.error(`[webhook] Failed to process event ${type}:`, err);
+    logger.error("Failed to process webhook event", {
+      type,
+      err,
+    });
     res.status(500).json({ error: "Failed to process webhook event" });
   }
 };
