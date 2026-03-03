@@ -1,4 +1,4 @@
-# <img src="social-avatar.png" alt="alt text" height="64" align="center" /> Tabi 旅
+# <img src="social-avatar.png" alt="alt text" height="64" align="center" /> Tabi
 
 > **A collaborative itinerary planning platform. Plan trips together, not in separate chat threads.**
 
