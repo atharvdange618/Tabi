@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { AppError } from "../lib/errors";
+import { AppError } from "../lib/errors.ts";
 
 export const errorHandler = (
   err: Error,
@@ -15,12 +15,10 @@ export const errorHandler = (
     });
   }
 
-  // Handle Mongoose cast errors (invalid ObjectId)
   if (err.name === "CastError") {
     return res.status(400).json({ error: "Invalid ID format" });
   }
 
-  // Fallback to generic 500
   res.status(500).json({
     error: "Internal server error",
   });

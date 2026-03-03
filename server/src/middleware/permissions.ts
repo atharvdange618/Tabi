@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
+import { TripMember } from "../models/index.ts";
+import { TripMemberStatus } from "../../../shared/types/index.ts";
 
 /**
  * Role-based permission middleware.
@@ -11,28 +13,40 @@ import type { Request, Response, NextFunction } from "express";
  */
 export function requireRole(allowedRoles: string[]) {
   return async (
-    _req: Request,
+    req: Request,
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    // TODO: Implement once TripMember model exists
-    // const member = await TripMemberModel.findOne({
-    //   tripId: req.params.id,
-    //   userId: req.dbUserId,
-    //   status: "active",
-    //   role: { $in: allowedRoles },
-    // });
-    //
-    // if (!member) {
-    //   res.status(404).json({ error: "Trip not found" });
-    //   return;
-    // }
-    //
-    // req.member = member;
+    try {
+      const { id: tripId } = req.params;
+      const { dbUserId } = req;
 
-    // Temporary pass-through until models are built
-    void allowedRoles;
-    next();
+      if (!tripId || !dbUserId) {
+        res.status(401).json({ error: "Unauthenticated or missing trip ID" });
+        return;
+      }
+
+      const member = await TripMember.findOne({
+        tripId,
+        userId: dbUserId,
+        status: TripMemberStatus.ACTIVE,
+        role: { $in: allowedRoles },
+      });
+
+      if (!member) {
+        res.status(404).json({ error: "Trip not found" });
+        return;
+      }
+
+      req.member = member;
+      next();
+    } catch (error) {
+      if (error instanceof Error && error.name === "CastError") {
+        res.status(404).json({ error: "Trip not found" });
+        return;
+      }
+      next(error);
+    }
   };
 }
 

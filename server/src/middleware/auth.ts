@@ -1,5 +1,6 @@
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import { clerkMiddleware, requireAuth, getAuth } from "@clerk/express";
 import type { Request, Response, NextFunction } from "express";
+import { User } from "../models/index.ts";
 
 /**
  * Clerk middleware that attaches auth info to every request.
@@ -18,16 +19,29 @@ export const requireAuthentication = requireAuth();
  * as req.dbUserId for downstream use.
  *
  * Usage: router.use(requireAuthentication, resolveDbUser)
- * This will be implemented once the User model is created.
  */
 export async function resolveDbUser(
-  _req: Request,
-  _res: Response,
+  req: Request,
+  res: Response,
   next: NextFunction,
 ): Promise<void> {
-  // TODO: Look up user by clerkId and attach req.dbUserId
-  // const user = await UserModel.findOne({ clerkId: req.auth.userId });
-  // if (!user) return res.status(401).json({ error: "User not synced" });
-  // req.dbUserId = user._id.toString();
-  next();
+  try {
+    const auth = getAuth(req);
+    const clerkId = auth.userId;
+    if (!clerkId) {
+      res.status(401).json({ error: "Missing Clerk user ID" });
+      return;
+    }
+
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      res.status(401).json({ error: "User not synced yet" });
+      return;
+    }
+
+    req.dbUserId = user._id.toString();
+    next();
+  } catch (error) {
+    next(error);
+  }
 }
