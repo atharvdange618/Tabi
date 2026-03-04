@@ -26,7 +26,7 @@
  * Note: I have used AI to generate these tests based on the requirements and my
  * knowledge of the codebase, but I have personally reviewed and edited each test
  * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
- * set of scenarios, including edge cases, to thoroughly validate the Trip CRUD functionality.
+ * set of scenarios, including edge cases, to thoroughly validate the Members and Invites CRUD functionality.
  */
 
 import { describe, it, expect, vi } from "vitest";
