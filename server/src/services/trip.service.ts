@@ -38,6 +38,7 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
 
   const session = await mongoose.startSession();
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let trip: any;
     await session.withTransaction(async () => {
       [trip] = await Trip.create(

@@ -73,7 +73,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     const res = await request(app)
       .post(`/api/v1/trips/${trip._id}/days/${day._id}/activities`)
@@ -93,7 +93,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await activityService.createActivity(
       trip._id.toString(),
@@ -119,7 +119,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await Activity.create({
       tripId: trip._id,
@@ -153,7 +153,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     const act = await activityService.createActivity(
       trip._id.toString(),
@@ -175,7 +175,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     const act1 = await activityService.createActivity(
       trip._id.toString(),
@@ -217,7 +217,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     const act = await activityService.createActivity(
       trip._id.toString(),
@@ -246,7 +246,7 @@ describe("Activities API", () => {
     const editor = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await TripMember.create({
       tripId: trip._id,
@@ -269,7 +269,7 @@ describe("Activities API", () => {
     const viewer = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await TripMember.create({
       tripId: trip._id,
@@ -292,7 +292,7 @@ describe("Activities API", () => {
     const stranger = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await request(app)
       .get(`/api/v1/trips/${trip._id}/days/${day._id}/activities`)
@@ -304,7 +304,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await request(app)
       .get(`/api/v1/trips/${trip._id}/days/${day._id}/activities`)
@@ -329,7 +329,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
     const fakeActId = new mongoose.Types.ObjectId().toString();
 
     await request(app)
@@ -344,7 +344,7 @@ describe("Activities API", () => {
     const owner = await createTestUser();
     const trip = await seedTrip(owner._id.toString());
     const days = await dayService.getTripDays(trip._id.toString());
-    const day = days[0];
+    const day = days[0]!;
 
     await request(app)
       .patch(`/api/v1/trips/${trip._id}/days/${day._id}/activities/reorder`)

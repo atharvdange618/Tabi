@@ -37,7 +37,7 @@ vi.mock("@clerk/express", () => ({
 }));
 
 import app from "../app.ts";
-import { User, Day, TripMember } from "../models/index.ts";
+import { User, TripMember } from "../models/index.ts";
 import * as tripService from "../services/trip.service.ts";
 import * as dayService from "../services/day.service.ts";
 import {
@@ -74,9 +74,9 @@ describe("Days Service", () => {
       const days = await dayService.getTripDays(trip._id.toString());
       expect(days).toHaveLength(3);
 
-      const sortTime1 = new Date(days[0].date).getTime();
-      const sortTime2 = new Date(days[1].date).getTime();
-      const sortTime3 = new Date(days[2].date).getTime();
+      const sortTime1 = new Date(days[0]!.date).getTime();
+      const sortTime2 = new Date(days[1]!.date).getTime();
+      const sortTime3 = new Date(days[2]!.date).getTime();
 
       expect(sortTime1).toBeLessThan(sortTime2);
       expect(sortTime2).toBeLessThan(sortTime3);
@@ -88,7 +88,7 @@ describe("Days Service", () => {
       const user = await createTestUser();
       const trip = await seedTrip(user._id.toString());
       const days = await dayService.getTripDays(trip._id.toString());
-      const dayId = days[0]._id.toString();
+      const dayId = days[0]!._id.toString();
 
       const updated = await dayService.updateDay(trip._id.toString(), dayId, {
         label: "Arrival",
@@ -152,7 +152,7 @@ describe("Days API", () => {
       const days = await dayService.getTripDays(trip._id.toString());
 
       const res = await request(app)
-        .patch(`/api/v1/trips/${trip._id}/days/${days[0]._id}`)
+        .patch(`/api/v1/trips/${trip._id}/days/${days[0]!._id}`)
         .set("x-test-clerk-id", owner.clerkId)
         .send({ label: "Check-in", notes: "Note" })
         .expect(200);
@@ -176,7 +176,7 @@ describe("Days API", () => {
       });
 
       await request(app)
-        .patch(`/api/v1/trips/${trip._id}/days/${days[0]._id}`)
+        .patch(`/api/v1/trips/${trip._id}/days/${days[0]!._id}`)
         .set("x-test-clerk-id", editor.clerkId)
         .send({ label: "Editor Label" })
         .expect(200);
@@ -198,7 +198,7 @@ describe("Days API", () => {
       });
 
       await request(app)
-        .patch(`/api/v1/trips/${trip._id}/days/${days[0]._id}`)
+        .patch(`/api/v1/trips/${trip._id}/days/${days[0]!._id}`)
         .set("x-test-clerk-id", viewer.clerkId)
         .send({ label: "Hacked" })
         .expect(404); // permission.ts throws NotFoundError for insufficient role to hide trip
@@ -214,7 +214,7 @@ describe("Days API", () => {
 
       // Try to update tripB's day using tripA's route
       await request(app)
-        .patch(`/api/v1/trips/${tripA._id}/days/${daysB[0]._id}`)
+        .patch(`/api/v1/trips/${tripA._id}/days/${daysB[0]!._id}`)
         .set("x-test-clerk-id", owner.clerkId)
         .send({ label: "Cross-trip hack" })
         .expect(404);
