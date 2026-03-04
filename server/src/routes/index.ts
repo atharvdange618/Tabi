@@ -6,6 +6,9 @@ import inviteRoutes from "./invites.ts";
 import dayRoutes from "./days.ts";
 import activityRoutes from "./activities.ts";
 import commentRoutes from "./comments.ts";
+import checklistRoutes from "./checklists.ts";
+import fileRoutes from "./files.ts";
+import reservationRoutes from "./reservations.ts";
 
 const router = Router();
 
@@ -29,5 +32,14 @@ router.use("/trips/:id/days/:dayId/activities", activityRoutes);
 
 // Comments API
 router.use("/trips/:id/comments", commentRoutes);
+
+// Checklists API
+router.use("/trips/:id/checklists", checklistRoutes);
+
+// Files API
+router.use("/trips/:id/files", fileRoutes);
+
+// Reservations API
+router.use("/trips/:id/reservations", reservationRoutes);
 
 export { router };
