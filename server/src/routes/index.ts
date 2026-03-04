@@ -5,6 +5,7 @@ import memberRoutes from "./members.ts";
 import inviteRoutes from "./invites.ts";
 import dayRoutes from "./days.ts";
 import activityRoutes from "./activities.ts";
+import commentRoutes from "./comments.ts";
 
 const router = Router();
 
@@ -25,5 +26,8 @@ router.use("/trips/:id/days", dayRoutes);
 
 // Activities API
 router.use("/trips/:id/days/:dayId/activities", activityRoutes);
+
+// Comments API
+router.use("/trips/:id/comments", commentRoutes);
 
 export { router };
