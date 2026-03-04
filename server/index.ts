@@ -3,6 +3,16 @@ import { connectDB } from "./src/lib/db.ts";
 import logger from "./src/lib/logger.ts";
 import { env } from "./src/lib/env.ts";
 
+process.on("unhandledRejection", (reason) => {
+  logger.error("Unhandled promise rejection", { reason });
+  process.exit(1);
+});
+
+process.on("uncaughtException", (error) => {
+  logger.error("Uncaught exception", { err: error });
+  process.exit(1);
+});
+
 const PORT = env.PORT;
 
 async function start(): Promise<void> {
