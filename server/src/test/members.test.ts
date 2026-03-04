@@ -525,10 +525,10 @@ describe("Member Service", () => {
       ).rejects.toThrow("Cannot remove yourself");
     });
 
-    it("throws ForbiddenError when trying to remove the trip owner", async () => {
-      // This covers a scenario where an admin API might exist
+    it("throws ForbiddenError when non-owner tries to remove a member", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({ email: "sneaky@example.com" });
+      const target = await createTestUser({ email: "target@example.com" });
       const trip = await seedTrip(owner._id.toString());
 
       await TripMember.create({
@@ -540,12 +540,45 @@ describe("Member Service", () => {
         joinedAt: new Date(),
       });
 
-      // editor can't remove owner even if they somehow bypassed the route guard
+      await TripMember.create({
+        tripId: trip._id,
+        userId: target._id,
+        role: TripMemberRole.VIEWER,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      // editor can't remove another member
       await expect(
         memberService.removeMember(
           trip._id.toString(),
-          owner._id.toString(),
+          target._id.toString(),
           editor._id.toString(),
+        ),
+      ).rejects.toThrow("Only the trip owner can remove members");
+    });
+
+    it("throws ForbiddenError when trying to remove a trip owner", async () => {
+      const owner1 = await createTestUser();
+      const owner2 = await createTestUser({ email: "owner2@example.com" });
+      const trip = await seedTrip(owner1._id.toString());
+
+      // Simulate a two-owner scenario for testing purposes
+      await TripMember.create({
+        tripId: trip._id,
+        userId: owner2._id,
+        role: TripMemberRole.OWNER,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner1._id,
+        joinedAt: new Date(),
+      });
+
+      await expect(
+        memberService.removeMember(
+          trip._id.toString(),
+          owner2._id.toString(),
+          owner1._id.toString(),
         ),
       ).rejects.toThrow("Cannot remove the trip owner");
     });

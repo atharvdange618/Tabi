@@ -16,6 +16,7 @@ import type {
   UpdateMemberRolePayload,
 } from "../../../shared/validations/index.ts";
 import { sendInviteEmail } from "../lib/email.ts";
+import logger from "../lib/logger.ts";
 
 /**
  * Return all members for a trip, with user info populated.
@@ -72,32 +73,60 @@ export async function inviteMember(
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-  if (existingUser) {
-    await TripMember.create({
-      tripId: new mongoose.Types.ObjectId(tripId),
-      userId: existingUser._id,
-      role,
-      status: TripMemberStatus.PENDING,
-      invitedBy: new mongoose.Types.ObjectId(inviterUserId),
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    if (existingUser) {
+      await TripMember.create(
+        [
+          {
+            tripId: new mongoose.Types.ObjectId(tripId),
+            userId: existingUser._id,
+            role,
+            status: TripMemberStatus.PENDING,
+            invitedBy: new mongoose.Types.ObjectId(inviterUserId),
+          },
+        ],
+        { session },
+      );
+    }
+
+    const invite = await PendingInvite.create(
+      [
+        {
+          tripId: new mongoose.Types.ObjectId(tripId),
+          email,
+          role,
+          invitedBy: new mongoose.Types.ObjectId(inviterUserId),
+          token,
+          expiresAt,
+        },
+      ],
+      { session },
+    );
+
+    await session.commitTransaction();
+    const inviter = await User.findById(inviterUserId).lean();
+    const trip = await Trip.findById(tripId).lean();
+    const inviterName = inviter?.name ?? "Someone";
+    const tripTitle = trip?.title ?? "a trip";
+    sendInviteEmail(email, inviterName, tripTitle, token).catch((err) => {
+      logger.error("Invite email failed", {
+        email: email.replace(/(.{2}).+(@.+)/, "$1***$2"),
+        inviterName,
+        tripTitle,
+        err,
+      });
     });
+
+    return invite[0];
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
   }
-
-  const invite = await PendingInvite.create({
-    tripId: new mongoose.Types.ObjectId(tripId),
-    email,
-    role,
-    invitedBy: new mongoose.Types.ObjectId(inviterUserId),
-    token,
-    expiresAt,
-  });
-
-  const inviter = await User.findById(inviterUserId).lean();
-  const trip = await Trip.findById(tripId).lean();
-  const inviterName = inviter?.name ?? "Someone";
-  const tripTitle = trip?.title ?? "a trip";
-  sendInviteEmail(email, inviterName, tripTitle, token).catch(() => {});
-
-  return invite;
 }
 
 /**
@@ -105,7 +134,10 @@ export async function inviteMember(
  * Creates (or activates) a TripMember and deletes the PendingInvite.
  */
 export async function acceptInvite(token: string, acceptingUserId: string) {
-  const invite = await PendingInvite.findOne({ token });
+  const invite = await PendingInvite.findOne({
+    token,
+    expiresAt: { $gt: new Date() },
+  });
   if (!invite) {
     throw new NotFoundError("Invite not found or has expired");
   }
@@ -155,7 +187,10 @@ export async function acceptInvite(token: string, acceptingUserId: string) {
  * Removes the PendingInvite and any pending TripMember.
  */
 export async function declineInvite(token: string, decliningUserId: string) {
-  const invite = await PendingInvite.findOne({ token });
+  const invite = await PendingInvite.findOne({
+    token,
+    expiresAt: { $gt: new Date() },
+  });
   if (!invite) {
     throw new NotFoundError("Invite not found or has expired");
   }
@@ -199,6 +234,22 @@ export async function updateMemberRole(
     );
   }
 
+  const requestingMember = await TripMember.findOne({
+    tripId,
+    userId: requestingUserId,
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!requestingMember) {
+    throw new ForbiddenError(
+      "Requesting user is not an active member of the trip",
+    );
+  }
+
+  if (requestingMember.role !== TripMemberRole.OWNER) {
+    throw new ForbiddenError("Only the trip owner can modify member roles");
+  }
+
   const member = await TripMember.findOne({
     tripId,
     userId: targetUserId,
@@ -225,6 +276,20 @@ export async function removeMember(
 ) {
   if (targetUserId === requestingUserId) {
     throw new ForbiddenError("Cannot remove yourself from the trip");
+  }
+
+  const requestingMember = await TripMember.findOne({
+    tripId,
+    userId: requestingUserId,
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!requestingMember) {
+    throw new ForbiddenError("Requesting user is not a member of the trip");
+  }
+
+  if (requestingMember.role !== TripMemberRole.OWNER) {
+    throw new ForbiddenError("Only the trip owner can remove members");
   }
 
   const member = await TripMember.findOne({
