@@ -164,13 +164,11 @@ export type UpdateReservationPayload = z.infer<typeof updateReservationSchema>;
 
 export const updateBudgetSettingsSchema = z.object({
   totalBudget: z.number().nonnegative(),
-  currency: z.string().length(3, "Currency must be a 3-letter ISO code"),
 });
 
 export const createExpenseSchema = z.object({
   description: z.string().min(1, "Description is required").max(300),
   amount: z.number().positive("Amount must be positive"),
-  currency: z.string().length(3).optional(),
   category: z.enum(expenseCategories),
   paidBy: z.string().min(1),
   date: z.string().datetime().optional(),

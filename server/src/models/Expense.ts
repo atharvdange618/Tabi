@@ -18,9 +18,7 @@ const expenseSchema = new Schema(
       required: true,
       min: 0,
     },
-    currency: {
-      type: String,
-    },
+
     category: {
       type: String,
       required: true,

@@ -196,7 +196,6 @@ export interface BudgetSettings {
   _id: string;
   tripId: string;
   totalBudget: number;
-  currency: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -206,7 +205,6 @@ export interface Expense {
   tripId: string;
   description: string;
   amount: number;
-  currency?: string;
   category: ExpenseCategory;
   paidBy: string;
   date?: string;
@@ -241,7 +239,7 @@ export interface BudgetSummary {
   totalBudget: number;
   totalSpent: number;
   remaining: number;
-  currency: string;
+  currency: "INR";
   byCategory: Record<ExpenseCategory, number>;
 }
 

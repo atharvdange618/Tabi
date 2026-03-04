@@ -12,11 +12,6 @@ const budgetSettingsSchema = new Schema(
       type: Number,
       required: true,
     },
-    currency: {
-      type: String,
-      required: true,
-      default: "INR",
-    },
   },
   { timestamps: true },
 );
