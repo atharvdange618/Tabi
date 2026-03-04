@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import logger from "./logger.ts";
+import { env } from "./env.ts";
 
 export async function connectDB(): Promise<void> {
-  const MONGODB_URI = process.env.MONGODB_URI;
+  const MONGODB_URI = env.MONGODB_URI;
 
   if (mongoose.connection.readyState >= 1) {
     return;

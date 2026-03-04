@@ -26,7 +26,10 @@
  *   look that user up in the in-memory DB and attach req.dbUserId - exactly as
  *   it would in production, without touching real Clerk infrastructure.
  *
- * Note: I have used AI to generate these tests based on the requirements and my knowledge of the codebase, but I have personally reviewed and edited each test case to ensure accuracy and relevance. The AI assisted in creating a comprehensive set of scenarios, including edge cases, to thoroughly validate the Trip CRUD functionality.
+ * Note: I have used AI to generate these tests based on the requirements and my
+ * knowledge of the codebase, but I have personally reviewed and edited each test
+ * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
+ * set of scenarios, including edge cases, to thoroughly validate the Trip CRUD functionality.
  */
 
 import { describe, it, expect, vi } from "vitest";

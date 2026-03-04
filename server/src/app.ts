@@ -6,6 +6,7 @@ import { router } from "./routes/index.ts";
 import { errorHandler } from "./middleware/errorHandler.ts";
 import { clerkAuth } from "./middleware/auth.ts";
 import { httpLogger } from "./lib/logger.ts";
+import { env } from "./lib/env.ts";
 
 const app = express();
 
@@ -16,7 +17,7 @@ app.use(hpp());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: env.CLIENT_URL,
     credentials: true,
   }),
 );

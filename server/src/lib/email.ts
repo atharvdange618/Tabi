@@ -1,9 +1,8 @@
 import { Resend } from "resend";
 import logger from "./logger.ts";
+import { env } from "./env.ts";
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
 const FROM_ADDRESS = "Tabi <noreply@tabi.hogyoku.cloud>";
 
@@ -17,7 +16,7 @@ export async function sendInviteEmail(
   tripTitle: string,
   token: string,
 ): Promise<void> {
-  const baseUrl = process.env.CLIENT_URL || "http://localhost:3000";
+  const baseUrl = env.CLIENT_URL || "http://localhost:3000";
   const acceptUrl = `${baseUrl}/invites/${token}/accept`;
   const declineUrl = `${baseUrl}/invites/${token}/decline`;
 

@@ -6,6 +6,7 @@ import {
   processUserUpdated,
 } from "../services/clerk-webhook.service.ts";
 import logger from "../lib/logger.ts";
+import { env } from "../lib/env.ts";
 
 const verifyWebhookSignature = (
   req: Request,
@@ -38,7 +39,7 @@ export const handleClerkWebhook = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const secret = process.env.CLERK_WEBHOOK_SECRET;
+  const secret = env.CLERK_WEBHOOK_SECRET;
 
   if (!secret) {
     logger.error("CLERK_WEBHOOK_SECRET is not set");

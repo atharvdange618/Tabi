@@ -6,13 +6,14 @@ import type { LevelWithSilent } from "pino";
 import type { IncomingMessage, ServerResponse } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { env } from "./env.ts";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const LOGS_DIR = path.resolve(__dirname, "../../logs");
 
-const isDev = process.env.NODE_ENV !== "production";
-const LOG_LEVEL = process.env.LOG_LEVEL ?? (isDev ? "debug" : "info");
+const isDev = env.NODE_ENV !== "production";
+const LOG_LEVEL = env.LOG_LEVEL ?? (isDev ? "debug" : "info");
 
 const { combine, timestamp, colorize, printf, json, errors, splat } =
   winston.format;
