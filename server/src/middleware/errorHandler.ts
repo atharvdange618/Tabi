@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { AppError } from "../lib/errors.ts";
 import logger from "../lib/logger.ts";
+import { env } from "../lib/env.ts";
 
 /**
  * Centralized Express error-handling middleware.
@@ -40,6 +41,6 @@ export const errorHandler = (
 
   res.status(500).json({
     error: "Internal server error",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    ...(env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };

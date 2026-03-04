@@ -36,34 +36,52 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
     throw new ValidationError("endDate must be on or after startDate");
   }
 
-  const trip = await Trip.create({
-    title: payload.title,
-    description: payload.description ?? "",
-    startDate,
-    endDate,
-    travelerCount: payload.travelerCount ?? 1,
-    coverImageUrl: payload.coverImageUrl ?? "",
-    createdBy: new mongoose.Types.ObjectId(userId),
-  });
+  const session = await mongoose.startSession();
+  try {
+    let trip: any;
+    await session.withTransaction(async () => {
+      [trip] = await Trip.create(
+        [
+          {
+            title: payload.title,
+            description: payload.description ?? "",
+            startDate,
+            endDate,
+            travelerCount: payload.travelerCount ?? 1,
+            coverImageUrl: payload.coverImageUrl ?? "",
+            createdBy: new mongoose.Types.ObjectId(userId),
+          },
+        ],
+        { session },
+      );
 
-  await TripMember.create({
-    tripId: trip._id,
-    userId: new mongoose.Types.ObjectId(userId),
-    role: TripMemberRole.OWNER,
-    status: TripMemberStatus.ACTIVE,
-    invitedBy: new mongoose.Types.ObjectId(userId),
-    joinedAt: new Date(),
-  });
+      await TripMember.create(
+        [
+          {
+            tripId: trip._id,
+            userId: new mongoose.Types.ObjectId(userId),
+            role: TripMemberRole.OWNER,
+            status: TripMemberStatus.ACTIVE,
+            invitedBy: new mongoose.Types.ObjectId(userId),
+            joinedAt: new Date(),
+          },
+        ],
+        { session },
+      );
 
-  const dates = getDatesInRange(startDate, endDate);
-  if (dates.length > 0) {
-    await Day.insertMany(
-      dates.map((date) => ({ tripId: trip._id, date })),
-      { ordered: false },
-    );
+      const dates = getDatesInRange(startDate, endDate);
+      if (dates.length > 0) {
+        await Day.insertMany(
+          dates.map((date) => ({ tripId: trip._id, date })),
+          { ordered: false, session },
+        );
+      }
+    });
+
+    return trip!;
+  } finally {
+    session.endSession();
   }
-
-  return trip;
 }
 
 /**
@@ -217,23 +235,34 @@ export async function deleteTripCascade(tripId: string) {
   const trip = await Trip.findById(tripId);
   if (!trip) throw new NotFoundError("Trip not found");
 
-  const checklistIds = await Checklist.find({ tripId }).distinct("_id");
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const checklistIds = await Checklist.find({ tripId })
+        .distinct("_id")
+        .session(session);
 
-  await Promise.all([
-    TripMember.deleteMany({ tripId }),
-    PendingInvite.deleteMany({ tripId }),
-    Day.deleteMany({ tripId }),
-    Activity.deleteMany({ tripId }),
-    Comment.deleteMany({ tripId }),
-    Checklist.deleteMany({ tripId }),
-    File.deleteMany({ tripId }),
-    Reservation.deleteMany({ tripId }),
-    BudgetSettings.deleteMany({ tripId }),
-    Expense.deleteMany({ tripId }),
-    checklistIds.length > 0
-      ? ChecklistItem.deleteMany({ checklistId: { $in: checklistIds } })
-      : Promise.resolve(),
-  ]);
+      await Promise.all([
+        TripMember.deleteMany({ tripId }).session(session),
+        PendingInvite.deleteMany({ tripId }).session(session),
+        Day.deleteMany({ tripId }).session(session),
+        Activity.deleteMany({ tripId }).session(session),
+        Comment.deleteMany({ tripId }).session(session),
+        Checklist.deleteMany({ tripId }).session(session),
+        File.deleteMany({ tripId }).session(session),
+        Reservation.deleteMany({ tripId }).session(session),
+        BudgetSettings.deleteMany({ tripId }).session(session),
+        Expense.deleteMany({ tripId }).session(session),
+        checklistIds.length > 0
+          ? ChecklistItem.deleteMany({
+              checklistId: { $in: checklistIds },
+            }).session(session)
+          : Promise.resolve(),
+      ]);
 
-  await Trip.findByIdAndDelete(tripId);
+      await Trip.findByIdAndDelete(tripId).session(session);
+    });
+  } finally {
+    session.endSession();
+  }
 }
