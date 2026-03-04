@@ -9,6 +9,7 @@ import commentRoutes from "./comments.ts";
 import checklistRoutes from "./checklists.ts";
 import fileRoutes from "./files.ts";
 import reservationRoutes from "./reservations.ts";
+import budgetRoutes from "./budget.ts";
 
 const router = Router();
 
@@ -41,5 +42,8 @@ router.use("/trips/:id/files", fileRoutes);
 
 // Reservations API
 router.use("/trips/:id/reservations", reservationRoutes);
+
+// Budget API
+router.use("/trips/:id/budget", budgetRoutes);
 
 export { router };

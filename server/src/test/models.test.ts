@@ -164,11 +164,11 @@ describe("Mongoose Models", () => {
     expect(comment.isEdited).toBe(false);
   });
 
-  it("should default BudgetSettings.currency to 'INR'", () => {
+  it("should not store a currency field on BudgetSettings", () => {
     const settings = new BudgetSettings({
       tripId: new mongoose.Types.ObjectId(),
       totalBudget: 50000,
     });
-    expect(settings.currency).toBe("INR");
+    expect((settings as any).currency).toBeUndefined();
   });
 });
