@@ -23,12 +23,15 @@ const devConsoleFormat = combine(
   timestamp({ format: "HH:mm:ss" }),
   errors({ stack: true }),
   splat(),
-  printf(({ timestamp, level, message, stack, ...meta }) => {
+  printf(({ level, message, stack: errorStack, timestamp: ts, ...meta }) => {
     const metaStr =
       Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
-    return stack
-      ? `${timestamp} [${level}] ${message}\n${stack}${metaStr}`
-      : `${timestamp} [${level}] ${message}${metaStr}`;
+    const tsStr = String(ts);
+    const levelStr = level satisfies string;
+    const msgStr = String(message);
+    return errorStack
+      ? `${tsStr} [${levelStr}] ${msgStr}\n${typeof errorStack === "string" ? errorStack : JSON.stringify(errorStack)}${metaStr}`
+      : `${tsStr} [${levelStr}] ${msgStr}${metaStr}`;
   }),
 );
 
@@ -124,13 +127,17 @@ const pinoHttpOptions: PinoHttpOptions = {
     res: ServerResponse,
     err: Error | undefined,
   ): LevelWithSilent {
-    if (err || res.statusCode >= 500) return "error";
-    if (res.statusCode >= 400) return "warn";
+    if (err || res.statusCode >= 500) {
+      return "error";
+    }
+    if (res.statusCode >= 400) {
+      return "warn";
+    }
     return "info";
   },
 
   customSuccessMessage(req: IncomingMessage, res: ServerResponse): string {
-    return `${req.method} ${req.url} ${res.statusCode}`;
+    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)}`;
   },
 
   customErrorMessage(
@@ -138,7 +145,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     _res: ServerResponse,
     err: Error,
   ): string {
-    return `${req.method} ${req.url} — ${err.message}`;
+    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} — ${err.message}`;
   },
 
   autoLogging: {

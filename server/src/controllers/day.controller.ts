@@ -7,7 +7,7 @@ import { updateDaySchema } from "../../../shared/validations/index.ts";
  * Retrieve all days for a trip
  */
 export async function getTripDays(req: Request, res: Response): Promise<void> {
-  const days = await dayService.getTripDays(req.params["id"] as string);
+  const days = await dayService.getTripDays(req.params.id as string);
   res.json({ data: days });
 }
 
@@ -26,8 +26,8 @@ export async function updateDay(req: Request, res: Response): Promise<void> {
   }
 
   const day = await dayService.updateDay(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
     parseResult.data,
   );
   res.json({ data: day });

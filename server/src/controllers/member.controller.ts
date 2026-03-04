@@ -10,7 +10,7 @@ import type {
  * Return all members for a trip.
  */
 export async function getMembers(req: Request, res: Response): Promise<void> {
-  const members = await memberService.getMembers(req.params["id"] as string);
+  const members = await memberService.getMembers(req.params.id as string);
   res.json({ data: members });
 }
 
@@ -19,9 +19,14 @@ export async function getMembers(req: Request, res: Response): Promise<void> {
  * Invite a user to a trip by email.
  */
 export async function inviteMember(req: Request, res: Response): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const invite = await memberService.inviteMember(
-    req.params["id"] as string,
-    req.dbUserId!,
+    req.params.id as string,
+    userId,
     req.body as InviteMemberPayload,
   );
   res.status(201).json({ data: invite });
@@ -35,11 +40,16 @@ export async function updateMemberRole(
   req: Request,
   res: Response,
 ): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const member = await memberService.updateMemberRole(
-    req.params["id"] as string,
-    req.params["uid"] as string,
+    req.params.id as string,
+    req.params.uid as string,
     req.body as UpdateMemberRolePayload,
-    req.dbUserId!,
+    userId,
   );
   res.json({ data: member });
 }
@@ -49,10 +59,15 @@ export async function updateMemberRole(
  * Remove a member from a trip.
  */
 export async function removeMember(req: Request, res: Response): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   await memberService.removeMember(
-    req.params["id"] as string,
-    req.params["uid"] as string,
-    req.dbUserId!,
+    req.params.id as string,
+    req.params.uid as string,
+    userId,
   );
   res.status(204).send();
 }
@@ -62,9 +77,14 @@ export async function removeMember(req: Request, res: Response): Promise<void> {
  * Accept a pending invite.
  */
 export async function acceptInvite(req: Request, res: Response): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const member = await memberService.acceptInvite(
-    req.params["token"] as string,
-    req.dbUserId!,
+    req.params.token as string,
+    userId,
   );
   res.json({ data: member });
 }
@@ -77,9 +97,11 @@ export async function declineInvite(
   req: Request,
   res: Response,
 ): Promise<void> {
-  await memberService.declineInvite(
-    req.params["token"] as string,
-    req.dbUserId!,
-  );
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  await memberService.declineInvite(req.params.token as string, userId);
   res.json({ message: "Invite declined" });
 }

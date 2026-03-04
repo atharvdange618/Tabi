@@ -1,11 +1,11 @@
-import mongoose from "mongoose";
+import mongoose, { ConnectionStates } from "mongoose";
 import logger from "./logger.ts";
 import { env } from "./env.ts";
 
 export async function connectDB(): Promise<void> {
   const MONGODB_URI = env.MONGODB_URI;
 
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState >= ConnectionStates.connected) {
     return;
   }
 
@@ -21,7 +21,7 @@ export async function connectDB(): Promise<void> {
     throw error;
   }
 
-  mongoose.connection.on("error", (err) => {
+  mongoose.connection.on("error", (err: unknown) => {
     logger.error("MongoDB connection error", { err });
   });
 

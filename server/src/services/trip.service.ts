@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type HydratedDocument } from "mongoose";
 import {
   Trip,
   TripMember,
@@ -24,6 +24,10 @@ import type {
 } from "../../../shared/validations/index.ts";
 import { dateKey, getDatesInRange } from "../lib/helpers.ts";
 
+type TripDoc = HydratedDocument<
+  typeof Trip extends mongoose.Model<infer T> ? T : never
+>;
+
 /**
  * Create a new trip, seed it with an owner TripMember, and auto-generate
  * one Day document per calendar day in [startDate, endDate].
@@ -38,10 +42,9 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
 
   const session = await mongoose.startSession();
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let trip: any;
+    let trip: TripDoc | undefined;
     await session.withTransaction(async () => {
-      [trip] = await Trip.create(
+      const [created] = await Trip.create(
         [
           {
             title: payload.title,
@@ -56,10 +59,15 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
         { session },
       );
 
+      if (!created) {
+        throw new Error("Failed to create trip document");
+      }
+      trip = created;
+
       await TripMember.create(
         [
           {
-            tripId: trip._id,
+            tripId: created._id,
             userId: new mongoose.Types.ObjectId(userId),
             role: TripMemberRole.OWNER,
             status: TripMemberStatus.ACTIVE,
@@ -73,15 +81,18 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
       const dates = getDatesInRange(startDate, endDate);
       if (dates.length > 0) {
         await Day.insertMany(
-          dates.map((date) => ({ tripId: trip._id, date })),
+          dates.map((date) => ({ tripId: created._id, date })),
           { ordered: false, session },
         );
       }
     });
 
-    return trip!;
+    if (!trip) {
+      throw new Error("Transaction did not produce a trip");
+    }
+    return trip;
   } finally {
-    session.endSession();
+    void session.endSession();
   }
 }
 
@@ -96,20 +107,15 @@ export async function getUserTrips(userId: string) {
     .populate("tripId")
     .lean();
 
-  type PopulatedMembership = (typeof memberships)[number] & {
-    tripId: Record<string, unknown>;
-  };
-
-  return (memberships as PopulatedMembership[])
-    .filter((m) => m.tripId != null)
-    .map((m) => ({ ...m.tripId, role: m.role }))
+  return memberships
+    .map((m) => {
+      const tripData = m.tripId as unknown as Record<string, unknown>;
+      const createdAt = tripData.createdAt as Date | undefined;
+      return { ...tripData, role: m.role, createdAt };
+    })
     .sort((a, b) => {
-      const aDate = new Date(
-        (a as Record<string, unknown>).createdAt as string,
-      ).getTime();
-      const bDate = new Date(
-        (b as Record<string, unknown>).createdAt as string,
-      ).getTime();
+      const aDate = new Date(a.createdAt ?? 0).getTime();
+      const bDate = new Date(b.createdAt ?? 0).getTime();
       return bDate - aDate;
     });
 }
@@ -122,7 +128,9 @@ export async function getTripById(tripId: string) {
     .populate("createdBy", "name email avatarUrl")
     .lean();
 
-  if (!trip) throw new NotFoundError("Trip not found");
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
   return trip;
 }
 
@@ -134,16 +142,23 @@ export async function getTripById(tripId: string) {
  */
 export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
   const trip = await Trip.findById(tripId);
-  if (!trip) throw new NotFoundError("Trip not found");
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
 
   const updates: Record<string, unknown> = {};
-  if (payload.title !== undefined) updates.title = payload.title;
-  if (payload.description !== undefined)
+  if (payload.title !== undefined) {
+    updates.title = payload.title;
+  }
+  if (payload.description !== undefined) {
     updates.description = payload.description;
-  if (payload.travelerCount !== undefined)
+  }
+  if (payload.travelerCount !== undefined) {
     updates.travelerCount = payload.travelerCount;
-  if (payload.coverImageUrl !== undefined)
+  }
+  if (payload.coverImageUrl !== undefined) {
     updates.coverImageUrl = payload.coverImageUrl;
+  }
 
   const oldStartDate = trip.startDate as Date;
   const oldEndDate = trip.endDate as Date;
@@ -222,7 +237,7 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
       );
     });
   } finally {
-    session.endSession();
+    void session.endSession();
   }
 
   return await Trip.findById(tripId); // Return the updated trip after the transaction
@@ -234,7 +249,9 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
  */
 export async function deleteTripCascade(tripId: string) {
   const trip = await Trip.findById(tripId);
-  if (!trip) throw new NotFoundError("Trip not found");
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
 
   const session = await mongoose.startSession();
   try {
@@ -264,6 +281,6 @@ export async function deleteTripCascade(tripId: string) {
       await Trip.findByIdAndDelete(tripId).session(session);
     });
   } finally {
-    session.endSession();
+    void session.endSession();
   }
 }

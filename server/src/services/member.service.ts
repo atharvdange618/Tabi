@@ -59,9 +59,7 @@ export async function inviteMember(
           "User is already an active member of this trip",
         );
       }
-      if (existingMember.status === TripMemberStatus.PENDING) {
-        throw new ConflictError("An invite is already pending for this user");
-      }
+      throw new ConflictError("An invite is already pending for this user");
     }
   }
 
@@ -111,21 +109,23 @@ export async function inviteMember(
     const trip = await Trip.findById(tripId).lean();
     const inviterName = inviter?.name ?? "Someone";
     const tripTitle = trip?.title ?? "a trip";
-    sendInviteEmail(email, inviterName, tripTitle, token).catch((err) => {
-      logger.error("Invite email failed", {
-        email: email.replace(/(.{2}).+(@.+)/, "$1***$2"),
-        inviterName,
-        tripTitle,
-        err,
-      });
-    });
+    void sendInviteEmail(email, inviterName, tripTitle, token).catch(
+      (err: unknown) => {
+        logger.error("Invite email failed", {
+          email: email.replace(/(.{2}).+(@.+)/, "$1***$2"),
+          inviterName,
+          tripTitle,
+          err,
+        });
+      },
+    );
 
     return invite[0];
-  } catch (error) {
+  } catch (error: unknown) {
     await session.abortTransaction();
     throw error;
   } finally {
-    session.endSession();
+    void session.endSession();
   }
 }
 

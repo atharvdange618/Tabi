@@ -1,4 +1,4 @@
-import { type Request, type Response } from "express";
+import type { Request, Response } from "express";
 import { Webhook } from "svix";
 import type { ClerkWebhookEvent } from "../../../shared/types/index.ts";
 import {

@@ -15,7 +15,7 @@ export const processUserCreated = async (
       $set: {
         email,
         name,
-        avatarUrl: data.image_url ?? "",
+        avatarUrl: data.image_url,
       },
     },
     { upsert: true, returnDocument: "after" },
@@ -34,7 +34,7 @@ export const processUserUpdated = async (
       $set: {
         email,
         name,
-        avatarUrl: data.image_url ?? "",
+        avatarUrl: data.image_url,
       },
       $setOnInsert: { clerkId: data.id },
     },

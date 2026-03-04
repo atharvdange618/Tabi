@@ -6,7 +6,7 @@ const envSchema = z.object({
     .default("development"),
   PORT: z.coerce.number().default(8000),
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
-  CLIENT_URL: z.string().url().default("http://localhost:3000"),
+  CLIENT_URL: z.url().default("http://localhost:3000"),
 
   CLERK_SECRET_KEY: z.string().min(1, "CLERK_SECRET_KEY is required"),
   CLERK_PUBLISHABLE_KEY: z.string().optional(),
@@ -35,9 +35,10 @@ if (!isTestMode) {
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
+    // eslint-disable-next-line no-console
     console.error(
       "❌ Invalid environment variables:",
-      parsed.error.flatten().fieldErrors,
+      z.treeifyError(parsed.error),
     );
     process.exit(1);
   }
@@ -45,14 +46,20 @@ if (!isTestMode) {
   _env = parsed.data;
 } else {
   _env = new Proxy({} as EnvSchema, {
-    get(_target, prop: keyof EnvSchema) {
-      if (process.env[prop as string] !== undefined) {
-        return process.env[prop as string];
+    get(_target, prop: string) {
+      if (process.env[prop] !== undefined) {
+        return process.env[prop];
       }
 
-      if (prop === "NODE_ENV") return "test";
-      if (prop === "PORT") return 8000;
-      if (prop === "CLIENT_URL") return "http://localhost:3000";
+      if (prop === "NODE_ENV") {
+        return "test";
+      }
+      if (prop === "PORT") {
+        return 8000;
+      }
+      if (prop === "CLIENT_URL") {
+        return "http://localhost:3000";
+      }
 
       return undefined;
     },

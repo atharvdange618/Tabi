@@ -15,8 +15,8 @@ export async function getActivities(
   res: Response,
 ): Promise<void> {
   const activities = await activityService.getActivitiesForDay(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
   );
   res.json({ data: activities });
 }
@@ -35,8 +35,8 @@ export async function createActivity(
   }
 
   const activity = await activityService.createActivity(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
     req.dbUserId,
     req.body as CreateActivityPayload,
   );
@@ -52,9 +52,9 @@ export async function updateActivity(
   res: Response,
 ): Promise<void> {
   const activity = await activityService.updateActivity(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
-    req.params["actId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
+    req.params.actId as string,
     req.body as UpdateActivityPayload,
   );
   res.json({ data: activity });
@@ -69,9 +69,9 @@ export async function deleteActivity(
   res: Response,
 ): Promise<void> {
   await activityService.deleteActivity(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
-    req.params["actId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
+    req.params.actId as string,
   );
   res.status(204).send();
 }
@@ -85,8 +85,8 @@ export async function reorderActivities(
   res: Response,
 ): Promise<void> {
   await activityService.reorderActivities(
-    req.params["id"] as string,
-    req.params["dayId"] as string,
+    req.params.id as string,
+    req.params.dayId as string,
     req.body as ReorderActivitiesPayload,
   );
   res.json({ message: "Activities reordered" });
