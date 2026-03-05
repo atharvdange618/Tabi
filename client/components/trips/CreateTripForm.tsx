@@ -1,0 +1,234 @@
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  createTripSchema,
+  type CreateTripPayload,
+} from "../../../shared/validations";
+import { useCreateTrip } from "../../hooks/useTrips";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+
+export default function CreateTripForm() {
+  const createTrip = useCreateTrip();
+
+  const form = useForm<CreateTripPayload>({
+    resolver: zodResolver(createTripSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      travelerCount: 1,
+    },
+  });
+
+  function onSubmit(data: CreateTripPayload) {
+    createTrip.mutate(data);
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Title */}
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-semibold font-display">
+                Trip Title
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="e.g. Tokyo Spring 2026"
+                  className="brutal-input"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Description */}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-semibold font-display">
+                Description
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  rows={3}
+                  placeholder="A brief description of the trip..."
+                  className="brutal-input resize-none"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Date Range */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="startDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-sm font-semibold font-display">
+                  Start Date
+                </FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "brutal-input w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value ? (
+                          format(new Date(field.value), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 brutal-card"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) =>
+                        field.onChange(date?.toISOString() || "")
+                      }
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="endDate"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-sm font-semibold font-display">
+                  End Date
+                </FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "brutal-input w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {field.value ? (
+                          format(new Date(field.value), "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0 brutal-card"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) =>
+                        field.onChange(date?.toISOString() || "")
+                      }
+                      disabled={(date) => {
+                        const minDate = form.getValues("startDate")
+                          ? new Date(form.getValues("startDate"))
+                          : new Date();
+                        return date < minDate;
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Traveler Count */}
+        <FormField
+          control={form.control}
+          name="travelerCount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-semibold font-display">
+                Number of Travelers
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  min="1"
+                  placeholder="e.g. 4"
+                  className="brutal-input max-w-xs"
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 1)
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Submit */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            type="submit"
+            disabled={form.formState.isSubmitting || createTrip.isPending}
+            className="brutal-button bg-brand-blue hover:bg-brand-lemon px-8"
+          >
+            {createTrip.isPending ? "Creating..." : "Create Trip"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
