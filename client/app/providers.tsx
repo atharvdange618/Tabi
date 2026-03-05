@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { useState } from "react";
+import { AuthSync } from "../lib/AuthSync";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ClerkProvider>
+      <AuthSync />
       <QueryClientProvider client={queryClient}>
         {children}
         <Toaster

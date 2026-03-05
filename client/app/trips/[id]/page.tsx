@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
-export default function TripPage({
+export default async function TripPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  return redirect(`/trips/${params}/itinerary`);
+  const { id } = await params;
+  redirect(`/trips/${id}/itinerary`);
 }
