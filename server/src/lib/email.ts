@@ -22,28 +22,60 @@ export async function sendInviteEmail(
 
   const subject = `${inviterName} invited you to join "${tripTitle}" on Tabi`;
 
-  const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px;">
-      <h2 style="margin: 0 0 16px; color: #1a1a1a;">You're invited!</h2>
-      <p style="color: #4a4a4a; line-height: 1.6; margin: 0 0 24px;">
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .wrapper   { background-color: #111118 !important; }
+      .card      { background-color: #1e1e2e !important; border-color: #2e2e42 !important; }
+      .title     { color: #f0f0f5 !important; }
+      .body-text { color: #b4b4c8 !important; }
+      .body-text strong { color: #e0e0f0 !important; }
+      .btn-decline { background-color: #2e2e42 !important; color: #d1d5db !important; }
+      .footer-text { color: #6b7280 !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f8;">
+  <div class="wrapper" style="background-color: #f4f4f8; padding: 40px 16px;">
+    <div class="card" style="
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 40px 32px;
+      background-color: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+    ">
+      <h2 class="title" style="margin: 0 0 16px; color: #1a1a1a; font-size: 22px; font-weight: 700;">
+        You're invited!
+      </h2>
+      <p class="body-text" style="color: #4a4a4a; line-height: 1.6; margin: 0 0 28px; font-size: 15px;">
         <strong>${inviterName}</strong> has invited you to collaborate on the trip
         <strong>"${tripTitle}"</strong>.
       </p>
-      <div style="margin: 24px 0;">
+      <div style="margin: 0 0 32px;">
         <a href="${acceptUrl}"
-           style="display: inline-block; padding: 12px 28px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-right: 12px;">
+           style="display: inline-block; padding: 12px 28px; background-color: #4f46e5; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; margin-right: 12px; font-size: 15px;">
           Accept Invite
         </a>
         <a href="${declineUrl}"
-           style="display: inline-block; padding: 12px 28px; background: #e5e7eb; color: #374151; text-decoration: none; border-radius: 8px; font-weight: 600;">
+           class="btn-decline"
+           style="display: inline-block; padding: 12px 28px; background-color: #e5e7eb; color: #374151; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
           Decline
         </a>
       </div>
-      <p style="color: #9ca3af; font-size: 13px; margin: 24px 0 0;">
+      <p class="footer-text" style="color: #9ca3af; font-size: 13px; margin: 0; line-height: 1.5;">
         This invite expires in 7 days. If you didn't expect this email, you can safely ignore it.
       </p>
     </div>
-  `;
+  </div>
+</body>
+</html>`;
 
   if (!resend) {
     logger.info("Invite email (no Resend key, logging only)", {
