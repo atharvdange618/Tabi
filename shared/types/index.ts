@@ -94,6 +94,21 @@ export interface TripMember {
   createdAt: string;
 }
 
+export interface PopulatedUser {
+  _id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
+export interface PopulatedTripMember extends Omit<
+  TripMember,
+  "userId" | "invitedBy"
+> {
+  userId: PopulatedUser;
+  invitedBy: PopulatedUser;
+}
+
 export interface PendingInvite {
   _id: string;
   tripId: string;
