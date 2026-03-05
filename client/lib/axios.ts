@@ -1,13 +1,10 @@
+import { toast } from "sonner";
 import axios from "axios";
 
-declare global {
-  interface Window {
-    Clerk?: {
-      session?: {
-        getToken: () => Promise<string | null>;
-      };
-    };
-  }
+let authTokenProvider: (() => Promise<string | null>) | null = null;
+
+export function setAuthTokenProvider(provider: () => Promise<string | null>) {
+  authTokenProvider = provider;
 }
 
 const api = axios.create({
@@ -15,8 +12,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  if (typeof window !== "undefined") {
-    const token = await window.Clerk?.session?.getToken();
+  if (authTokenProvider) {
+    const token = await authTokenProvider();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -27,7 +24,28 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    // TODO: Global error handling to be added here (toast, redirect, etc.)
+    if (typeof window !== "undefined") {
+      let message = "An unexpected error occurred";
+      const dataError = err.response?.data?.error;
+
+      if (typeof dataError === "string") {
+        message = dataError;
+      } else if (dataError?.formErrors?.length > 0) {
+        message = dataError.formErrors[0];
+      } else if (
+        dataError?.fieldErrors &&
+        Object.keys(dataError.fieldErrors).length > 0
+      ) {
+        const firstField = Object.keys(dataError.fieldErrors)[0];
+        message = `${firstField}: ${dataError.fieldErrors[firstField][0]}`;
+      } else if (err.message) {
+        message = err.message;
+      }
+
+      toast.error("Error", {
+        description: message,
+      });
+    }
     return Promise.reject(err);
   },
 );
