@@ -108,17 +108,27 @@ const pinoHttpOptions: PinoHttpOptions = {
         options: {
           colorize: true,
           translateTime: "HH:mm:ss",
-          ignore: "pid,hostname",
+          ignore: "pid,hostname,req,res",
         },
       }
     : undefined,
 
+  serializers: {
+    req(req: IncomingMessage) {
+      return {
+        method: req.method,
+        url: req.url,
+      };
+    },
+    res(res: ServerResponse) {
+      return {
+        statusCode: res.statusCode,
+      };
+    },
+  },
+
   redact: {
-    paths: [
-      "req.headers.authorization",
-      "req.headers.cookie",
-      'res.headers["set-cookie"]',
-    ],
+    paths: ["req.headers.authorization", "req.headers.cookie"],
     censor: "[redacted]",
   },
 
@@ -136,16 +146,20 @@ const pinoHttpOptions: PinoHttpOptions = {
     return "info";
   },
 
-  customSuccessMessage(req: IncomingMessage, res: ServerResponse): string {
-    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)}`;
+  customSuccessMessage(
+    req: IncomingMessage,
+    res: ServerResponse,
+    responseTime: number,
+  ): string {
+    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)} (${responseTime}ms)`;
   },
 
   customErrorMessage(
     req: IncomingMessage,
-    _res: ServerResponse,
+    res: ServerResponse,
     err: Error,
   ): string {
-    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} — ${err.message}`;
+    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)} — ${err.message}`;
   },
 
   autoLogging: {
