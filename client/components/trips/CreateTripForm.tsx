@@ -205,6 +205,7 @@ export default function CreateTripForm() {
                 <Input
                   {...field}
                   type="number"
+                  inputMode="numeric"
                   min="1"
                   placeholder="e.g. 4"
                   className="brutal-input max-w-xs"
