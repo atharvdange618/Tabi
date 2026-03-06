@@ -36,12 +36,22 @@ import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 
-vi.mock("@clerk/express", () => ({
-  clerkMiddleware: () => (_req: any, _res: any, next: any) => next(),
-  getAuth: (req: any) => ({
-    userId: req.headers["x-test-clerk-id"] ?? null,
-  }),
-}));
+vi.mock("@clerk/express", async () => {
+  const { AppError } = await import("../lib/errors.ts");
+  return {
+    clerkMiddleware: () => (_req: any, _res: any, next: any) => next(),
+    getAuth: (req: any) => ({
+      userId: req.headers["x-test-clerk-id"] ?? null,
+    }),
+    clerkClient: {
+      users: {
+        getUser: async (_clerkId: string) => {
+          throw new AppError("Unauthorized", 401);
+        },
+      },
+    },
+  };
+});
 
 import app from "../app.ts";
 import {

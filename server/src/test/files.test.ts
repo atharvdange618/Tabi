@@ -145,10 +145,10 @@ describe("Files API", () => {
     const res = await request(app)
       .post(`/api/v1/trips/${trip._id}/files`)
       .set("x-test-clerk-id", owner.clerkId)
-      .attach("file", Buffer.from("mock file content"), "test-upload.pdf")
+      .attach("file", Buffer.from("mock file content"), "test-upload.png")
       .expect(201);
 
-    expect(res.body.data.originalName).toBe("test-upload.pdf");
+    expect(res.body.data.originalName).toBe("test-upload.png");
     expect(res.body.data.cloudinaryId).toBe("fake_public_id");
 
     // Test URL retrieval
