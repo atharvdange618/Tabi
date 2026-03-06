@@ -186,6 +186,7 @@ function SortableActivityCard({
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-brand-blue hover:bg-brand-blue/10"
           title="Edit activity"
+          aria-label="Edit activity"
         >
           <Pencil size={14} />
         </Button>
@@ -196,6 +197,7 @@ function SortableActivityCard({
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-brand-coral hover:bg-brand-coral/10"
           title="Delete activity"
+          aria-label="Delete activity"
         >
           <Trash2 size={14} />
         </Button>
@@ -620,7 +622,9 @@ function DayCard({ day, tripId }: { day: Day; tripId: string }) {
           {dateStr}
         </Badge>
         {day.label && (
-          <h3 className="text-lg font-semibold font-display">{day.label}</h3>
+          <h3 className="font-display font-extrabold text-base uppercase tracking-tight">
+            {day.label}
+          </h3>
         )}
         <div className="flex-1" />
         <Button
@@ -675,9 +679,9 @@ function DayCard({ day, tripId }: { day: Day; tripId: string }) {
               </DragOverlay>
             </DndContext>
           ) : (
-            <div className="brutal-card rounded-lg p-8 text-center bg-white/50">
-              <p className="text-sm text-muted-foreground italic font-body">
-                No activities for this day yet.
+            <div className="border-2 border-dashed border-[#1a1a1a]/20 rounded-lg p-6 text-center bg-white/30">
+              <p className="text-sm text-muted-foreground font-body">
+                No activities yet. Add your first stop.
               </p>
             </div>
           )}
