@@ -652,7 +652,6 @@ describe("Trip Service", () => {
       await BudgetSettings.create({
         tripId: trip._id,
         totalBudget: 150000,
-        currency: "INR",
       });
 
       await tripService.deleteTripCascade(trip._id.toString());
@@ -668,7 +667,6 @@ describe("Trip Service", () => {
         tripId: trip._id,
         description: "Hotel",
         amount: 5000,
-        currency: "INR",
         category: "accommodation",
         paidBy: user._id.toString(),
         createdBy: user._id,
@@ -750,13 +748,11 @@ describe("Trip Service", () => {
       await BudgetSettings.create({
         tripId,
         totalBudget: 80000,
-        currency: "INR",
       });
       await Expense.create({
         tripId,
         description: "Dinner",
         amount: 1200,
-        currency: "INR",
         category: "food",
         paidBy: user._id.toString(),
         createdBy: user._id,
