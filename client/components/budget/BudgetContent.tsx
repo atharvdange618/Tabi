@@ -1,11 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import {
-  useBudgetSettings,
-  useUpdateBudgetSettings,
   useExpenses,
-  useBudgetSummary,
   useCreateExpense,
   useDeleteExpense,
 } from "../../hooks/useBudget";
@@ -14,12 +12,10 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createExpenseSchema,
-  updateBudgetSettingsSchema,
   type CreateExpensePayload,
-  type UpdateBudgetSettingsPayload,
   expenseCategories,
 } from "../../../shared/validations";
-import { Plus, Trash2, Wallet, TrendingUp, TrendingDown } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -30,17 +26,21 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useState } from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BudgetSettingsCard } from "./BudgetSettingsCard";
+import { SplitsSection } from "./SplitsSection";
+
+const BudgetSummaryChart = dynamic(
+  () =>
+    import("./BudgetCharts").then((m) => ({ default: m.BudgetSummaryChart })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="brutal-card rounded-lg p-6 animate-pulse">
+        <div className="h-48 bg-gray-200 rounded" />
+      </div>
+    ),
+  },
+);
 
 const CATEGORY_COLORS: Record<string, string> = {
   accommodation: "#93CDFF",
@@ -50,209 +50,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   shopping: "#FFB8B8",
   misc: "#E5E7EB",
 };
-
-function BudgetSettingsCard({ tripId }: { tripId: string }) {
-  const { data: settings } = useBudgetSettings(tripId);
-  const updateSettings = useUpdateBudgetSettings(tripId);
-  const [editing, setEditing] = useState(false);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<UpdateBudgetSettingsPayload>({
-    resolver: zodResolver(updateBudgetSettingsSchema),
-    values: { totalBudget: settings?.totalBudget ?? 0 },
-  });
-
-  function onSubmit(data: UpdateBudgetSettingsPayload) {
-    updateSettings.mutate(data, { onSuccess: () => setEditing(false) });
-  }
-
-  return (
-    <div className="brutal-card rounded-lg p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold font-display flex items-center gap-2">
-          <Wallet size={16} />
-          Budget Settings
-        </h3>
-        {!editing && (
-          <Button
-            variant="ghost"
-            onClick={() => setEditing(true)}
-            className="text-xs text-brand-blue hover:underline hover:bg-transparent h-auto p-0"
-          >
-            Edit
-          </Button>
-        )}
-      </div>
-      {editing ? (
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex items-center gap-3"
-        >
-          <Input
-            type="number"
-            {...register("totalBudget", { valueAsNumber: true })}
-            className="brutal-input px-3 py-2 rounded-md text-sm font-body w-40 focus:outline-none"
-          />
-          <span className="text-sm text-muted-foreground font-mono">INR</span>
-          <Button
-            type="submit"
-            disabled={updateSettings.isPending}
-            className="brutal-button bg-brand-mint px-3 py-1.5 rounded-md text-xs h-auto"
-          >
-            Save
-          </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            onClick={() => setEditing(false)}
-            className="text-xs text-muted-foreground hover:bg-transparent h-auto p-0"
-          >
-            Cancel
-          </Button>
-          {errors.totalBudget && (
-            <p className="text-xs text-brand-coral">
-              {errors.totalBudget.message}
-            </p>
-          )}
-        </form>
-      ) : (
-        <p className="text-2xl font-bold font-display">
-          ₹{(settings?.totalBudget ?? 0).toLocaleString("en-IN")}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function BudgetSummaryChart({ tripId }: { tripId: string }) {
-  const { data: summary, isLoading } = useBudgetSummary(tripId);
-
-  if (isLoading || !summary) {
-    return (
-      <div className="brutal-card rounded-lg p-6 animate-pulse">
-        <div className="h-48 bg-gray-200 rounded" />
-      </div>
-    );
-  }
-
-  const pieData = Object.entries(summary.byCategory)
-    .filter(([, val]) => val > 0)
-    .map(([key, val]) => ({ name: key, value: val }));
-
-  const barData = [
-    { name: "Spent", value: summary.totalSpent, fill: "#FFB8B8" },
-    {
-      name: "Remaining",
-      value: Math.max(0, summary.remaining),
-      fill: "#B8F0D4",
-    },
-  ];
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Overview */}
-      <div className="brutal-card rounded-lg p-5">
-        <h3 className="text-sm font-semibold font-display mb-4">Overview</h3>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Total Spent</p>
-            <p className="text-lg font-bold font-display flex items-center gap-1">
-              <TrendingDown size={14} className="text-brand-coral" />₹
-              {summary.totalSpent.toLocaleString("en-IN")}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Remaining</p>
-            <p className="text-lg font-bold font-display flex items-center gap-1">
-              <TrendingUp size={14} className="text-brand-mint" />₹
-              {Math.max(0, summary.remaining).toLocaleString("en-IN")}
-            </p>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={barData} layout="vertical">
-            <XAxis type="number" hide />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={80}
-              tick={{ fontSize: 12 }}
-            />
-            <Bar dataKey="value" radius={[0, 6, 6, 0]}>
-              {barData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.fill}
-                  stroke="#1A1A1A"
-                  strokeWidth={1.5}
-                />
-              ))}
-            </Bar>
-            <Tooltip
-              formatter={(val) => `₹${(val ?? 0).toLocaleString("en-IN")}`}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Category Breakdown */}
-      <div className="brutal-card rounded-lg p-5">
-        <h3 className="text-sm font-semibold font-display mb-4">By Category</h3>
-        {pieData.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No expenses recorded yet.
-          </p>
-        ) : (
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={70}
-                strokeWidth={2}
-                stroke="#1A1A1A"
-                label={({
-                  name,
-                  percent,
-                  x,
-                  y,
-                  textAnchor,
-                  dominantBaseline,
-                }) => (
-                  <text
-                    x={x}
-                    y={y}
-                    fill="black"
-                    textAnchor={textAnchor}
-                    dominantBaseline={dominantBaseline}
-                  >
-                    {`${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  </text>
-                )}
-              >
-                {pieData.map((entry) => (
-                  <Cell
-                    key={entry.name}
-                    fill={CATEGORY_COLORS[entry.name] || "#E5E7EB"}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                formatter={(val) => `₹${(val ?? 0).toLocaleString("en-IN")}`}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function BudgetContent() {
   const params = useParams<{ id: string }>();
@@ -290,7 +87,9 @@ export default function BudgetContent() {
       {/* Expenses */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold font-display">Expenses</h3>
+          <h3 className="font-display font-extrabold text-lg uppercase tracking-tight">
+            Expenses
+          </h3>
           <Button
             onClick={() => setShowForm(!showForm)}
             className="brutal-button bg-brand-blue px-4 py-2 rounded-md text-sm inline-flex items-center gap-2 h-auto"
@@ -321,6 +120,7 @@ export default function BudgetContent() {
               <div>
                 <Input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   {...register("amount", { valueAsNumber: true })}
                   placeholder="Amount (₹)"
@@ -403,47 +203,57 @@ export default function BudgetContent() {
             ))}
           </div>
         ) : !expenses || expenses.length === 0 ? (
-          <div className="brutal-card rounded-lg p-8 text-center">
-            <p className="text-muted-foreground font-body">
-              No expenses recorded yet.
+          <div className="border-2 border-dashed border-[#1a1a1a]/20 rounded-xl p-8 text-center">
+            <p className="text-sm font-body text-muted-foreground">
+              No expenses recorded yet. Add your first expense.
             </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {expenses.map((exp) => (
-              <div
-                key={exp._id}
-                className="brutal-card rounded-lg p-4 flex items-center gap-4"
-              >
+            {expenses.map((exp) => {
+              const payer = members?.active?.find(
+                (m) => m.userId._id === exp.paidBy,
+              );
+              const payerName =
+                payer?.userId.name || payer?.userId.email || "Unknown";
+              return (
                 <div
-                  className="w-3 h-3 rounded-full border border-brutal-border shrink-0"
-                  style={{
-                    backgroundColor: CATEGORY_COLORS[exp.category] || "#E5E7EB",
-                  }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium font-body truncate">
-                    {exp.description}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {exp.category}
-                  </p>
-                </div>
-                <span className="text-sm font-bold font-mono">
-                  ₹{exp.amount.toLocaleString("en-IN")}
-                </span>
-                <Button
-                  variant="ghost"
-                  onClick={() => deleteExpense.mutate(exp._id)}
-                  className="p-1.5 text-muted-foreground hover:text-brand-coral hover:bg-transparent transition-colors size-auto"
+                  key={exp._id}
+                  className="brutal-card rounded-lg p-4 flex items-center gap-4"
                 >
-                  <Trash2 size={14} />
-                </Button>
-              </div>
-            ))}
+                  <div
+                    className="w-3 h-3 rounded-sm border-2 border-brutal-border shrink-0"
+                    style={{
+                      backgroundColor:
+                        CATEGORY_COLORS[exp.category] || "#E5E7EB",
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium font-body truncate">
+                      {exp.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {exp.category} &middot; paid by {payerName}
+                    </p>
+                  </div>
+                  <span className="text-sm font-bold font-mono">
+                    ₹{exp.amount.toLocaleString("en-IN")}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    onClick={() => deleteExpense.mutate(exp._id)}
+                    className="p-1.5 text-muted-foreground hover:text-brand-coral hover:bg-transparent transition-colors size-auto"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      <SplitsSection tripId={params.id} />
     </div>
   );
 }
