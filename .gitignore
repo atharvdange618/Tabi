@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # context docs for me
 context/
+
+*.zip
+
+ecosystem.config.js

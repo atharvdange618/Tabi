@@ -9,13 +9,13 @@ const steps = [
     num: "02",
     bg: "bg-[#B8F0D4]",
     title: "Invite your crew",
-    desc: "Share an invite link or add by email. Assign roles\u2014admins edit everything, editors contribute, viewers just follow along.",
+    desc: "Share an invite link or add by email. Assign roles admins edit everything, editors contribute, viewers just follow along.",
   },
   {
     num: "03",
     bg: "bg-[#FFD6C0]",
     title: "Build together",
-    desc: "Add activities day by day, log expenses as they happen, upload docs, comment, and check off tasks\u2014everything lives in one shared space your whole group can access.",
+    desc: "Add activities day by day, log expenses as they happen, upload docs, comment, and check off tasks everything lives in one shared space your whole group can access.",
   },
 ];
 
