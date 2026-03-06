@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
-import type { Trip, ApiResponse } from "../../shared/types";
+import type { Trip, ApiResponse } from "shared/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 

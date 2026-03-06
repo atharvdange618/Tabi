@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { Download, File as FileIcon, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import type { FileDoc } from "../../../shared/types";
+import type { FileDoc } from "shared/types";
 
 interface FileViewerModalProps {
   file: FileDoc | null;

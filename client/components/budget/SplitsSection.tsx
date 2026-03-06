@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 import { useSplits, useCreateSettlement } from "../../hooks/useBudget";
-import type { SplitBalance } from "../../../shared/types";
+import type { SplitBalance } from "shared/types";
 
 export function SplitsSection({ tripId }: { tripId: string }) {
   const { data: splits, isLoading } = useSplits(tripId);

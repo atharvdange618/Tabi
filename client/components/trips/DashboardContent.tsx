@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import type { Trip } from "../../../shared/types";
+import type { Trip } from "shared/types";
 
 const ACCENT_COLORS = [
   "bg-brand-blue",

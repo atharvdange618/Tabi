@@ -1,8 +1,14 @@
 {
   "name": "shared",
+  "main": "index.ts",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": "./index.ts",
+    "./types": "./types/index.ts",
+    "./validations": "./validations/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },

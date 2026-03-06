@@ -14,7 +14,7 @@ import {
   createExpenseSchema,
   type CreateExpensePayload,
   expenseCategories,
-} from "../../../shared/validations";
+} from "shared/validations";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";

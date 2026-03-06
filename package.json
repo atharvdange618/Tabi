@@ -1,0 +1,9 @@
+{
+  "name": "tabi",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "client",
+    "server"
+  ]
+}

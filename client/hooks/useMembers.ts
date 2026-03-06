@@ -6,7 +6,7 @@ import type {
   PopulatedTripMember,
   PendingInvite,
   ApiResponse,
-} from "../../shared/types";
+} from "shared/types";
 import { toast } from "sonner";
 
 export function useMembers(tripId: string) {

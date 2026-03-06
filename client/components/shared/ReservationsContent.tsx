@@ -12,7 +12,7 @@ import {
   createReservationSchema,
   type CreateReservationPayload,
   reservationTypes,
-} from "../../../shared/validations";
+} from "shared/validations";
 import {
   Plus,
   Trash2,

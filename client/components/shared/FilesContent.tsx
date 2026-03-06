@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
-import type { FileDoc } from "../../../shared/types";
+import type { FileDoc } from "shared/types";
 import { FileViewerModal } from "./FileViewerModal";
 
 function getFileIcon(mimeType: string) {

@@ -12,8 +12,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   inviteMemberSchema,
   type InviteMemberPayload,
-} from "../../../shared/validations";
-import type { PopulatedTripMember } from "../../../shared/types";
+} from "shared/validations";
+import type { PopulatedTripMember } from "shared/types";
 import {
   UserPlus,
   Trash2,

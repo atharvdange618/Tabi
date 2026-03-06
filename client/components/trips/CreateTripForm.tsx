@@ -2,10 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  createTripSchema,
-  type CreateTripPayload,
-} from "../../../shared/validations";
+import { createTripSchema, type CreateTripPayload } from "shared/validations";
 import { useCreateTrip } from "../../hooks/useTrips";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";

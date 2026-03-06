@@ -15,7 +15,7 @@ import {
   createActivitySchema,
   type CreateActivityPayload,
   activityTypes,
-} from "../../../shared/validations";
+} from "shared/validations";
 import CommentsSection from "./CommentsSection";
 import {
   Plus,
@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { TimePicker } from "@/components/ui/time-picker";
-import type { Day, Activity } from "../../../shared/types";
+import type { Day, Activity } from "shared/types";
 import {
   DndContext,
   closestCenter,

@@ -16,7 +16,7 @@ import {
   createChecklistItemSchema,
   type CreateChecklistPayload,
   type CreateChecklistItemPayload,
-} from "../../../shared/validations";
+} from "shared/validations";
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -24,7 +24,7 @@ import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
-import type { ChecklistItem } from "../../../shared/types";
+import type { ChecklistItem } from "shared/types";
 
 function ChecklistItemRow({
   item,

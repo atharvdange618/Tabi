@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
-import type { Comment, ApiResponse } from "../../shared/types";
+import type { Comment, ApiResponse } from "shared/types";
 import { toast } from "sonner";
 
 export function useComments(

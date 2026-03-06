@@ -17,7 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import type { Comment } from "../../../shared/types";
+import type { Comment } from "shared/types";
 import { useUser } from "@clerk/nextjs";
 
 interface CommentsSectionProps {

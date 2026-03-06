@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
-import type { Checklist, ChecklistItem, ApiResponse } from "../../shared/types";
+import type { Checklist, ChecklistItem, ApiResponse } from "shared/types";
 import { toast } from "sonner";
 
 export function useChecklists(tripId: string) {

@@ -8,8 +8,8 @@ import type {
   SplitBalance,
   Settlement,
   ApiResponse,
-} from "../../shared/types";
-import type { CreateSettlementPayload } from "../../shared/validations";
+} from "shared/types";
+import type { CreateSettlementPayload } from "shared/validations";
 import { toast } from "sonner";
 
 export function useBudgetSettings(tripId: string) {

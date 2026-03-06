@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   updateBudgetSettingsSchema,
   type UpdateBudgetSettingsPayload,
-} from "../../../shared/validations";
+} from "shared/validations";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
