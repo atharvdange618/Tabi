@@ -174,13 +174,24 @@ export default function ReservationsContent() {
       )}
 
       {!reservations || reservations.length === 0 ? (
-        <div className="brutal-card rounded-lg p-12 text-center">
-          <h2 className="text-xl font-bold font-display mb-2">
-            No reservations
-          </h2>
-          <p className="text-muted-foreground font-body">
-            Track your flights, hotels, and bookings here.
-          </p>
+        <div className="brutal-card rounded-xl p-10 text-center hero-grid relative overflow-hidden">
+          <div className="absolute top-0 right-4 text-[120px] leading-none opacity-[0.04] font-kanji select-none pointer-events-none">
+            旅
+          </div>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-16 h-16 bg-brand-blue border-2 border-brutal-border shadow-[4px_4px_0px_#1a1a1a] rounded-2xl flex items-center justify-center mb-5 -rotate-3">
+              <Plane size={30} strokeWidth={1.5} />
+            </div>
+            <span className="badge bg-brand-mint mb-4 inline-flex">
+              No bookings yet
+            </span>
+            <h2 className="font-display font-extrabold text-xl uppercase tracking-tight text-[#111] mb-2">
+              No reservations
+            </h2>
+            <p className="text-muted-foreground font-body text-sm max-w-xs mx-auto">
+              Track your flights, hotels, and bookings here.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -194,7 +205,7 @@ export default function ReservationsContent() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-sm font-semibold font-display">
+                  <h3 className="text-sm font-extrabold font-display uppercase tracking-tight">
                     {res.title}
                   </h3>
                   <span className="brutal-badge bg-brand-lemon rounded-md text-[10px]">
@@ -226,6 +237,8 @@ export default function ReservationsContent() {
                 variant="ghost"
                 onClick={() => deleteReservation.mutate(res._id)}
                 className="p-1.5 text-muted-foreground hover:text-brand-coral hover:bg-transparent transition-colors shrink-0 size-auto"
+                aria-label="Delete reservation"
+                title="Delete reservation"
               >
                 <Trash2 size={14} />
               </Button>
