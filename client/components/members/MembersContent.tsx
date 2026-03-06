@@ -23,6 +23,7 @@ import {
   Eye,
   Users,
   Clock,
+  MoreHorizontal,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 function RoleBadge({ role }: { role: string }) {
   const configs: Record<
@@ -146,6 +155,8 @@ function InviteMemberDialog({ tripId }: { tripId: string }) {
                     <Input
                       {...field}
                       type="email"
+                      autoComplete="email"
+                      spellCheck={false}
                       placeholder="friend@example.com"
                       className="brutal-input"
                     />
@@ -275,35 +286,54 @@ function MemberCard({
       </div>
 
       {member.role !== "owner" && (
-        <div className="flex items-center gap-2 ml-4">
-          <Select
-            defaultValue={member.role}
-            onValueChange={(value) =>
-              updateRole.mutate({
-                userId: member.userId._id,
-                role: value as "editor" | "viewer",
-              })
-            }
-          >
-            <SelectTrigger className="brutal-input w-32 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="brutal-card">
-              <SelectItem value="editor">Editor</SelectItem>
-              <SelectItem value="viewer">Viewer</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            onClick={() => removeMember.mutate(member.userId._id)}
-            disabled={removeMember.isPending}
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-brand-coral hover:bg-brand-coral/10"
-            title="Remove member"
-          >
-            <Trash2 size={16} />
-          </Button>
+        <div className="ml-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:bg-brand-blue/10"
+                aria-label="Member actions"
+              >
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="brutal-card w-44">
+              <DropdownMenuItem
+                disabled={member.role === "editor" || updateRole.isPending}
+                onClick={() =>
+                  updateRole.mutate({
+                    userId: member.userId._id,
+                    role: "editor",
+                  })
+                }
+              >
+                <Shield size={14} className="mr-2" />
+                Make Editor
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={member.role === "viewer" || updateRole.isPending}
+                onClick={() =>
+                  updateRole.mutate({
+                    userId: member.userId._id,
+                    role: "viewer",
+                  })
+                }
+              >
+                <Eye size={14} className="mr-2" />
+                Make Viewer
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={removeMember.isPending}
+                onClick={() => removeMember.mutate(member.userId._id)}
+                className="text-brand-coral focus:text-brand-coral"
+              >
+                <Trash2 size={14} className="mr-2" />
+                Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
     </div>
@@ -394,7 +424,9 @@ export default function MembersContent() {
       {/* Header with Invite Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold font-display">Trip Members</h2>
+          <h2 className="font-display font-extrabold text-2xl uppercase tracking-tight">
+            Trip Members
+          </h2>
           <p className="text-sm text-muted-foreground font-body mt-1">
             Manage who can access and edit this trip
           </p>
@@ -454,6 +486,12 @@ export default function MembersContent() {
           </div>
         </div>
       )}
+
+      {/* Separator between active and pending sections */}
+      {data?.active &&
+        data.active.length > 0 &&
+        data?.pending &&
+        data.pending.length > 0 && <Separator />}
 
       {/* Pending Invites */}
       {data?.pending && data.pending.length > 0 && (
