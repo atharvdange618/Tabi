@@ -5,7 +5,6 @@ import { useFiles, useUploadFile, useDeleteFile } from "../../hooks/useFiles";
 import {
   Upload,
   Trash2,
-  FileText,
   Image as ImageIcon,
   File as FileIcon,
   Download,
@@ -13,15 +12,12 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import type { FileDoc } from "../../../shared/types";
-import Image from "next/image";
+import { FileViewerModal } from "./FileViewerModal";
 
 function getFileIcon(mimeType: string) {
   if (mimeType.startsWith("image/"))
     return <ImageIcon size={20} className="text-brand-blue" />;
-  if (mimeType.includes("pdf"))
-    return <FileText size={20} className="text-brand-coral" />;
   return <FileIcon size={20} className="text-muted-foreground" />;
 }
 
@@ -86,11 +82,24 @@ export default function FilesContent() {
       </div>
 
       {!files || files.length === 0 ? (
-        <div className="brutal-card rounded-lg p-12 text-center">
-          <h2 className="text-xl font-bold font-display mb-2">No files</h2>
-          <p className="text-muted-foreground font-body">
-            Upload documents, images, or receipts for your trip.
-          </p>
+        <div className="brutal-card rounded-xl p-10 text-center hero-grid relative overflow-hidden">
+          <div className="absolute top-0 right-4 text-[120px] leading-none opacity-[0.04] font-kanji select-none pointer-events-none">
+            旅
+          </div>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-16 h-16 bg-brand-peach border-2 border-brutal-border shadow-[4px_4px_0px_#1a1a1a] rounded-2xl flex items-center justify-center mb-5 rotate-3">
+              <FileIcon size={30} strokeWidth={1.5} />
+            </div>
+            <span className="badge bg-brand-lemon mb-4 inline-flex">
+              No files yet
+            </span>
+            <h2 className="font-display font-extrabold text-xl uppercase tracking-tight text-[#111] mb-2">
+              Nothing uploaded
+            </h2>
+            <p className="text-muted-foreground font-body text-sm max-w-xs mx-auto">
+              Upload documents, images, or receipts for your trip.
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -113,6 +122,7 @@ export default function FilesContent() {
                 onClick={() => setViewingFile(file)}
                 className="p-1.5 text-muted-foreground hover:text-brand-blue hover:bg-transparent transition-colors size-auto h-auto"
                 title="View"
+                aria-label="View file"
               >
                 <Eye size={14} />
               </Button>
@@ -131,6 +141,7 @@ export default function FilesContent() {
                 disabled={deleteFile.isPending}
                 className="p-1.5 text-muted-foreground hover:text-brand-coral hover:bg-transparent transition-colors size-auto h-auto"
                 title="Delete"
+                aria-label="Delete file"
               >
                 <Trash2 size={14} />
               </Button>
@@ -139,55 +150,10 @@ export default function FilesContent() {
         </div>
       )}
 
-      {/* File Viewer Dialog */}
-      <Dialog
-        open={!!viewingFile}
-        onOpenChange={(open) => !open && setViewingFile(null)}
-      >
-        <DialogContent className="sm:max-w-4xl brutal-card w-[90vw] h-[80vh] flex flex-col p-6 overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="font-display truncate pr-8">
-              {viewingFile?.originalName}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 w-full mt-4 overflow-hidden rounded-md border-2 border-brutal-border relative bg-gray-50 flex items-center justify-center">
-            {viewingFile?.mimeType?.startsWith("image/") ? (
-              <Image
-                src={viewingFile.cloudinaryUrl}
-                alt={viewingFile.originalName}
-                width={500}
-                height={500}
-                className="max-w-full max-h-full object-contain"
-              />
-            ) : viewingFile?.mimeType?.includes("pdf") ? (
-              <iframe
-                src={viewingFile.cloudinaryUrl}
-                className="w-full h-full"
-                title={viewingFile.originalName}
-              />
-            ) : (
-              <div className="text-center p-8">
-                <FileIcon
-                  size={48}
-                  className="mx-auto text-muted-foreground mb-4"
-                />
-                <p className="font-body text-muted-foreground">
-                  No preview available for this file type.
-                </p>
-                <a
-                  href={viewingFile?.cloudinaryUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 inline-flex items-center gap-2 text-brand-blue hover:underline font-medium"
-                >
-                  <Download size={16} />
-                  Download File
-                </a>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FileViewerModal
+        file={viewingFile}
+        onClose={() => setViewingFile(null)}
+      />
     </div>
   );
 }

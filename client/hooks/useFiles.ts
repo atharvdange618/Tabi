@@ -28,9 +28,6 @@ export function useUploadFile(tripId: string) {
       const { data } = await api.post<ApiResponse<FileDoc>>(
         `/api/v1/trips/${tripId}/files`,
         formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
       );
       return data.data;
     },

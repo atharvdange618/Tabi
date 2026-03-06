@@ -1,7 +1,29 @@
 import mongoose from "mongoose";
+import streamifier from "streamifier";
 import { File } from "../models/index.ts";
 import { NotFoundError, ValidationError } from "../lib/errors.ts";
 import cloudinary from "../lib/cloudinary.ts";
+import type { CloudinaryResourceType } from "../models/File.ts";
+
+function getResourceType(mimetype: string): CloudinaryResourceType {
+  if (mimetype.startsWith("image/")) {
+    return "image";
+  }
+  if (mimetype.startsWith("video/")) {
+    return "video";
+  }
+  return "raw";
+}
+
+/**
+ * Sanitize a filename for use as a Cloudinary public_id.
+ */
+function sanitizePublicId(originalName: string): string {
+  return originalName
+    .replace(/\.[^/.]+$/, "")
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .substring(0, 100);
+}
 
 /**
  * Get all files for a trip.
@@ -15,6 +37,7 @@ export async function getFiles(tripId: string) {
 
 /**
  * Upload a file to Cloudinary and save metadata to MongoDB.
+ * Handles images, and raw files (text, csv, etc.)
  */
 export async function uploadFile(
   tripId: string,
@@ -25,6 +48,11 @@ export async function uploadFile(
     throw new ValidationError("Empty file");
   }
 
+  const resourceType = getResourceType(file.mimetype);
+
+  const publicId =
+    resourceType === "raw" ? sanitizePublicId(file.originalname) : undefined;
+
   const uploadResult = await new Promise<{
     public_id: string;
     secure_url: string;
@@ -33,12 +61,16 @@ export async function uploadFile(
     const stream = cloudinary.uploader.upload_stream(
       {
         folder: `tabi/${tripId}`,
-        resource_type: "auto",
+        resource_type: resourceType,
+        ...(publicId && { public_id: publicId }),
       },
       (error: unknown, result) => {
         if (error) {
-          const errMsg = typeof error === "string" ? error : "Upload failed";
-          reject(error instanceof Error ? error : new Error(errMsg));
+          // eslint-disable-next-line no-console
+          console.error("Cloudinary upload error:", error);
+          const errMsg =
+            error instanceof Error ? error.message : "Upload failed";
+          reject(new Error(errMsg));
           return;
         }
         if (!result) {
@@ -52,7 +84,7 @@ export async function uploadFile(
         });
       },
     );
-    stream.end(file.buffer);
+    streamifier.createReadStream(file.buffer).pipe(stream);
   });
 
   return File.create({
@@ -63,6 +95,7 @@ export async function uploadFile(
     sizeBytes: uploadResult.bytes,
     cloudinaryId: uploadResult.public_id,
     cloudinaryUrl: uploadResult.secure_url,
+    resourceType,
     uploadedBy: new mongoose.Types.ObjectId(userId),
   });
 }
@@ -76,7 +109,18 @@ export async function deleteFile(tripId: string, fileId: string) {
     throw new NotFoundError("File not found");
   }
 
-  await cloudinary.uploader.destroy(file.cloudinaryId);
+  const resourceType = file.resourceType;
+
+  const destroyResult = (await cloudinary.uploader.destroy(file.cloudinaryId, {
+    resource_type: resourceType,
+  })) as { result: string };
+
+  if (destroyResult.result !== "ok" && destroyResult.result !== "not found") {
+    // eslint-disable-next-line no-console
+    console.error("Cloudinary destroy failed:", destroyResult);
+    throw new Error(`Cloudinary deletion failed: ${destroyResult.result}`);
+  }
+
   await File.deleteOne({ _id: fileId });
 }
 

@@ -1,5 +1,7 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 
+const CLOUDINARY_RESOURCE_TYPES = ["image", "video", "raw"] as const;
+
 const fileSchema = new Schema(
   {
     tripId: {
@@ -31,6 +33,12 @@ const fileSchema = new Schema(
       type: String,
       required: true,
     },
+    resourceType: {
+      type: String,
+      enum: CLOUDINARY_RESOURCE_TYPES,
+      required: true,
+      default: "image",
+    },
     uploadedBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -41,6 +49,8 @@ const fileSchema = new Schema(
 );
 
 fileSchema.index({ tripId: 1 });
+
+export type CloudinaryResourceType = (typeof CLOUDINARY_RESOURCE_TYPES)[number];
 
 export type FileDocument = InferSchemaType<typeof fileSchema> & {
   _id: mongoose.Types.ObjectId;
