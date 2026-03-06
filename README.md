@@ -14,6 +14,7 @@ Built for ChaiCode Buildathon. MERN stack. In active development.
 ![Clerk](https://img.shields.io/badge/Auth-Clerk-6C47FF?style=flat-square)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)
+[![React Doctor](https://www.react.doctor/share/badge?p=client&s=96&w=64&f=30)](https://www.react.doctor/share?p=client&s=96&w=64&f=30)
 
 ---
 
