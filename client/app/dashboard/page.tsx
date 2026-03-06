@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import DashboardContent from "../../components/trips/DashboardContent";
 import CreateTripDialog from "../../components/trips/CreateTripDialog";
-import { Compass, Map } from "lucide-react";
 import { currentUser } from "@clerk/nextjs/server";
 
 export const metadata: Metadata = {
@@ -14,57 +13,43 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-brand-cream p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-        {/* Hero Section - Redesigned */}
-        <div className="relative">
-          <div className="brutal-card bg-white rounded-2xl p-8 md:p-10 relative overflow-hidden">
-            {/* Decorative Elements */}
-            <div className="absolute top-4 right-4 text-6xl md:text-8xl opacity-5 font-kanji select-none pointer-events-none">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Hero Section */}
+        <div className="brutal-card rounded-2xl bg-white overflow-hidden anim-1">
+          {/* top accent strip */}
+          <div className="h-2.5 bg-brand-blue w-full" />
+
+          {/* grid-dotted background area */}
+          <div className="hero-grid px-8 py-10 md:px-12 md:py-12 relative">
+            {/* kanji watermark */}
+            <div className="absolute top-0 right-6 text-[200px] leading-none opacity-[0.035] font-kanji select-none pointer-events-none">
               旅
             </div>
-            <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-brand-mint rounded-full opacity-10 blur-2xl" />
-            <div className="absolute -top-8 -right-8 w-32 h-32 bg-brand-blue rounded-full opacity-10 blur-2xl" />
 
-            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="flex-1">
-                <div className="inline-flex items-center gap-2 mb-3">
-                  <div className="w-10 h-10 bg-brand-blue rounded-lg border-2 border-brutal-border shadow-[2px_2px_0px_theme(--color-brutal-shadow)] flex items-center justify-center">
-                    <Map size={20} />
-                  </div>
-                  <span className="text-sm font-bold text-muted-foreground uppercase tracking-wider">
-                    Dashboard
-                  </span>
-                </div>
-                <h1 className="text-4xl md:text-5xl font-bold font-display mb-3 text-foreground">
-                  Welcome back, {firstName}
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+              <div>
+                <span className="badge bg-brand-lemon tag-rotate-1 inline-flex mb-5">
+                  ✦ Your Dashboard
+                </span>
+                <h1 className="font-display font-extrabold text-[clamp(36px,5vw,60px)] leading-[1.05] tracking-tight text-[#111] uppercase mb-4">
+                  Welcome back,{" "}
+                  <span className="text-brand-blue">{firstName}</span>
                 </h1>
-                <p className="text-muted-foreground font-body text-lg max-w-xl">
-                  Your journey continues. Plan your next adventure, track your
-                  itineraries, or pick up where you left off.
+                <p className="text-muted-foreground font-body text-base max-w-md leading-relaxed">
+                  Plan your next adventure, track itineraries, or pick up where
+                  you left off.
                 </p>
               </div>
 
-              <CreateTripDialog />
+              <div className="shrink-0">
+                <CreateTripDialog />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Trips Section */}
-        <div className="pt-4">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-brand-blue rounded-xl border-2 border-brutal-border shadow-[3px_3px_0px_theme(--color-brutal-shadow)] flex items-center justify-center rotate-3">
-              <Compass size={24} strokeWidth={2} />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold font-display">Your Trips</h2>
-              <p className="text-sm text-muted-foreground font-body">
-                All your adventures in one place
-              </p>
-            </div>
-          </div>
-
-          <DashboardContent />
-        </div>
+        {/* Trips Content */}
+        <DashboardContent />
       </div>
     </main>
   );
