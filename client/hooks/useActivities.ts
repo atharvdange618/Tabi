@@ -14,6 +14,7 @@ export function useActivities(tripId: string, dayId: string) {
       return data.data;
     },
     enabled: !!tripId && !!dayId,
+    refetchInterval: 30_000,
   });
 }
 

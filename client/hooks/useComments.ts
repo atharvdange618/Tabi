@@ -18,6 +18,7 @@ export function useComments(
       return data.data;
     },
     enabled: !!tripId && !!targetId,
+    refetchInterval: 30_000,
   });
 }
 
