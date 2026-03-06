@@ -7,6 +7,7 @@ import {
   updateBudgetSettingsSchema,
   createExpenseSchema,
   updateExpenseSchema,
+  createSettlementSchema,
 } from "../../../shared/validations/index.ts";
 
 const router = Router({ mergeParams: true });
@@ -70,6 +71,26 @@ router.get(
   ...auth,
   requireMembership(),
   budgetController.getBudgetSummary,
+);
+
+// GET /api/v1/trips/:id/budget/splits
+router.get("/splits", ...auth, requireMembership(), budgetController.getSplits);
+
+// GET /api/v1/trips/:id/budget/settlements
+router.get(
+  "/settlements",
+  ...auth,
+  requireMembership(),
+  budgetController.getSettlements,
+);
+
+// POST /api/v1/trips/:id/budget/settlements
+router.post(
+  "/settlements",
+  ...auth,
+  requireRole(["owner", "editor"]),
+  validate(createSettlementSchema),
+  budgetController.createSettlement,
 );
 
 export default router;

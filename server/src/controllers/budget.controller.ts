@@ -4,6 +4,7 @@ import type {
   UpdateBudgetSettingsPayload,
   CreateExpensePayload,
   UpdateExpensePayload,
+  CreateSettlementPayload,
 } from "../../../shared/validations/index.ts";
 
 /**
@@ -106,4 +107,46 @@ export async function getBudgetSummary(
 ): Promise<void> {
   const summary = await budgetService.getBudgetSummary(req.params.id as string);
   res.json({ data: summary });
+}
+
+/**
+ * GET /api/v1/trips/:id/budget/splits
+ * Compute pairwise split balances for all trip expenses.
+ */
+export async function getSplits(req: Request, res: Response): Promise<void> {
+  const splits = await budgetService.computeSplits(req.params.id as string);
+  res.json({ data: splits });
+}
+
+/**
+ * GET /api/v1/trips/:id/budget/settlements
+ * Get all settlements recorded for a trip.
+ */
+export async function getSettlements(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const settlements = await budgetService.getSettlements(
+    req.params.id as string,
+  );
+  res.json({ data: settlements });
+}
+
+/**
+ * POST /api/v1/trips/:id/budget/settlements
+ * Record a new settlement between two members.
+ */
+export async function createSettlement(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  if (!req.dbUserId) {
+    res.status(401).json({ error: "Unauthorized: Missing user ID" });
+    return;
+  }
+  const settlement = await budgetService.createSettlement(
+    req.params.id as string,
+    req.body as CreateSettlementPayload,
+  );
+  res.status(201).json({ data: settlement });
 }

@@ -1,14 +1,21 @@
 import mongoose from "mongoose";
-import { BudgetSettings, Expense } from "../models/index.ts";
+import {
+  BudgetSettings,
+  Expense,
+  Settlement,
+  TripMember,
+} from "../models/index.ts";
 import { NotFoundError } from "../lib/errors.ts";
 import type {
   UpdateBudgetSettingsPayload,
   CreateExpensePayload,
   UpdateExpensePayload,
+  CreateSettlementPayload,
 } from "../../../shared/validations/index.ts";
 import type {
   BudgetSummary,
   ExpenseCategory,
+  SplitBalance,
 } from "../../../shared/types/index.ts";
 
 /**
@@ -96,6 +103,140 @@ export async function deleteExpense(tripId: string, expId: string) {
   if (result.deletedCount === 0) {
     throw new NotFoundError("Expense not found");
   }
+}
+
+/**
+ * Compute pairwise split balances for a trip.
+ * Each expense is split equally among all active members.
+ * Pairwise balances are netted out and existing settlements are subtracted.
+ */
+export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
+  const [expenses, activeMembers, settlements] = await Promise.all([
+    Expense.find({ tripId }).lean(),
+    TripMember.find({ tripId, status: "active" })
+      .populate<{
+        userId: { _id: mongoose.Types.ObjectId; name: string; email: string };
+      }>("userId", "name email")
+      .lean(),
+    Settlement.find({ tripId }).lean<
+      {
+        fromUserId: mongoose.Types.ObjectId;
+        toUserId: mongoose.Types.ObjectId;
+        amount: number;
+      }[]
+    >(),
+  ]);
+
+  const memberCount = activeMembers.length;
+  if (memberCount <= 1) {
+    return [];
+  }
+
+  const memberMap = new Map<string, string>();
+  for (const m of activeMembers) {
+    const uid = m.userId as {
+      _id: mongoose.Types.ObjectId;
+      name: string;
+      email: string;
+    };
+    memberMap.set(uid._id.toString(), uid.name || uid.email);
+  }
+
+  const memberIds = [...memberMap.keys()];
+
+  // balance[debtor][creditor] = total amount debtor owes creditor
+  const balance: Record<string, Record<string, number>> = {};
+
+  for (const expense of expenses) {
+    const paidById = expense.paidBy.toString();
+    // Only split among members who are still active; skip if payer not in members
+    if (!memberMap.has(paidById)) {
+      continue;
+    }
+    const share = expense.amount / memberCount;
+
+    for (const memberId of memberIds) {
+      if (memberId === paidById) {
+        continue;
+      }
+      balance[memberId] ??= {};
+      balance[memberId][paidById] ??= 0;
+      balance[memberId][paidById] += share;
+    }
+  }
+
+  const splits: SplitBalance[] = [];
+
+  for (let i = 0; i < memberIds.length; i++) {
+    for (let j = i + 1; j < memberIds.length; j++) {
+      const a = memberIds[i] as string;
+      const b = memberIds[j] as string;
+
+      const aOwesB = balance[a]?.[b] ?? 0;
+      const bOwesA = balance[b]?.[a] ?? 0;
+      const net = aOwesB - bOwesA;
+
+      if (net > 0.005) {
+        const alreadySettled = settlements
+          .filter(
+            (s) => s.fromUserId.toString() === a && s.toUserId.toString() === b,
+          )
+          .reduce((sum, s) => sum + s.amount, 0);
+        const remaining = Math.round((net - alreadySettled) * 100) / 100;
+        if (remaining > 0.005) {
+          splits.push({
+            fromUserId: a,
+            fromUserName: memberMap.get(a) as string,
+            toUserId: b,
+            toUserName: memberMap.get(b) as string,
+            amount: remaining,
+          });
+        }
+      } else if (net < -0.005) {
+        const absNet = -net;
+        const alreadySettled = settlements
+          .filter(
+            (s) => s.fromUserId.toString() === b && s.toUserId.toString() === a,
+          )
+          .reduce((sum, s) => sum + s.amount, 0);
+        const remaining = Math.round((absNet - alreadySettled) * 100) / 100;
+        if (remaining > 0.005) {
+          splits.push({
+            fromUserId: b,
+            fromUserName: memberMap.get(b) as string,
+            toUserId: a,
+            toUserName: memberMap.get(a) as string,
+            amount: remaining,
+          });
+        }
+      }
+    }
+  }
+
+  return splits;
+}
+
+/**
+ * Get all settlements recorded for a trip.
+ */
+export async function getSettlements(tripId: string) {
+  return Settlement.find({ tripId }).sort({ createdAt: -1 }).lean();
+}
+
+/**
+ * Record a new settlement (one member paying another back).
+ */
+export async function createSettlement(
+  tripId: string,
+  payload: CreateSettlementPayload,
+) {
+  const { fromUserId, toUserId, amount } = payload;
+  return Settlement.create({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    fromUserId: new mongoose.Types.ObjectId(fromUserId),
+    toUserId: new mongoose.Types.ObjectId(toUserId),
+    amount,
+  });
 }
 
 /**

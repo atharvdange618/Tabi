@@ -177,8 +177,15 @@ export const createExpenseSchema = z.object({
 
 export const updateExpenseSchema = createExpenseSchema.partial();
 
+export const createSettlementSchema = z.object({
+  fromUserId: z.string().min(1),
+  toUserId: z.string().min(1),
+  amount: z.number().positive(),
+});
+
 export type UpdateBudgetSettingsPayload = z.infer<
   typeof updateBudgetSettingsSchema
 >;
 export type CreateExpensePayload = z.infer<typeof createExpenseSchema>;
 export type UpdateExpensePayload = z.infer<typeof updateExpenseSchema>;
+export type CreateSettlementPayload = z.infer<typeof createSettlementSchema>;

@@ -1,3 +1,4 @@
+import type { CloudinaryResourceType } from "../../server/src/models/File.ts";
 // ============================================================
 // Shared Type Definitions for Tabi
 // Used by both client and server
@@ -188,8 +189,10 @@ export interface FileDoc {
   sizeBytes: number;
   cloudinaryId: string;
   cloudinaryUrl: string;
+  resourceType: CloudinaryResourceType;
   uploadedBy: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Reservation {
@@ -246,6 +249,26 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
+}
+
+// --- Splits & Settlements ---
+
+export interface SplitBalance {
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  amount: number;
+}
+
+export interface Settlement {
+  _id: string;
+  tripId: string;
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // --- Budget Summary ---
