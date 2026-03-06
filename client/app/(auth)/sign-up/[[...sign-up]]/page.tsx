@@ -1,4 +1,10 @@
 import { SignUp } from "@clerk/nextjs";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Sign Up | Tabi",
+  description: "Create a Tabi account and start planning your trips together.",
+};
 
 export default function SignUpPage() {
   return (
