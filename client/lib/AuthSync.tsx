@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useEffect } from "react";
 import { setAuthTokenProvider } from "./axios";
 
 /**
@@ -11,9 +10,7 @@ import { setAuthTokenProvider } from "./axios";
 export function AuthSync() {
   const { getToken } = useAuth();
 
-  useEffect(() => {
-    setAuthTokenProvider(getToken);
-  }, [getToken]);
+  setAuthTokenProvider(getToken);
 
   return null;
 }
