@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import ReservationsContent from "../../../../components/shared/ReservationsContent";
+
+export const metadata: Metadata = {
+  title: "Reservations",
+  description: "Manage hotel, flight, and activity reservations for your trip.",
+};
 
 export default function ReservationsPage() {
   return (

@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import ChecklistsContent from "../../../../components/shared/ChecklistsContent";
+
+export const metadata: Metadata = {
+  title: "Checklists",
+  description: "Packing lists and group to-dos for your trip.",
+};
 
 export default function ChecklistsPage() {
   return (

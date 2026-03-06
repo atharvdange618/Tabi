@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import MembersContent from "../../../../components/members/MembersContent";
+
+export const metadata: Metadata = {
+  title: "Members",
+  description: "Manage trip members and invite collaborators.",
+};
 
 export default function MembersPage() {
   return (

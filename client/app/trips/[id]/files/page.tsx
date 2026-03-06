@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import FilesContent from "../../../../components/shared/FilesContent";
+
+export const metadata: Metadata = {
+  title: "Files",
+  description: "Trip documents, tickets, and uploaded files.",
+};
 
 export default function FilesPage() {
   return (

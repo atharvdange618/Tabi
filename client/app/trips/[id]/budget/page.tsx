@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import BudgetContent from "../../../../components/budget/BudgetContent";
+
+export const metadata: Metadata = {
+  title: "Budget",
+  description: "Track trip expenses and split costs among members.",
+};
 
 export default function BudgetPage() {
   return (

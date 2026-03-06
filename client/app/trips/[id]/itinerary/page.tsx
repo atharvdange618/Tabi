@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import ItineraryContent from "../../../../components/itinerary/ItineraryContent";
+
+export const metadata: Metadata = {
+  title: "Itinerary",
+  description: "Day-by-day itinerary for your trip.",
+};
 
 export default function ItineraryPage() {
   return (
