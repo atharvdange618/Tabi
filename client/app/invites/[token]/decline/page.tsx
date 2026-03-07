@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useDeclineInvite } from "../../../../hooks/useMembers";
 import { Loader2, XCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,20 +10,49 @@ import { Button } from "@/components/ui/button";
 export default function DeclineInvitePage() {
   const params = useParams<{ token: string }>();
   const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const declineInvite = useDeclineInvite();
   const triggered = useRef(false);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      const redirectUrl = encodeURIComponent(
+        `/invites/${params.token}/decline`,
+      );
+      router.replace(`/sign-in?redirect_url=${redirectUrl}`);
+      return;
+    }
+
     if (triggered.current) return;
     triggered.current = true;
     declineInvite.mutate(params.token, {
       onSuccess: () => setTimeout(() => router.push("/dashboard"), 2000),
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLoaded, isSignedIn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-cream">
       <div className="brutal-card rounded-lg p-8 max-w-md w-full text-center">
+        {(!isLoaded || (!isSignedIn && isLoaded)) &&
+          !declineInvite.isPending &&
+          !declineInvite.isError &&
+          !declineInvite.isSuccess && (
+            <>
+              <Loader2
+                className="mx-auto mb-4 animate-spin text-muted-foreground"
+                size={40}
+              />
+              <h1 className="text-2xl font-bold font-display mb-2">
+                Just a moment…
+              </h1>
+              <p className="text-muted-foreground font-body text-sm">
+                Checking your account status.
+              </p>
+            </>
+          )}
+
         {declineInvite.isPending && (
           <>
             <Loader2

@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { useAcceptInvite, useDeclineInvite } from "../../hooks/useMembers";
 import { Check, X, Loader2, UserPlus, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 export default function InviteActions() {
   const params = useParams<{ token: string }>();
   const router = useRouter();
+  const { isSignedIn } = useAuth();
   const acceptInvite = useAcceptInvite();
   const declineInvite = useDeclineInvite();
 
   const isPending = acceptInvite.isPending || declineInvite.isPending;
 
   function handleAccept() {
+    if (!isSignedIn) {
+      const redirectUrl = encodeURIComponent(`/invites/${params.token}/accept`);
+      router.push(`/sign-up?redirect_url=${redirectUrl}`);
+      return;
+    }
     acceptInvite.mutate(params.token, {
       onSuccess: () => {
         setTimeout(() => {
@@ -25,6 +32,13 @@ export default function InviteActions() {
   }
 
   function handleDecline() {
+    if (!isSignedIn) {
+      const redirectUrl = encodeURIComponent(
+        `/invites/${params.token}/decline`,
+      );
+      router.push(`/sign-up?redirect_url=${redirectUrl}`);
+      return;
+    }
     declineInvite.mutate(params.token, {
       onSuccess: () => {
         setTimeout(() => {

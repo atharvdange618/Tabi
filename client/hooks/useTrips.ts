@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 export function useTrips() {
-  const { isLoaded } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
 
   return useQuery({
     queryKey: queryKeys.trips(),
@@ -21,7 +21,7 @@ export function useTrips() {
         await api.get<ApiResponse<DashboardTrip[]>>("/api/v1/trips");
       return data.data;
     },
-    enabled: isLoaded,
+    enabled: isLoaded && !!isSignedIn,
   });
 }
 
@@ -82,8 +82,11 @@ export function useUpdateTrip(id: string) {
       );
       return data.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.tripDays(id) });
+      queryClient.removeQueries({ queryKey: queryKeys.tripDays(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.trip(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tripDays(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.trips() });
       toast.success("Trip updated successfully!");
     },
@@ -96,11 +99,17 @@ export function useDeleteTrip() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["trips", id] });
+      queryClient.removeQueries({ queryKey: ["trips", id] });
       await api.delete(`/api/v1/trips/${id}`);
       return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.trips() });
+    onSuccess: (id) => {
+      queryClient.removeQueries({ queryKey: ["trips", id] });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trips(),
+        exact: true,
+      });
       toast.success("Trip deleted successfully!");
       router.push("/dashboard");
     },
