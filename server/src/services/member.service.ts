@@ -20,12 +20,37 @@ import logger from "../lib/logger.ts";
 
 /**
  * Return all members for a trip, with user info populated.
+ * Also returns pending invites for unregistered users formatted as members.
  */
 export async function getMembers(tripId: string) {
-  return TripMember.find({ tripId })
-    .populate("userId", "name email avatarUrl")
-    .populate("invitedBy", "name email")
-    .lean();
+  const [members, pendingInvites] = await Promise.all([
+    TripMember.find({ tripId })
+      .populate("userId", "name email avatarUrl")
+      .populate("invitedBy", "name email")
+      .lean(),
+    PendingInvite.find({ tripId }).populate("invitedBy", "name email").lean(),
+  ]);
+
+  const memberEmails = new Set(
+    members
+      .map((m) => (m.userId as unknown as { email?: string }).email)
+      .filter(Boolean),
+  );
+
+  const formattedInvites = pendingInvites
+    .filter((invite) => !memberEmails.has(invite.email))
+    .map((invite) => ({
+      _id: invite._id,
+      tripId: invite.tripId,
+      userId: null,
+      email: invite.email,
+      role: invite.role,
+      status: TripMemberStatus.PENDING,
+      invitedBy: invite.invitedBy,
+      createdAt: invite.createdAt,
+    }));
+
+  return [...members, ...formattedInvites];
 }
 
 /**

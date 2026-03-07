@@ -248,27 +248,32 @@ function MemberCard({
   const updateRole = useUpdateMemberRole(tripId);
   const removeMember = useRemoveMember(tripId);
 
+  const name = member.userId?.name || "Deleted User";
+  const avatarUrl = member.userId?.avatarUrl || "";
+  const email = member.userId?.email || member.email || "Unknown email";
+  const userIdStr = member.userId?._id || "";
+
   return (
     <div className="brutal-card rounded-xl p-5 flex items-center justify-between bg-white hover:shadow-[5px_5px_0px_theme(--color-brutal-shadow)] transition-shadow">
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <Avatar className="h-12 w-12 border-2 border-brutal-border">
-          <AvatarImage src={member.userId.avatarUrl} alt={member.userId.name} />
+          <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback className="bg-brand-peach text-base font-bold">
-            {member.userId.name?.charAt(0).toUpperCase() || "U"}
+            {name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-semibold font-display truncate">
-              {member.userId.name}
+              {name}
             </span>
             {member.role === "owner" && isOwner && (
               <span className="text-xs text-muted-foreground">(You)</span>
             )}
           </div>
           <span className="text-xs text-muted-foreground truncate block">
-            {member.userId.email}
+            {email}
           </span>
           {member.joinedAt && (
             <span className="text-xs text-muted-foreground mt-1 block">
@@ -300,10 +305,13 @@ function MemberCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="brutal-card w-44">
               <DropdownMenuItem
-                disabled={member.role === "editor" || updateRole.isPending}
+                disabled={
+                  member.role === "editor" || updateRole.isPending || !userIdStr
+                }
                 onClick={() =>
+                  userIdStr &&
                   updateRole.mutate({
-                    userId: member.userId._id,
+                    userId: userIdStr,
                     role: "editor",
                   })
                 }
@@ -312,10 +320,13 @@ function MemberCard({
                 Make Editor
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={member.role === "viewer" || updateRole.isPending}
+                disabled={
+                  member.role === "viewer" || updateRole.isPending || !userIdStr
+                }
                 onClick={() =>
+                  userIdStr &&
                   updateRole.mutate({
-                    userId: member.userId._id,
+                    userId: userIdStr,
                     role: "viewer",
                   })
                 }
@@ -325,8 +336,8 @@ function MemberCard({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                disabled={removeMember.isPending}
-                onClick={() => removeMember.mutate(member.userId._id)}
+                disabled={removeMember.isPending || !userIdStr}
+                onClick={() => userIdStr && removeMember.mutate(userIdStr)}
                 className="text-brand-coral focus:text-brand-coral"
               >
                 <Trash2 size={14} className="mr-2" />
@@ -341,6 +352,9 @@ function MemberCard({
 }
 
 function PendingMemberCard({ member }: { member: PopulatedTripMember }) {
+  const name = member.userId?.name || "Pending User";
+  const email = member.userId?.email || member.email || "Unknown email";
+
   return (
     <div className="brutal-card rounded-xl p-5 flex items-center justify-between bg-white/50 border-dashed">
       <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -353,11 +367,11 @@ function PendingMemberCard({ member }: { member: PopulatedTripMember }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm font-semibold font-display truncate">
-              {member.userId.name || "Pending User"}
+              {name}
             </span>
           </div>
           <span className="text-xs text-muted-foreground truncate block">
-            {member.userId.email}
+            {email}
           </span>
         </div>
 
@@ -480,7 +494,7 @@ export default function MembersContent() {
                 key={member._id}
                 member={member}
                 tripId={params.id}
-                isOwner={member.userId._id === owner?.userId._id}
+                isOwner={member.userId?._id === owner?.userId?._id}
               />
             ))}
           </div>

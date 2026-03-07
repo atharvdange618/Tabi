@@ -106,8 +106,9 @@ export interface PopulatedTripMember extends Omit<
   TripMember,
   "userId" | "invitedBy"
 > {
-  userId: PopulatedUser;
+  userId: PopulatedUser | null;
   invitedBy: PopulatedUser;
+  email?: string;
 }
 
 export interface PendingInvite {
