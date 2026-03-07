@@ -1,5 +1,8 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
-import { ReservationType } from "../../../shared/types/index.ts";
+import {
+  ReservationType,
+  ReservationStatus,
+} from "../../../shared/types/index.ts";
 
 const reservationSchema = new Schema(
   {
@@ -42,6 +45,11 @@ const reservationSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    status: {
+      type: String,
+      enum: Object.values(ReservationStatus),
+      default: "confirmed",
     },
   },
   { timestamps: true },

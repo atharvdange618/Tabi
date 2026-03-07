@@ -12,6 +12,11 @@ const tripSchema = new Schema(
       default: "",
       maxlength: 500,
     },
+    destination: {
+      type: String,
+      default: "",
+      maxlength: 200,
+    },
     startDate: {
       type: Date,
       required: true,
@@ -33,6 +38,10 @@ const tripSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    isPublic: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },

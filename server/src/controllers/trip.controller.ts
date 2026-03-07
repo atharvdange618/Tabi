@@ -37,11 +37,28 @@ export async function getUserTrips(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * GET /api/v1/trips/public/:id
+ * Return a public trip by ID. No auth required.
+ */
+export async function getPublicTripById(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const trip = await tripService.getPublicTripById(req.params.id as string);
+  res.json({ data: trip });
+}
+
+/**
  * GET /api/v1/trips/:id
  * Return a single trip by ID. Requires membership (any role).
  */
 export async function getTripById(req: Request, res: Response): Promise<void> {
-  const trip = await tripService.getTripById(req.params.id as string);
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  const trip = await tripService.getTripById(req.params.id as string, userId);
   res.json({ data: trip });
 }
 
@@ -67,4 +84,23 @@ export async function deleteTripCascade(
 ): Promise<void> {
   await tripService.deleteTripCascade(req.params.id as string);
   res.status(204).send();
+}
+
+/**
+ * POST /api/v1/trips/:id/cover
+ * Upload a cover image for a trip. Requires owner role.
+ */
+export async function uploadCoverImage(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  if (!req.file) {
+    res.status(400).json({ error: "No file provided" });
+    return;
+  }
+  const trip = await tripService.uploadCoverImage(
+    req.params.id as string,
+    req.file,
+  );
+  res.json({ data: trip });
 }

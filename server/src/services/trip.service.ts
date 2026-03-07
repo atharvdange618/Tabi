@@ -1,4 +1,5 @@
 import mongoose, { type HydratedDocument } from "mongoose";
+import streamifier from "streamifier";
 import {
   Trip,
   TripMember,
@@ -13,7 +14,11 @@ import {
   Expense,
   PendingInvite,
 } from "../models/index.ts";
-import { NotFoundError, ValidationError } from "../lib/errors.ts";
+import {
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "../lib/errors.ts";
 import {
   TripMemberRole,
   TripMemberStatus,
@@ -23,6 +28,7 @@ import type {
   UpdateTripPayload,
 } from "../../../shared/validations/index.ts";
 import { dateKey, getDatesInRange } from "../lib/helpers.ts";
+import cloudinary from "../lib/cloudinary.ts";
 
 type TripDoc = HydratedDocument<
   typeof Trip extends mongoose.Model<infer T> ? T : never
@@ -49,10 +55,12 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
           {
             title: payload.title,
             description: payload.description ?? "",
+            destination: payload.destination ?? "",
             startDate,
             endDate,
             travelerCount: payload.travelerCount ?? 1,
             coverImageUrl: payload.coverImageUrl ?? "",
+            isPublic: payload.isPublic ?? false,
             createdBy: new mongoose.Types.ObjectId(userId),
           },
         ],
@@ -98,6 +106,7 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
 
 /**
  * Return all trips the authenticated user is an active member of, sorted by most recent creation date.
+ * Each trip is enriched with memberCount, activityCount, and the members list (active only).
  */
 export async function getUserTrips(userId: string) {
   const memberships = await TripMember.find({
@@ -107,7 +116,7 @@ export async function getUserTrips(userId: string) {
     .populate("tripId")
     .lean();
 
-  return memberships
+  const trips = memberships
     .map((m) => {
       const tripData = m.tripId as unknown as Record<string, unknown>;
       const createdAt = tripData.createdAt as Date | undefined;
@@ -118,20 +127,158 @@ export async function getUserTrips(userId: string) {
       const bDate = new Date(b.createdAt ?? 0).getTime();
       return bDate - aDate;
     });
+
+  if (trips.length === 0) {
+    return [];
+  }
+
+  const tripsAsRecords = trips as unknown as Record<string, unknown>[];
+  const tripIds = tripsAsRecords.map((t) => t._id as mongoose.Types.ObjectId);
+
+  const [memberCounts, activityCounts, tripMembersData] = await Promise.all([
+    TripMember.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      { $match: { tripId: { $in: tripIds }, status: TripMemberStatus.ACTIVE } },
+      { $group: { _id: "$tripId", count: { $sum: 1 } } },
+    ]),
+    Activity.aggregate<{ _id: mongoose.Types.ObjectId; count: number }>([
+      { $match: { tripId: { $in: tripIds } } },
+      { $group: { _id: "$tripId", count: { $sum: 1 } } },
+    ]),
+    TripMember.find({
+      tripId: { $in: tripIds },
+      status: TripMemberStatus.ACTIVE,
+    })
+      .populate("userId", "name email avatarUrl")
+      .lean(),
+  ]);
+
+  const memberCountMap = new Map(
+    memberCounts.map((m) => [m._id.toString(), m.count]),
+  );
+  const activityCountMap = new Map(
+    activityCounts.map((a) => [a._id.toString(), a.count]),
+  );
+
+  const membersByTrip = new Map<
+    string,
+    { name: string; email: string; avatarUrl?: string }[]
+  >();
+  for (const m of tripMembersData) {
+    const tripId = m.tripId.toString();
+    const user = m.userId as unknown as {
+      name: string;
+      email: string;
+      avatarUrl?: string;
+    } | null;
+    if (!user) {
+      continue;
+    }
+    if (!membersByTrip.has(tripId)) {
+      membersByTrip.set(tripId, []);
+    }
+    membersByTrip
+      .get(tripId)
+      ?.push({ name: user.name, email: user.email, avatarUrl: user.avatarUrl });
+  }
+
+  return tripsAsRecords.map((t) => {
+    const tripId = (t._id as mongoose.Types.ObjectId).toString();
+    return {
+      ...t,
+      memberCount: memberCountMap.get(tripId) ?? 0,
+      activityCount: activityCountMap.get(tripId) ?? 0,
+      members: membersByTrip.get(tripId) ?? [],
+    };
+  });
+}
+
+/**
+ * Fetch a public trip by its ID, complete with members, days, and activities.
+ */
+export async function getPublicTripById(tripId: string) {
+  const trip = await Trip.findById(tripId).lean();
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+  if (!trip.isPublic) {
+    throw new ForbiddenError("This trip is not publicly accessible");
+  }
+
+  const [days, activities, members] = await Promise.all([
+    Day.find({ tripId }).sort({ date: 1 }).lean(),
+    Activity.find({ tripId }).sort({ position: 1 }).lean(),
+    TripMember.find({ tripId, status: TripMemberStatus.ACTIVE })
+      .populate("userId", "name")
+      .lean(),
+  ]);
+
+  const initialsList = members
+    .map((m) => {
+      const user = m.userId as unknown as { name?: string } | null;
+      if (!user?.name) {
+        return "";
+      }
+      const nameParts = user.name.split(" ").filter(Boolean);
+      if (nameParts.length === 0) {
+        return "";
+      }
+      if (nameParts.length === 1) {
+        return nameParts[0]?.[0]?.toUpperCase() ?? "";
+      }
+      return (
+        (nameParts[0]?.[0]?.toUpperCase() ?? "") +
+        (nameParts[nameParts.length - 1]?.[0]?.toUpperCase() ?? "")
+      );
+    })
+    .filter((initials) => initials.length > 0)
+    .map((initials) => ({ initials }));
+
+  return {
+    _id: trip._id.toString(),
+    title: trip.title,
+    description: trip.description,
+    destination: trip.destination,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    coverImageUrl: trip.coverImageUrl,
+    members: initialsList,
+    days: days.map((d) => ({
+      _id: d._id.toString(),
+      date: d.date,
+      label: d.label,
+      notes: d.notes,
+    })),
+    activities: activities.map((a) => ({
+      _id: a._id.toString(),
+      dayId: a.dayId.toString(),
+      title: a.title,
+      type: a.type,
+      startTime: a.startTime,
+      endTime: a.endTime,
+      location: a.location,
+      notes: a.notes,
+      position: a.position,
+    })),
+  };
 }
 
 /**
  * Fetch a single trip by its MongoDB _id, with creator info populated.
  */
-export async function getTripById(tripId: string) {
-  const trip = await Trip.findById(tripId)
-    .populate("createdBy", "name email avatarUrl")
-    .lean();
+export async function getTripById(tripId: string, userId: string) {
+  const [trip, membership] = await Promise.all([
+    Trip.findById(tripId).populate("createdBy", "name email avatarUrl").lean(),
+    TripMember.findOne({
+      tripId: new mongoose.Types.ObjectId(tripId),
+      userId: new mongoose.Types.ObjectId(userId),
+      status: TripMemberStatus.ACTIVE,
+    }).lean(),
+  ]);
 
   if (!trip) {
     throw new NotFoundError("Trip not found");
   }
-  return trip;
+  return { ...trip, role: membership?.role ?? "viewer" };
 }
 
 /**
@@ -153,11 +300,17 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
   if (payload.description !== undefined) {
     updates.description = payload.description;
   }
+  if (payload.destination !== undefined) {
+    updates.destination = payload.destination;
+  }
   if (payload.travelerCount !== undefined) {
     updates.travelerCount = payload.travelerCount;
   }
   if (payload.coverImageUrl !== undefined) {
     updates.coverImageUrl = payload.coverImageUrl;
+  }
+  if (payload.isPublic !== undefined) {
+    updates.isPublic = payload.isPublic;
   }
 
   const oldStartDate = trip.startDate as Date;
@@ -240,7 +393,7 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
     void session.endSession();
   }
 
-  return await Trip.findById(tripId); // Return the updated trip after the transaction
+  return await Trip.findById(tripId);
 }
 
 /**
@@ -283,4 +436,76 @@ export async function deleteTripCascade(tripId: string) {
   } finally {
     void session.endSession();
   }
+}
+
+/**
+ * Extract the Cloudinary public ID from a secure URL.
+ */
+function extractCloudinaryPublicId(url: string): string | null {
+  const match = /\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/.exec(url);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Upload a cover image for a trip to Cloudinary and persist the URL.
+ * If the trip already has a cover image, it is deleted from Cloudinary
+ * only after the new upload succeeds.
+ */
+export async function uploadCoverImage(
+  tripId: string,
+  file: Express.Multer.File,
+) {
+  const trip = await Trip.findById(tripId);
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+
+  if (file.buffer.length === 0) {
+    throw new ValidationError("Empty file");
+  }
+
+  const oldCoverImageUrl = trip.coverImageUrl as string | undefined;
+
+  const result = await new Promise<{ secure_url: string }>(
+    (resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "tabi/covers",
+          resource_type: "auto",
+        },
+        (error: unknown, res) => {
+          if (error) {
+            // eslint-disable-next-line no-console
+            console.error("Cloudinary upload error:", error);
+            const errMsg =
+              error instanceof Error
+                ? error.message
+                : JSON.stringify(error) || "Upload failed";
+            reject(new Error(errMsg));
+            return;
+          }
+          if (!res) {
+            reject(new Error("No result from Cloudinary"));
+            return;
+          }
+          resolve({ secure_url: res.secure_url });
+        },
+      );
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    },
+  );
+
+  if (oldCoverImageUrl) {
+    const publicId = extractCloudinaryPublicId(oldCoverImageUrl);
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId).catch((err: unknown) => {
+        // eslint-disable-next-line no-console
+        console.error("Failed to delete old cover image from Cloudinary:", err);
+      });
+    }
+  }
+
+  trip.coverImageUrl = result.secure_url;
+  await trip.save();
+  return trip;
 }
