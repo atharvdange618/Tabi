@@ -270,7 +270,6 @@ function ChecklistCard({
   );
 }
 
-// ─── ChecklistsTab ────────────────────────────────────────────────────────────
 
 export function ChecklistsTab({
   tripId,

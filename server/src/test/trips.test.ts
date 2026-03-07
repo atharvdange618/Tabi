@@ -303,7 +303,10 @@ describe("Trip Service", () => {
         title: "Specific Trip",
       });
 
-      const result = await tripService.getTripById(trip._id.toString());
+      const result = await tripService.getTripById(
+        trip._id.toString(),
+        user._id.toString(),
+      );
       expect(result).not.toBeNull();
       expect(result!._id.toString()).toBe(trip._id.toString());
       expect(result!.title).toBe("Specific Trip");
@@ -313,7 +316,10 @@ describe("Trip Service", () => {
       const user = await createTestUser({ name: "Jane Doe" });
       const trip = await seedTrip(user._id.toString());
 
-      const result = await tripService.getTripById(trip._id.toString());
+      const result = await tripService.getTripById(
+        trip._id.toString(),
+        user._id.toString(),
+      );
       const creator = result!.createdBy as any;
 
       expect(creator.name).toBe("Jane Doe");
@@ -322,7 +328,8 @@ describe("Trip Service", () => {
 
     it("throws NotFoundError for a non-existent trip ID", async () => {
       const fakeId = new mongoose.Types.ObjectId().toString();
-      await expect(tripService.getTripById(fakeId)).rejects.toThrow(
+      const fakeUserId = new mongoose.Types.ObjectId().toString();
+      await expect(tripService.getTripById(fakeId, fakeUserId)).rejects.toThrow(
         "Trip not found",
       );
     });

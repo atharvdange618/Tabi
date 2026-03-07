@@ -70,6 +70,14 @@ if (!isTestMode) {
         return "http://localhost:3000";
       }
 
+      if (
+        prop === "CLOUDINARY_CLOUD_NAME" ||
+        prop === "CLOUDINARY_API_KEY" ||
+        prop === "CLOUDINARY_API_SECRET"
+      ) {
+        return "test_mock";
+      }
+
       return undefined;
     },
   });
