@@ -12,9 +12,18 @@ const envSchema = z.object({
   CLERK_PUBLISHABLE_KEY: z.string().optional(),
   CLERK_WEBHOOK_SECRET: z.string().min(1, "CLERK_WEBHOOK_SECRET is required"),
 
-  CLOUDINARY_CLOUD_NAME: z.string().min(1, "CLOUDINARY_CLOUD_NAME is required"),
-  CLOUDINARY_API_KEY: z.string().min(1, "CLOUDINARY_API_KEY is required"),
-  CLOUDINARY_API_SECRET: z.string().min(1, "CLOUDINARY_API_SECRET is required"),
+  CLOUDINARY_CLOUD_NAME: z
+    .string()
+    .min(1, "CLOUDINARY_CLOUD_NAME is required")
+    .transform((s) => s.trim()),
+  CLOUDINARY_API_KEY: z
+    .string()
+    .min(1, "CLOUDINARY_API_KEY is required")
+    .transform((s) => s.trim()),
+  CLOUDINARY_API_SECRET: z
+    .string()
+    .min(1, "CLOUDINARY_API_SECRET is required")
+    .transform((s) => s.trim()),
 
   RESEND_API_KEY: z.string().optional(),
   LOG_LEVEL: z.string().optional(),

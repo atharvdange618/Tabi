@@ -79,7 +79,7 @@ export async function resolveDbUser(
         { upsert: true, returnDocument: "after" },
       );
 
-      logger.info("resolveDbUser — JIT sync: user created from Clerk", {
+      logger.info("resolveDbUser - JIT sync: user created from Clerk", {
         clerkId,
       });
     }

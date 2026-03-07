@@ -43,7 +43,12 @@ export async function upsertBudgetSettings(
  * Get all expenses for a trip, sorted newest-first.
  */
 export async function getExpenses(tripId: string) {
-  return Expense.find({ tripId }).sort({ createdAt: -1 }).lean();
+  return Expense.find({ tripId })
+    .populate<{
+      paidBy: { _id: string; name: string; email: string };
+    }>("paidBy", "name email")
+    .sort({ createdAt: -1 })
+    .lean();
 }
 
 /**

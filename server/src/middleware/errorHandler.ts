@@ -33,14 +33,14 @@ export const errorHandler = (
     return;
   }
 
-  logger.error("Unhandled server error", {
+  logger.error(err.message || "Unhandled server error", {
     context: "errorHandler",
     err,
     stack: err.stack,
   });
 
   res.status(500).json({
-    error: "Internal server error",
+    error: err.message || "Internal server error",
     ...(env.NODE_ENV === "development" && { stack: err.stack }),
   });
 };

@@ -159,7 +159,7 @@ const pinoHttpOptions: PinoHttpOptions = {
     res: ServerResponse,
     err: Error,
   ): string {
-    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)} — ${err.message}`;
+    return `${req.method ?? "UNKNOWN"} ${req.url ?? "/"} ${String(res.statusCode)} - ${err.message}`;
   },
 
   autoLogging: {

@@ -12,7 +12,7 @@ const router = Router();
 
 const auth = [requireAuthentication, resolveDbUser] as const;
 
-// GET /api/v1/trips/:id/members — list all members for a trip
+// GET /api/v1/trips/:id/members - list all members for a trip
 router.get(
   "/:id/members",
   ...auth,
@@ -20,7 +20,7 @@ router.get(
   memberController.getMembers,
 );
 
-// POST /api/v1/trips/:id/members/invite — invite a user by email
+// POST /api/v1/trips/:id/members/invite - invite a user by email
 router.post(
   "/:id/members/invite",
   ...auth,
@@ -29,7 +29,7 @@ router.post(
   memberController.inviteMember,
 );
 
-// PATCH /api/v1/trips/:id/members/:uid — update a member's role
+// PATCH /api/v1/trips/:id/members/:uid - update a member's role
 router.patch(
   "/:id/members/:uid",
   ...auth,
@@ -38,7 +38,7 @@ router.patch(
   memberController.updateMemberRole,
 );
 
-// DELETE /api/v1/trips/:id/members/:uid — remove a member
+// DELETE /api/v1/trips/:id/members/:uid - remove a member
 router.delete(
   "/:id/members/:uid",
   ...auth,

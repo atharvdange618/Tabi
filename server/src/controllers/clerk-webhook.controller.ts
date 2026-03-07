@@ -65,14 +65,14 @@ export const handleClerkWebhook = async (
     switch (type) {
       case "user.created":
         await processUserCreated(data);
-        logger.info("user.created — synced user", {
+        logger.info("user.created - synced user", {
           clerkId: data.id,
         });
         break;
 
       case "user.updated":
         await processUserUpdated(data);
-        logger.info("user.updated — synced user", {
+        logger.info("user.updated - synced user", {
           clerkId: data.id,
         });
         break;

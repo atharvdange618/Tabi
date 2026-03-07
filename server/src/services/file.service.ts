@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from "../lib/errors.ts";
 import cloudinary from "../lib/cloudinary.ts";
 import type { CloudinaryResourceType } from "../models/File.ts";
 
-function getResourceType(mimetype: string): CloudinaryResourceType {
+export function getResourceType(mimetype: string): CloudinaryResourceType {
   if (mimetype.startsWith("image/")) {
     return "image";
   }
@@ -18,7 +18,7 @@ function getResourceType(mimetype: string): CloudinaryResourceType {
 /**
  * Sanitize a filename for use as a Cloudinary public_id.
  */
-function sanitizePublicId(originalName: string): string {
+export function sanitizePublicId(originalName: string): string {
   return originalName
     .replace(/\.[^/.]+$/, "")
     .replace(/[^a-zA-Z0-9_-]/g, "_")
