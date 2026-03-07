@@ -49,6 +49,13 @@ export const ReservationType = {
 export type ReservationType =
   (typeof ReservationType)[keyof typeof ReservationType];
 
+export const ReservationStatus = {
+  CONFIRMED: "confirmed",
+  PENDING: "pending",
+} as const;
+export type ReservationStatus =
+  (typeof ReservationStatus)[keyof typeof ReservationStatus];
+
 export const ExpenseCategory = {
   ACCOMMODATION: "accommodation",
   FOOD: "food",
@@ -75,13 +82,28 @@ export interface Trip {
   _id: string;
   title: string;
   description?: string;
+  destination?: string;
   startDate: string;
   endDate: string;
   travelerCount?: number;
   coverImageUrl?: string;
+  isPublic?: boolean;
   createdBy: string;
+  role?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DashboardTripMember {
+  name: string;
+  email: string;
+  avatarUrl?: string;
+}
+
+export interface DashboardTrip extends Trip {
+  memberCount: number;
+  activityCount: number;
+  members: DashboardTripMember[];
 }
 
 export interface TripMember {
@@ -206,6 +228,7 @@ export interface Reservation {
   datetime?: string;
   notes?: string;
   fileId?: string;
+  status?: ReservationStatus;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -231,6 +254,44 @@ export interface Expense {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PopulatedExpense extends Omit<Expense, "paidBy"> {
+  paidBy: PopulatedUser;
+}
+
+// --- Public Trip Types ---
+
+export interface PublicActivity {
+  _id: string;
+  dayId: string;
+  title: string;
+  type: ActivityType;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  notes?: string;
+  position: number;
+}
+
+export interface PublicDay {
+  _id: string;
+  date: string;
+  label?: string;
+  notes?: string;
+}
+
+export interface PublicTrip {
+  _id: string;
+  title: string;
+  description?: string;
+  destination?: string;
+  startDate: string;
+  endDate: string;
+  coverImageUrl?: string;
+  members: { initials: string }[];
+  days: PublicDay[];
+  activities: PublicActivity[];
 }
 
 // --- API Response Types ---

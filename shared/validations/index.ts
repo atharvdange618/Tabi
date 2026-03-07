@@ -26,6 +26,7 @@ export const reservationTypes = [
   "activity",
   "other",
 ] as const;
+export const reservationStatuses = ["confirmed", "pending"] as const;
 export const expenseCategories = [
   "accommodation",
   "food",
@@ -40,10 +41,12 @@ export const expenseCategories = [
 export const createTripSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().max(500).optional(),
+  destination: z.string().max(200).optional(),
   startDate: z.string().datetime({ message: "Invalid start date" }),
   endDate: z.string().datetime({ message: "Invalid end date" }),
   travelerCount: z.number().int().positive().optional(),
   coverImageUrl: z.string().url().optional(),
+  isPublic: z.boolean().optional(),
 });
 
 export const updateTripSchema = createTripSchema.partial();
@@ -153,6 +156,7 @@ export const createReservationSchema = z.object({
   datetime: z.string().datetime().optional(),
   notes: z.string().max(1000).optional(),
   fileId: z.string().optional(),
+  status: z.enum(reservationStatuses).optional(),
 });
 
 export const updateReservationSchema = createReservationSchema.partial();
