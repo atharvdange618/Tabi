@@ -148,6 +148,6 @@ describe("Reservations API", () => {
       .post(`/api/v1/trips/${trip._id}/reservations`)
       .set("x-test-clerk-id", viewer.clerkId)
       .send({ title: "Hacked Hotel", type: "hotel" })
-      .expect(404);
+      .expect(403);
   });
 });

@@ -134,7 +134,7 @@ describe("Files API", () => {
     await request(app)
       .delete(`/api/v1/trips/${trip._id}/files/${file._id}`)
       .set("x-test-clerk-id", viewer.clerkId)
-      .expect(404);
+      .expect(403);
   });
 
   it("should successfully upload a mock file and save metadata", async () => {

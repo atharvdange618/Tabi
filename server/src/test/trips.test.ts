@@ -1043,7 +1043,7 @@ describe("Trip API", () => {
       expect(res.status).toBe(401);
     });
 
-    it("returns 404 when the requesting user is not a member of the trip", async () => {
+    it("returns 403 when the requesting user is not a member of the trip", async () => {
       const owner = await createTestUser({ clerkId: "clerk_getbyid_owner" });
       const nonMember = await createTestUser({
         clerkId: "clerk_getbyid_nonmember",
@@ -1054,7 +1054,7 @@ describe("Trip API", () => {
         .get(`/api/v1/trips/${trip._id}`)
         .set("x-test-clerk-id", nonMember.clerkId);
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(403);
     });
 
     it("returns 200 with the trip for a member", async () => {
@@ -1097,7 +1097,7 @@ describe("Trip API", () => {
       expect(res.status).toBe(401);
     });
 
-    it("returns 404 when the requesting user is not the owner", async () => {
+    it("returns 403 when the requesting user is not the owner", async () => {
       const owner = await createTestUser({ clerkId: "clerk_patch_owner" });
       const editor = await createTestUser({ clerkId: "clerk_patch_editor" });
       const trip = await seedTrip(owner._id.toString());
@@ -1117,10 +1117,10 @@ describe("Trip API", () => {
         .set("x-test-clerk-id", editor.clerkId)
         .send({ title: "Sneaky Edit" });
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(403);
     });
 
-    it("returns 404 when the user has no membership at all", async () => {
+    it("returns 403 when the user has no membership at all", async () => {
       const owner = await createTestUser({ clerkId: "clerk_patch_owner2" });
       const stranger = await createTestUser({
         clerkId: "clerk_patch_stranger",
@@ -1132,7 +1132,7 @@ describe("Trip API", () => {
         .set("x-test-clerk-id", stranger.clerkId)
         .send({ title: "Stranger Edit" });
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(403);
     });
 
     it("returns 200 and the updated trip when the owner updates fields", async () => {
@@ -1218,7 +1218,7 @@ describe("Trip API", () => {
       expect(res.status).toBe(401);
     });
 
-    it("returns 404 when the requesting user is not the owner", async () => {
+    it("returns 403 when the requesting user is not the owner", async () => {
       const owner = await createTestUser({ clerkId: "clerk_delete_owner" });
       const viewer = await createTestUser({ clerkId: "clerk_delete_viewer" });
       const trip = await seedTrip(owner._id.toString());
@@ -1236,10 +1236,10 @@ describe("Trip API", () => {
         .delete(`/api/v1/trips/${trip._id}`)
         .set("x-test-clerk-id", viewer.clerkId);
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(403);
     });
 
-    it("returns 404 when the user has no membership at all", async () => {
+    it("returns 403 when the user has no membership at all", async () => {
       const owner = await createTestUser({ clerkId: "clerk_delete_owner2" });
       const stranger = await createTestUser({
         clerkId: "clerk_delete_stranger",
@@ -1250,7 +1250,7 @@ describe("Trip API", () => {
         .delete(`/api/v1/trips/${trip._id}`)
         .set("x-test-clerk-id", stranger.clerkId);
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(403);
     });
 
     it("returns 204 and removes the trip when the owner deletes it", async () => {

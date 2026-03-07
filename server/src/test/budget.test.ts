@@ -90,7 +90,7 @@ describe("Budget API", () => {
       await request(app)
         .get(`/api/v1/trips/${trip._id}/budget/settings`)
         .set("x-test-clerk-id", stranger.clerkId)
-        .expect(404);
+        .expect(403);
     });
   });
 
@@ -170,7 +170,7 @@ describe("Budget API", () => {
         .put(`/api/v1/trips/${trip._id}/budget/settings`)
         .set("x-test-clerk-id", viewer.clerkId)
         .send({ totalBudget: 99999 })
-        .expect(404);
+        .expect(403);
     });
 
     it("should allow an editor to update budget settings", async () => {
@@ -381,7 +381,7 @@ describe("Budget API", () => {
           category: "misc",
           paidBy: viewer._id.toString(),
         })
-        .expect(404);
+        .expect(403);
     });
   });
 
@@ -491,7 +491,7 @@ describe("Budget API", () => {
         .patch(`/api/v1/trips/${trip._id}/budget/expenses/${expense._id}`)
         .set("x-test-clerk-id", viewer.clerkId)
         .send({ amount: 9999 })
-        .expect(404);
+        .expect(403);
     });
   });
 
@@ -555,7 +555,7 @@ describe("Budget API", () => {
       await request(app)
         .delete(`/api/v1/trips/${trip._id}/budget/expenses/${expense._id}`)
         .set("x-test-clerk-id", viewer.clerkId)
-        .expect(404);
+        .expect(403);
 
       // Expense should still exist
       const still = await Expense.findById(expense._id);
@@ -731,7 +731,7 @@ describe("Budget API", () => {
       await request(app)
         .get(`/api/v1/trips/${trip._id}/budget/summary`)
         .set("x-test-clerk-id", stranger.clerkId)
-        .expect(404);
+        .expect(403);
     });
   });
 });

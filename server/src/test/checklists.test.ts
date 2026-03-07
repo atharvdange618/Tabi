@@ -164,7 +164,7 @@ describe("Checklists API", () => {
       .post(`/api/v1/trips/${trip._id}/checklists`)
       .set("x-test-clerk-id", viewer.clerkId)
       .send({ title: "Hacked List" })
-      .expect(404);
+      .expect(403);
   });
 
   describe("Checklist Items", () => {

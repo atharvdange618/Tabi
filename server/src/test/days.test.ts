@@ -126,7 +126,7 @@ describe("Days API", () => {
       expect(res.body.data.length).toBe(3);
     });
 
-    it("returns 404 for non-members", async () => {
+    it("returns 403 for non-members", async () => {
       const owner = await createTestUser();
       const randomUser = await createTestUser();
       const trip = await seedTrip(owner._id.toString());
@@ -134,7 +134,7 @@ describe("Days API", () => {
       await request(app)
         .get(`/api/v1/trips/${trip._id}/days`)
         .set("x-test-clerk-id", randomUser.clerkId)
-        .expect(404);
+        .expect(403);
     });
 
     it("returns 401 without auth", async () => {
@@ -182,7 +182,7 @@ describe("Days API", () => {
         .expect(200);
     });
 
-    it("returns 404/forbidden for viewer attempting to update", async () => {
+    it("returns 403/forbidden for viewer attempting to update", async () => {
       const owner = await createTestUser();
       const viewer = await createTestUser();
       const trip = await seedTrip(owner._id.toString());
@@ -201,7 +201,7 @@ describe("Days API", () => {
         .patch(`/api/v1/trips/${trip._id}/days/${days[0]!._id}`)
         .set("x-test-clerk-id", viewer.clerkId)
         .send({ label: "Hacked" })
-        .expect(404); // permission.ts throws NotFoundError for insufficient role to hide trip
+        .expect(403); // permission.ts throws NotFoundError for insufficient role to hide trip
     });
   });
 

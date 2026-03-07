@@ -284,7 +284,7 @@ describe("Activities API", () => {
       .post(`/api/v1/trips/${trip._id}/days/${day._id}/activities`)
       .set("x-test-clerk-id", viewer.clerkId)
       .send({ title: "Viewer Activity", type: ActivityType.SIGHTSEEING })
-      .expect(404);
+      .expect(403);
   });
 
   it("should deny non-member from viewing activities", async () => {
@@ -297,7 +297,7 @@ describe("Activities API", () => {
     await request(app)
       .get(`/api/v1/trips/${trip._id}/days/${day._id}/activities`)
       .set("x-test-clerk-id", stranger.clerkId)
-      .expect(404);
+      .expect(403);
   });
 
   it("should return 401 for unauthenticated requests", async () => {

@@ -627,7 +627,7 @@ describe("Member API", () => {
       await request(app).get(`/api/v1/trips/${trip._id}/members`).expect(401);
     });
 
-    it("returns 404 for non-member user", async () => {
+    it("returns 403 for non-member user", async () => {
       const owner = await createTestUser();
       const stranger = await createTestUser();
       const trip = await seedTrip(owner._id.toString());
@@ -635,7 +635,7 @@ describe("Member API", () => {
       await request(app)
         .get(`/api/v1/trips/${trip._id}/members`)
         .set("x-test-clerk-id", stranger.clerkId)
-        .expect(404);
+        .expect(403);
     });
   });
 
@@ -656,7 +656,7 @@ describe("Member API", () => {
       expect(res.body.data.token).toBeTruthy();
     });
 
-    it("returns 404 when non-owner tries to invite", async () => {
+    it("returns 403 when non-owner tries to invite", async () => {
       const owner = await createTestUser();
       const viewer = await createTestUser({ email: "viewer@example.com" });
       const trip = await seedTrip(owner._id.toString());
@@ -674,7 +674,7 @@ describe("Member API", () => {
         .post(`/api/v1/trips/${trip._id}/members/invite`)
         .set("x-test-clerk-id", viewer.clerkId)
         .send({ email: "someone@example.com", role: "editor" })
-        .expect(404);
+        .expect(403);
     });
 
     it("returns 400 with invalid email", async () => {
@@ -726,7 +726,7 @@ describe("Member API", () => {
       expect(res.body.data.role).toBe("viewer");
     });
 
-    it("returns 404 when non-owner tries to update role", async () => {
+    it("returns 403 when non-owner tries to update role", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({ email: "ed2@example.com" });
       const trip = await seedTrip(owner._id.toString());
@@ -744,7 +744,7 @@ describe("Member API", () => {
         .patch(`/api/v1/trips/${trip._id}/members/${owner._id}`)
         .set("x-test-clerk-id", editor.clerkId)
         .send({ role: "viewer" })
-        .expect(404);
+        .expect(403);
     });
   });
 
@@ -777,7 +777,7 @@ describe("Member API", () => {
       expect(found).toBeNull();
     });
 
-    it("returns 404 when non-owner tries to remove a member", async () => {
+    it("returns 403 when non-owner tries to remove a member", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({ email: "ed3@example.com" });
       const viewer = await createTestUser({ email: "vw@example.com" });
@@ -803,7 +803,7 @@ describe("Member API", () => {
       await request(app)
         .delete(`/api/v1/trips/${trip._id}/members/${viewer._id}`)
         .set("x-test-clerk-id", editor.clerkId)
-        .expect(404);
+        .expect(403);
     });
   });
 

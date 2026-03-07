@@ -25,7 +25,7 @@ export function requireRole(allowedRoles: string[]) {
       });
 
       if (!member) {
-        res.status(404).json({ error: "Trip not found" });
+        res.status(403).json({ error: "Unauthorized access to trip" });
         return;
       }
 
