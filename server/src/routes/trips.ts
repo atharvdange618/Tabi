@@ -7,6 +7,7 @@ import {
   updateTripSchema,
 } from "../../../shared/validations/index.ts";
 import * as tripController from "../controllers/trip.controller.ts";
+import * as activityController from "../controllers/activity.controller.ts";
 import { upload } from "../middleware/upload.ts";
 
 const router = Router();
@@ -25,6 +26,14 @@ router.post(
   ...auth,
   validate(createTripSchema),
   tripController.createTrip,
+);
+
+// GET /api/v1/trips/:id/activities - fetch all activities for a trip
+router.get(
+  "/:id/activities",
+  ...auth,
+  requireMembership(),
+  activityController.getAllTripActivities,
 );
 
 // GET /api/v1/trips/:id - fetch a single trip (any member)

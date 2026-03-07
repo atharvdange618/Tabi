@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import {
   DndContext,
@@ -25,6 +25,8 @@ import {
   MapPin,
   IndianRupee,
   Tag,
+  List,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,8 +66,10 @@ import {
   useUpdateActivity,
   useDeleteActivity,
   useReorderActivities,
+  useAllActivities,
 } from "@/hooks/useActivities";
 import CommentsSection from "@/components/itinerary/CommentsSection";
+import { CalendarView } from "@/components/itinerary/CalendarView";
 import type { Activity } from "shared/types";
 import { activityTypes } from "shared/validations";
 
@@ -564,11 +568,55 @@ export function ItineraryTab({
   tripId: string;
   canEdit: boolean;
 }) {
+  const [view, setView] = useState<"list" | "calendar">("list");
   const { data: days = [], isLoading } = useDays(tripId);
+  const { data: allActivities = [] } = useAllActivities(tripId);
+
+  const activitiesByDay = useMemo(
+    () =>
+      allActivities.reduce<Record<string, Activity[]>>((acc, act) => {
+        const key = String(act.dayId);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(act);
+        return acc;
+      }, {}),
+    [allActivities],
+  );
+
+  // View toggle button
+  const viewToggle = (
+    <div className="flex items-center gap-1 bg-white border-2 border-[#1A1A1A] rounded-lg p-0.5 shadow-[3px_3px_0px_#1A1A1A]">
+      <button
+        onClick={() => setView("list")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold transition-all",
+          view === "list"
+            ? "bg-[#111] text-white"
+            : "text-[#6B7280] hover:bg-[#f0f0ec]",
+        )}
+      >
+        <List size={14} />
+        List
+      </button>
+      <button
+        onClick={() => setView("calendar")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold transition-all",
+          view === "calendar"
+            ? "bg-[#111] text-white"
+            : "text-[#6B7280] hover:bg-[#f0f0ec]",
+        )}
+      >
+        <CalendarDays size={14} />
+        Calendar
+      </button>
+    </div>
+  );
 
   if (isLoading) {
     return (
       <div className="space-y-4">
+        <div className="flex justify-end">{viewToggle}</div>
         {[1, 2, 3].map((i) => (
           <div
             key={i}
@@ -600,15 +648,21 @@ export function ItineraryTab({
 
   return (
     <div className="space-y-4">
-      {days.map((day, i) => (
-        <DayCard
-          key={day._id}
-          day={day}
-          dayIndex={i}
-          tripId={tripId}
-          canEdit={canEdit}
-        />
-      ))}
+      <div className="flex justify-end">{viewToggle}</div>
+
+      {view === "calendar" ? (
+        <CalendarView days={days} activitiesByDay={activitiesByDay} />
+      ) : (
+        days.map((day, i) => (
+          <DayCard
+            key={day._id}
+            day={day}
+            dayIndex={i}
+            tripId={tripId}
+            canEdit={canEdit}
+          />
+        ))
+      )}
     </div>
   );
 }

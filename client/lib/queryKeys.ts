@@ -15,4 +15,5 @@ export const queryKeys = {
   tripReservations: (id: string) => ["trips", id, "reservations"] as const,
   tripComments: (id: string, targetType?: string, targetId?: string) =>
     ["trips", id, "comments", targetType, targetId].filter(Boolean) as string[],
+  tripAllActivities: (id: string) => ["trips", id, "activities"] as const,
 };

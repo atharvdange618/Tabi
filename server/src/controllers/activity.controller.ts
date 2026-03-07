@@ -7,6 +7,20 @@ import type {
 } from "../../../shared/validations/index.ts";
 
 /**
+ * GET /api/v1/trips/:id/activities
+ * Retrieve all activities for every day of a trip (used by calendar view).
+ */
+export async function getAllTripActivities(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const activities = await activityService.getActivitiesForTrip(
+    req.params.id as string,
+  );
+  res.json({ data: activities });
+}
+
+/**
  * GET /api/v1/trips/:id/days/:dayId/activities
  * Retrieve all activities for a day
  */

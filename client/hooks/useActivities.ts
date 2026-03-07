@@ -18,6 +18,20 @@ export function useActivities(tripId: string, dayId: string) {
   });
 }
 
+export function useAllActivities(tripId: string) {
+  return useQuery({
+    queryKey: queryKeys.tripAllActivities(tripId),
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<Activity[]>>(
+        `/api/v1/trips/${tripId}/activities`,
+      );
+      return data.data;
+    },
+    enabled: !!tripId,
+    refetchInterval: 30_000,
+  });
+}
+
 export function useCreateActivity(tripId: string, dayId: string) {
   const queryClient = useQueryClient();
 
