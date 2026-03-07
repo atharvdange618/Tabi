@@ -13,6 +13,7 @@ import {
   PanelLeft,
   ArrowLeft,
   Menu,
+  Settings,
 } from "lucide-react";
 import { useTripStore } from "@/store/tripStore";
 import { useTrip } from "@/hooks/useTrips";
@@ -32,6 +33,7 @@ const navItems = [
   { label: "Files", href: "files", icon: FileText },
   { label: "Reservations", href: "reservations", icon: Bookmark },
   { label: "Budget", href: "budget", icon: Wallet },
+  { label: "Settings", href: "settings", icon: Settings },
 ];
 
 function NavLinks({
