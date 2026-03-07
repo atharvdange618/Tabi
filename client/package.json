@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "shared": "workspace:*",
     "@clerk/nextjs": "^6.39.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
@@ -29,6 +28,7 @@
     "react-hook-form": "^7.71.2",
     "react-icons": "^5.5.0",
     "recharts": "^3.7.0",
+    "shared": "workspace:*",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
