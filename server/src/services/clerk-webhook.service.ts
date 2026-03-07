@@ -8,18 +8,26 @@ export const processUserCreated = async (
   const email = getPrimaryEmail(data);
   const name = getFullName(data);
 
-  await User.findOneAndUpdate(
-    { clerkId: data.id },
-    {
-      $setOnInsert: { clerkId: data.id },
-      $set: {
-        email,
-        name,
-        avatarUrl: data.image_url,
+  try {
+    await User.findOneAndUpdate(
+      { clerkId: data.id },
+      {
+        $setOnInsert: { clerkId: data.id },
+        $set: { email, name, avatarUrl: data.image_url },
       },
-    },
-    { upsert: true, returnDocument: "after" },
-  );
+      { upsert: true, returnDocument: "after" },
+    );
+  } catch (err) {
+    const mongoErr = err as { code?: number };
+    if (mongoErr.code === 11000) {
+      await User.findOneAndUpdate(
+        { email },
+        { $set: { clerkId: data.id, name, avatarUrl: data.image_url } },
+      );
+    } else {
+      throw err;
+    }
+  }
 };
 
 export const processUserUpdated = async (

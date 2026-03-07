@@ -70,14 +70,31 @@ export async function resolveDbUser(
         [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") ||
         "Unknown";
 
-      user = await User.findOneAndUpdate(
-        { clerkId },
-        {
-          $setOnInsert: { clerkId },
-          $set: { email, name, avatarUrl: clerkUser.imageUrl },
-        },
-        { upsert: true, returnDocument: "after" },
-      );
+      try {
+        user = await User.findOneAndUpdate(
+          { clerkId },
+          {
+            $setOnInsert: { clerkId },
+            $set: { email, name, avatarUrl: clerkUser.imageUrl },
+          },
+          { upsert: true, returnDocument: "after" },
+        );
+      } catch (err) {
+        const mongoErr = err as { code?: number };
+        if (mongoErr.code === 11000) {
+          user = await User.findOneAndUpdate(
+            { email },
+            { $set: { clerkId, name, avatarUrl: clerkUser.imageUrl } },
+            { returnDocument: "after" },
+          );
+          logger.warn("resolveDbUser - JIT sync: merged duplicate email doc", {
+            clerkId,
+            email,
+          });
+        } else {
+          throw err;
+        }
+      }
 
       logger.info("resolveDbUser - JIT sync: user created from Clerk", {
         clerkId,
