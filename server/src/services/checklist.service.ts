@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Checklist, ChecklistItem } from "../models/index.ts";
-import { NotFoundError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import type {
   CreateChecklistPayload,
   UpdateChecklistPayload,
@@ -39,6 +40,13 @@ export async function createChecklist(
   userId: string,
   payload: CreateChecklistPayload,
 ) {
+  const checklistCount = await Checklist.countDocuments({ tripId });
+  if (checklistCount >= LIMITS.CHECKLISTS_PER_TRIP) {
+    throw new LimitExceededError(
+      `A trip can have at most ${LIMITS.CHECKLISTS_PER_TRIP} checklists (${checklistCount}/${LIMITS.CHECKLISTS_PER_TRIP})`,
+    );
+  }
+
   const lastChecklist = await Checklist.findOne({ tripId })
     .sort({ position: -1 })
     .lean();
@@ -97,6 +105,13 @@ export async function createItem(
   const checklist = await Checklist.findOne({ _id: clId, tripId }).lean();
   if (!checklist) {
     throw new NotFoundError("Checklist not found");
+  }
+
+  const itemCount = await ChecklistItem.countDocuments({ checklistId: clId });
+  if (itemCount >= LIMITS.ITEMS_PER_CHECKLIST) {
+    throw new LimitExceededError(
+      `A checklist can have at most ${LIMITS.ITEMS_PER_CHECKLIST} items (${itemCount}/${LIMITS.ITEMS_PER_CHECKLIST})`,
+    );
   }
 
   const lastItem = await ChecklistItem.findOne({ checklistId: clId })

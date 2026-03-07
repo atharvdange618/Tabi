@@ -4,9 +4,11 @@ import { TripMember, PendingInvite, User, Trip } from "../models/index.ts";
 import {
   ConflictError,
   ForbiddenError,
+  LimitExceededError,
   NotFoundError,
   ValidationError,
 } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import {
   TripMemberRole,
   TripMemberStatus,
@@ -69,6 +71,17 @@ export async function inviteMember(
 ) {
   const email = payload.email.toLowerCase();
   const role = payload.role;
+
+  const [memberCount, pendingInviteCount] = await Promise.all([
+    TripMember.countDocuments({ tripId }),
+    PendingInvite.countDocuments({ tripId }),
+  ]);
+  const totalOccupied = memberCount + pendingInviteCount;
+  if (totalOccupied >= LIMITS.MEMBERS_PER_TRIP) {
+    throw new LimitExceededError(
+      `A trip can have at most ${LIMITS.MEMBERS_PER_TRIP} members (${totalOccupied}/${LIMITS.MEMBERS_PER_TRIP})`,
+    );
+  }
 
   const existingUser = await User.findOne({ email }).lean();
 
@@ -240,6 +253,44 @@ export async function declineInvite(token: string, decliningUserId: string) {
 }
 
 /**
+ * Return a lightweight preview of a pending invite.
+ * Does NOT consume or modify the invite.
+ */
+export async function getInvitePreview(token: string) {
+  const invite = await PendingInvite.findOne({
+    token,
+    expiresAt: { $gt: new Date() },
+  })
+    .populate<{ invitedBy: { name?: string; email?: string } | null }>(
+      "invitedBy",
+      "name email",
+    )
+    .lean();
+
+  if (!invite) {
+    throw new NotFoundError("Invite not found or has expired");
+  }
+
+  const trip = await Trip.findById(invite.tripId)
+    .select("title destination")
+    .lean();
+
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+
+  return {
+    tripName: trip.title,
+    tripDestination: trip.destination || null,
+    invitedByName:
+      invite.invitedBy?.name ?? invite.invitedBy?.email ?? "Someone",
+    invitedEmail: invite.email,
+    role: invite.role,
+    expiresAt: invite.expiresAt,
+  };
+}
+
+/**
  * Update a member's role. Owner-only operation.
  * Cannot change own role. Cannot set role to 'owner'.
  */
@@ -331,4 +382,56 @@ export async function removeMember(
   }
 
   await TripMember.deleteOne({ _id: member._id });
+}
+
+/**
+ * Revoke a pending invite by its ID. Owner-only operation.
+ */
+export async function revokeInvite(
+  tripId: string,
+  id: string,
+  requestingUserId: string,
+) {
+  const requestingMember = await TripMember.findOne({
+    tripId,
+    userId: requestingUserId,
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!requestingMember || requestingMember.role !== TripMemberRole.OWNER) {
+    throw new ForbiddenError("Only the trip owner can revoke invitations");
+  }
+
+  let invite = await PendingInvite.findOne({ _id: id, tripId });
+
+  if (!invite) {
+    const pendingMember = await TripMember.findOne({
+      _id: id,
+      tripId,
+      status: TripMemberStatus.PENDING,
+    }).populate<{ userId: { email?: string } }>("userId", "email");
+
+    if (!pendingMember) {
+      throw new NotFoundError("Invite not found");
+    }
+
+    const email = (pendingMember.userId as { email?: string }).email;
+    if (email) {
+      invite = await PendingInvite.findOne({ tripId, email });
+    }
+
+    await TripMember.deleteOne({ _id: pendingMember._id });
+  }
+
+  if (invite) {
+    const invitedUser = await User.findOne({ email: invite.email }).lean();
+    if (invitedUser) {
+      await TripMember.deleteOne({
+        tripId,
+        userId: invitedUser._id,
+        status: TripMemberStatus.PENDING,
+      });
+    }
+    await PendingInvite.deleteOne({ _id: invite._id });
+  }
 }

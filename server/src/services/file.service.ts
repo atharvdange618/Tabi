@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import streamifier from "streamifier";
 import { File } from "../models/index.ts";
-import { NotFoundError, ValidationError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError, ValidationError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import cloudinary from "../lib/cloudinary.ts";
 import type { CloudinaryResourceType } from "../models/File.ts";
 
@@ -46,6 +47,13 @@ export async function uploadFile(
 ) {
   if (file.buffer.length === 0) {
     throw new ValidationError("Empty file");
+  }
+
+  const fileCount = await File.countDocuments({ tripId });
+  if (fileCount >= LIMITS.FILES_PER_TRIP) {
+    throw new LimitExceededError(
+      `A trip can have at most ${LIMITS.FILES_PER_TRIP} files (${fileCount}/${LIMITS.FILES_PER_TRIP})`,
+    );
   }
 
   const resourceType = getResourceType(file.mimetype);

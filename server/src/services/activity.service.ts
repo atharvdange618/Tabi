@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Activity, Day } from "../models/index.ts";
-import { NotFoundError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import type {
   CreateActivityPayload,
   UpdateActivityPayload,
@@ -20,6 +21,14 @@ export async function getActivitiesForDay(tripId: string, dayId: string) {
 }
 
 /**
+ * Get all activities across every day of a trip.
+ * Used by the calendar view to fetch data in a single request.
+ */
+export async function getActivitiesForTrip(tripId: string) {
+  return Activity.find({ tripId }).sort({ dayId: 1, position: 1 }).lean();
+}
+
+/**
  * Creates a new activity. Appends it to the end of the day by calculating
  * the highest current position + 1024.
  */
@@ -32,6 +41,13 @@ export async function createActivity(
   const day = await Day.findOne({ _id: dayId, tripId }).lean();
   if (!day) {
     throw new NotFoundError("Day not found");
+  }
+
+  const activityCount = await Activity.countDocuments({ dayId });
+  if (activityCount >= LIMITS.ACTIVITIES_PER_DAY) {
+    throw new LimitExceededError(
+      `A day can have at most ${LIMITS.ACTIVITIES_PER_DAY} activities (${activityCount}/${LIMITS.ACTIVITIES_PER_DAY})`,
+    );
   }
 
   const lastActivity = await Activity.findOne({ dayId })

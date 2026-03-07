@@ -85,6 +85,7 @@ export interface Trip {
   destination?: string;
   startDate: string;
   endDate: string;
+  initialBudget?: number;
   travelerCount?: number;
   coverImageUrl?: string;
   isPublic?: boolean;

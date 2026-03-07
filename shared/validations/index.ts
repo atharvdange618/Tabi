@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIMITS } from "../constants.ts";
 
 // ============================================================
 // Shared Zod Schemas for Tabi
@@ -38,16 +39,31 @@ export const expenseCategories = [
 
 // --- Trip Schemas ---
 
-export const createTripSchema = z.object({
-  title: z.string().min(1, "Title is required").max(100),
-  description: z.string().max(500).optional(),
-  destination: z.string().max(200).optional(),
-  startDate: z.string().datetime({ message: "Invalid start date" }),
-  endDate: z.string().datetime({ message: "Invalid end date" }),
-  travelerCount: z.number().int().positive().optional(),
-  coverImageUrl: z.string().url().optional(),
-  isPublic: z.boolean().optional(),
-});
+export const createTripSchema = z
+  .object({
+    title: z.string().min(1, "Title is required").max(100),
+    description: z.string().max(500).optional(),
+    destination: z.string().max(200).optional(),
+    startDate: z.string().datetime({ message: "Invalid start date" }),
+    endDate: z.string().datetime({ message: "Invalid end date" }),
+    travelerCount: z.number().int().positive().optional(),
+    coverImageUrl: z.string().url().optional(),
+    isPublic: z.boolean().optional(),
+    initialBudget: z.number().nonnegative().optional(),
+  })
+  .refine(
+    (data) => {
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      const diffDays =
+        (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays + 1 <= LIMITS.TRIP_MAX_DAYS;
+    },
+    {
+      message: `Trip duration cannot exceed ${LIMITS.TRIP_MAX_DAYS} days`,
+      path: ["endDate"],
+    },
+  );
 
 export const updateTripSchema = createTripSchema.partial();
 

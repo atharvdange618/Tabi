@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Reservation } from "../models/index.ts";
-import { NotFoundError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import type {
   CreateReservationPayload,
   UpdateReservationPayload,
@@ -21,6 +22,13 @@ export async function createReservation(
   userId: string,
   payload: CreateReservationPayload,
 ) {
+  const reservationCount = await Reservation.countDocuments({ tripId });
+  if (reservationCount >= LIMITS.RESERVATIONS_PER_TRIP) {
+    throw new LimitExceededError(
+      `A trip can have at most ${LIMITS.RESERVATIONS_PER_TRIP} reservations (${reservationCount}/${LIMITS.RESERVATIONS_PER_TRIP})`,
+    );
+  }
+
   return Reservation.create({
     ...payload,
     tripId: new mongoose.Types.ObjectId(tripId),

@@ -1,5 +1,6 @@
 import { Comment } from "../models/Comment.ts";
-import { NotFoundError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import type {
   CreateCommentPayload,
   UpdateCommentPayload,
@@ -27,6 +28,16 @@ export async function createComment(
   authorId: string,
   data: CreateCommentPayload,
 ) {
+  const commentCount = await Comment.countDocuments({
+    tripId,
+    targetId: data.targetId,
+  });
+  if (commentCount >= LIMITS.COMMENTS_PER_TARGET) {
+    throw new LimitExceededError(
+      `A target can have at most ${LIMITS.COMMENTS_PER_TARGET} comments (${commentCount}/${LIMITS.COMMENTS_PER_TARGET})`,
+    );
+  }
+
   const comment = new Comment({
     tripId,
     authorId,

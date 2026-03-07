@@ -5,7 +5,8 @@ import {
   Settlement,
   TripMember,
 } from "../models/index.ts";
-import { NotFoundError } from "../lib/errors.ts";
+import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import type {
   UpdateBudgetSettingsPayload,
   CreateExpensePayload,
@@ -59,6 +60,13 @@ export async function createExpense(
   userId: string,
   payload: CreateExpensePayload,
 ) {
+  const expenseCount = await Expense.countDocuments({ tripId });
+  if (expenseCount >= LIMITS.EXPENSES_PER_TRIP) {
+    throw new LimitExceededError(
+      `A trip can have at most ${LIMITS.EXPENSES_PER_TRIP} expenses (${expenseCount}/${LIMITS.EXPENSES_PER_TRIP})`,
+    );
+  }
+
   return Expense.create({
     ...payload,
     tripId: new mongoose.Types.ObjectId(tripId),

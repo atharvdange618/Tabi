@@ -16,9 +16,11 @@ import {
 } from "../models/index.ts";
 import {
   ForbiddenError,
+  LimitExceededError,
   NotFoundError,
   ValidationError,
 } from "../lib/errors.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import {
   TripMemberRole,
   TripMemberStatus,
@@ -41,6 +43,15 @@ type TripDoc = HydratedDocument<
 export async function createTrip(userId: string, payload: CreateTripPayload) {
   const startDate = new Date(payload.startDate);
   const endDate = new Date(payload.endDate);
+
+  const ownedTrips = await Trip.countDocuments({
+    createdBy: new mongoose.Types.ObjectId(userId),
+  });
+  if (ownedTrips >= LIMITS.TRIPS_PER_USER) {
+    throw new LimitExceededError(
+      `You can own at most ${LIMITS.TRIPS_PER_USER} trips (${ownedTrips}/${LIMITS.TRIPS_PER_USER})`,
+    );
+  }
 
   if (endDate < startDate) {
     throw new ValidationError("endDate must be on or after startDate");
@@ -91,6 +102,18 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
         await Day.insertMany(
           dates.map((date) => ({ tripId: created._id, date })),
           { ordered: false, session },
+        );
+      }
+
+      if (payload.initialBudget !== undefined) {
+        await BudgetSettings.create(
+          [
+            {
+              tripId: created._id,
+              totalBudget: payload.initialBudget,
+            },
+          ],
+          { session },
         );
       }
     });
@@ -329,6 +352,13 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
   if (datesChanged) {
     if (newEndDate < newStartDate) {
       throw new ValidationError("endDate must be on or after startDate");
+    }
+    const diffDays =
+      (newEndDate.getTime() - newStartDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays + 1 > LIMITS.TRIP_MAX_DAYS) {
+      throw new ValidationError(
+        `Trip duration cannot exceed ${LIMITS.TRIP_MAX_DAYS} days`,
+      );
     }
     updates.startDate = newStartDate;
     updates.endDate = newEndDate;

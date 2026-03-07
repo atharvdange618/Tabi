@@ -41,3 +41,9 @@ export class UnauthorizedError extends AppError {
     super(message, 401);
   }
 }
+
+export class LimitExceededError extends AppError {
+  constructor(message = "Limit exceeded") {
+    super(message, 422);
+  }
+}
