@@ -36,7 +36,7 @@ export function HowItWorks() {
           {steps.map((step, i) => (
             <div
               key={step.num}
-              className={`flex gap-7 items-start p-9 border-2 border-[#1A1A1A] rounded-xl bg-white shadow-[4px_4px_0px_#1A1A1A] ${i < 2 ? "mb-5" : "mb-0"}`}
+              className={`flex gap-4 sm:gap-7 items-start p-5 sm:p-9 border-2 border-[#1A1A1A] rounded-xl bg-white shadow-[4px_4px_0px_#1A1A1A] ${i < 2 ? "mb-5" : "mb-0"}`}
             >
               <div className={`step-number ${step.bg}`}>{step.num}</div>
               <div>

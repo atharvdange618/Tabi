@@ -9,9 +9,9 @@ import {
 
 export function HeroSection() {
   return (
-    <section className="hero-grid max-w-[1200px] mx-auto pt-20 pb-[100px] px-6">
-      <div className="flex flex-row items-center justify-between gap-12 flex-wrap">
-        <div className="flex-1 min-w-[300px] max-w-[540px]">
+    <section className="hero-grid max-w-[1200px] mx-auto pt-14 sm:pt-20 pb-16 sm:pb-[100px] px-4 sm:px-6">
+      <div className="flex flex-row items-center justify-between gap-8 sm:gap-12 flex-wrap">
+        <div className="flex-1 min-w-[260px] max-w-[540px]">
           <div className="anim-1">
             <span className="badge tag-rotate-1 inline-flex bg-[#FFF3B0] mb-6">
               Shared group workspace
@@ -31,8 +31,8 @@ export function HeroSection() {
 
           <p className="anim-3 text-lg text-gray-500 leading-relaxed max-w-[460px] mb-9 font-medium">
             Tabi brings your whole group onto one shared itinerary. Build day
-            plans, split expenses, store files all in one place, no WhatsApp groups
-            required.
+            plans, split expenses, store files all in one place, no WhatsApp
+            groups required.
           </p>
 
           <div className="anim-4 flex gap-3 flex-wrap">
@@ -71,7 +71,7 @@ export function HeroSection() {
           </div>
         </div>
 
-        <div className="flex-1 min-w-[300px] max-w-[480px] relative h-[440px]">
+        <div className="hidden md:block flex-1 min-w-[300px] max-w-[480px] relative h-[440px]">
           <div className="float-card-reverse absolute top-5 right-0 w-[260px] bg-[#FFD6C0] border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-4 -rotate-2 z-10">
             <div className="flex items-center gap-2 mb-3">
               <BadgeIndianRupee

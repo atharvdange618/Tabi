@@ -3,7 +3,7 @@ import Link from "next/link";
 export function HomeFooter() {
   return (
     <footer className="border-t-2 border-[#1A1A1A] bg-white">
-      <div className="max-w-[1100px] mx-auto py-10 px-6 flex items-center justify-between gap-4 flex-wrap">
+      <div className="max-w-[1100px] mx-auto py-6 px-6 flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2.5">
           <div className="border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] bg-[#93CDFF] rounded-md w-7 h-7 flex items-center justify-center text-sm font-kanji">
             旅
@@ -27,6 +27,13 @@ export function HomeFooter() {
               {link}
             </Link>
           ))}
+
+          <Link
+            href="/story"
+            className="font-bold text-[13px] text-[#111111] no-underline"
+          >
+            The Story ❤️
+          </Link>
         </div>
       </div>
     </footer>
