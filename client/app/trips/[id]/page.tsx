@@ -9,7 +9,7 @@ import {
   ArrowLeft,
   Calendar,
   CheckCircle2,
-  DollarSign,
+  BadgeIndianRupee,
   FileText,
   Globe,
   MapPin,
@@ -40,10 +40,11 @@ import { ReservationsTab } from "@/components/trips/tabs/ReservationsTab";
 import { MembersTab } from "@/components/trips/tabs/MembersTab";
 import { SettingsTab } from "@/components/trips/tabs/SettingsTab";
 import TripEditSheet from "@/components/trips/TripEditSheet";
+import { TabValue, useTripStore } from "@/store/tripStore";
 
 const TAB_CONFIG = [
   { value: "itinerary", label: "Itinerary", Icon: Calendar },
-  { value: "budget", label: "Budget", Icon: DollarSign },
+  { value: "budget", label: "Budget", Icon: BadgeIndianRupee },
   { value: "files", label: "Files", Icon: FileText },
   { value: "checklists", label: "Checklists", Icon: CheckCircle2 },
   { value: "reservations", label: "Reservations", Icon: MapPin },
@@ -58,7 +59,8 @@ export default function TripPage() {
   const { data: trip, isPending: tripPending } = useTrip(tripId);
   const { data: membersData } = useMembers(tripId);
 
-  const [activeTab, setActiveTab] = useState("itinerary");
+  const { getActiveTab, setActiveTab } = useTripStore();
+  const activeTab = getActiveTab(tripId);
   const [editSheetOpen, setEditSheetOpen] = useState(false);
 
   const displayRole = mapRole(trip?.role ?? "viewer");
@@ -258,7 +260,7 @@ export default function TripPage() {
 
             {isOwner && (
               <button
-                onClick={() => setActiveTab("members")}
+                onClick={() => setActiveTab(tripId, "members")}
                 className={`shrink-0 flex items-center gap-1.5 h-auto px-4 py-2 text-sm font-bold border-2 border-[#1A1A1A] rounded-lg shadow-[4px_4px_0px_#1A1A1A] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1A1A1A] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#1A1A1A] transition-all duration-150 ${
                   trip.coverImageUrl
                     ? "bg-white text-[#111]"
@@ -273,7 +275,10 @@ export default function TripPage() {
         </div>
 
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(t) => setActiveTab(tripId, t as TabValue)}
+          >
             <div className="overflow-x-auto pb-1 mb-6">
               <TabsList className="bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-1 h-auto gap-1 w-max">
                 {TAB_CONFIG.map(({ value, label, Icon }) => (
