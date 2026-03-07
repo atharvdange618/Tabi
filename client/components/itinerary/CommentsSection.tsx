@@ -26,7 +26,6 @@ interface CommentsSectionProps {
   targetId: string;
 }
 
-// Extended type for populated comment from API
 interface PopulatedComment extends Omit<Comment, "authorId"> {
   authorId: {
     _id: string;
@@ -148,7 +147,6 @@ export default function CommentsSection({
 
   return (
     <div className="mt-3">
-      {/* Header */}
       <Button
         variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
@@ -164,7 +162,6 @@ export default function CommentsSection({
         </span>
       </Button>
 
-      {/* Comments List */}
       {isOpen && (
         <div className="mt-3 pl-6 space-y-2">
           {isLoading ? (
@@ -198,7 +195,6 @@ export default function CommentsSection({
             </p>
           )}
 
-          {/* Add Comment Form */}
           <form onSubmit={handleSubmit} className="flex gap-2 pt-2">
             <Textarea
               value={newComment}

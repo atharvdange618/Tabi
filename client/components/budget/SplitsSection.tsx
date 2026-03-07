@@ -14,7 +14,13 @@ import {
 import { useSplits, useCreateSettlement } from "../../hooks/useBudget";
 import type { SplitBalance } from "shared/types";
 
-export function SplitsSection({ tripId }: { tripId: string }) {
+export function SplitsSection({
+  tripId,
+  canEdit,
+}: {
+  tripId: string;
+  canEdit: boolean;
+}) {
   const { data: splits, isLoading } = useSplits(tripId);
   const createSettlement = useCreateSettlement(tripId);
   const [pending, setPending] = useState<SplitBalance | null>(null);
@@ -66,6 +72,7 @@ export function SplitsSection({ tripId }: { tripId: string }) {
                 <span className="text-sm font-bold font-mono shrink-0">
                   ₹{split.amount.toLocaleString("en-IN")}
                 </span>
+                {canEdit && (
                 <Button
                   variant="ghost"
                   onClick={() => setPending(split)}
@@ -73,13 +80,13 @@ export function SplitsSection({ tripId }: { tripId: string }) {
                 >
                   Mark as Settled
                 </Button>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Settlement confirmation dialog */}
       <Dialog
         open={!!pending}
         onOpenChange={(open) => !open && setPending(null)}
