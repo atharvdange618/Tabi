@@ -33,7 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { useTrips, useCreateTrip, useDeleteTrip } from "@/hooks/useTrips";
+import { useTrips, useDeleteTrip } from "@/hooks/useTrips";
 import type { DashboardTrip } from "shared/types";
 import {
   ACCENT_COLORS,
@@ -44,6 +44,7 @@ import {
   MEMBER_COLORS,
 } from "@/lib/helpers";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import CreateTripForm from "@/components/trips/CreateTripForm";
 
 type TripStatus = "upcoming" | "planning" | "completed";
 
@@ -294,19 +295,23 @@ function TripCard({
             </span>
           </div>
 
-          {trip.status !== "completed" && (
-            <div className="mt-3 pt-3 border-t border-[#f3f4f6] flex items-center justify-between">
+          <div className="mt-3 pt-3 border-t border-[#f3f4f6] flex items-center justify-between">
+            {trip.status !== "completed" ? (
               <p className="flex items-center gap-1 text-[11px] font-semibold text-[#9CA3AF]">
                 <Clock size={11} />
                 {trip.daysUntil > 0
                   ? `${trip.daysUntil} days away`
                   : "Happening now"}
               </p>
-              <span className="flex items-center gap-1 text-[11px] font-bold text-[#111] opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                Open <ArrowRight size={11} />
+            ) : (
+              <span className="text-[11px] font-semibold text-[#9CA3AF]">
+                Trip completed
               </span>
-            </div>
-          )}
+            )}
+            <span className="flex items-center gap-1 text-[11px] font-bold text-[#111] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150">
+              View trip <ArrowRight size={11} />
+            </span>
+          </div>
         </div>
       </div>
     </Link>
@@ -355,17 +360,10 @@ function TripCardSkeleton() {
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filterOptions)[number]>("all");
-  const [form, setForm] = useState({
-    title: "",
-    destination: "",
-    startDate: "",
-    endDate: "",
-  });
 
   const { user } = useUser();
   const { signOut } = useClerk();
   const { data: rawTrips = [], isLoading } = useTrips();
-  const createTrip = useCreateTrip();
   const deleteTrip = useDeleteTrip();
 
   const trips: NormalizedTrip[] = rawTrips.map(normalizeTrip);
@@ -382,18 +380,6 @@ export default function DashboardPage() {
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-
-  async function handleCreateTrip() {
-    if (!form.title || !form.startDate || !form.endDate) return;
-    await createTrip.mutateAsync({
-      title: form.title,
-      destination: form.destination,
-      startDate: new Date(form.startDate).toISOString(),
-      endDate: new Date(form.endDate).toISOString(),
-    });
-    setForm({ title: "", destination: "", startDate: "", endDate: "" });
-    setCreateOpen(false);
-  }
 
   return (
     <div className="min-h-screen bg-brand-cream font-body text-[#111] flex flex-col">
@@ -464,75 +450,8 @@ export default function DashboardPage() {
                   Create a new trip
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">
-                    Trip name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Kyoto Explorer"
-                    value={form.title}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, title: e.target.value }))
-                    }
-                    className="w-full border-2 border-[#1A1A1A] rounded-lg px-3 py-2.5 text-sm font-medium placeholder:text-[#9CA3AF] focus:outline-none focus:shadow-[3px_3px_0px_#93CDFF] transition-shadow"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">
-                    Destination
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Kyoto, Japan"
-                    value={form.destination}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, destination: e.target.value }))
-                    }
-                    className="w-full border-2 border-[#1A1A1A] rounded-lg px-3 py-2.5 text-sm font-medium placeholder:text-[#9CA3AF] focus:outline-none focus:shadow-[3px_3px_0px_#93CDFF] transition-shadow"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">
-                      Start date
-                    </label>
-                    <input
-                      type="date"
-                      value={form.startDate}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, startDate: e.target.value }))
-                      }
-                      className="w-full border-2 border-[#1A1A1A] rounded-lg px-3 py-2.5 text-sm font-medium focus:outline-none focus:shadow-[3px_3px_0px_#93CDFF] transition-shadow"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#6B7280] mb-1.5">
-                      End date
-                    </label>
-                    <input
-                      type="date"
-                      value={form.endDate}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, endDate: e.target.value }))
-                      }
-                      className="w-full border-2 border-[#1A1A1A] rounded-lg px-3 py-2.5 text-sm font-medium focus:outline-none focus:shadow-[3px_3px_0px_#93CDFF] transition-shadow"
-                    />
-                  </div>
-                </div>
-                <Button
-                  onClick={handleCreateTrip}
-                  disabled={
-                    createTrip.isPending ||
-                    !form.title ||
-                    !form.startDate ||
-                    !form.endDate
-                  }
-                  className="w-full bg-brand-blue text-[#111] border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1A1A1A] hover:bg-brand-blue transition-all duration-150 h-auto py-2.5 rounded-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#1A1A1A]"
-                >
-                  {createTrip.isPending ? "Creating…" : "Create trip"}
-                </Button>
+              <div className="pt-2 px-1">
+                <CreateTripForm onSuccess={() => setCreateOpen(false)} />
               </div>
             </DialogContent>
           </Dialog>

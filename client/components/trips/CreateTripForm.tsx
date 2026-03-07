@@ -22,10 +22,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
-export default function CreateTripForm() {
+export default function CreateTripForm({
+  onSuccess,
+}: { onSuccess?: () => void } = {}) {
   const createTrip = useCreateTrip();
 
   const form = useForm<CreateTripPayload>({
@@ -33,12 +35,17 @@ export default function CreateTripForm() {
     defaultValues: {
       title: "",
       description: "",
+      destination: "",
       travelerCount: 1,
     },
   });
 
   function onSubmit(data: CreateTripPayload) {
-    createTrip.mutate(data);
+    createTrip.mutate(data, {
+      onSuccess: () => {
+        onSuccess?.();
+      },
+    });
   }
 
   return (
@@ -56,6 +63,26 @@ export default function CreateTripForm() {
                 <Input
                   {...field}
                   placeholder="e.g. Tokyo Spring 2026"
+                  className="brutal-input"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="destination"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-semibold font-display">
+                Destination
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  placeholder="e.g. Kyoto, Japan"
                   className="brutal-input"
                 />
               </FormControl>
@@ -123,7 +150,7 @@ export default function CreateTripForm() {
                       onSelect={(date) =>
                         field.onChange(date?.toISOString() || "")
                       }
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => date < startOfDay(new Date())}
                       initialFocus
                     />
                   </PopoverContent>
@@ -172,8 +199,8 @@ export default function CreateTripForm() {
                       }
                       disabled={(date) => {
                         const minDate = form.getValues("startDate")
-                          ? new Date(form.getValues("startDate"))
-                          : new Date();
+                          ? startOfDay(new Date(form.getValues("startDate")))
+                          : startOfDay(new Date());
                         return date < minDate;
                       }}
                       initialFocus
@@ -186,31 +213,67 @@ export default function CreateTripForm() {
           />
         </div>
 
-        <FormField
-          control={form.control}
-          name="travelerCount"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-sm font-semibold font-display">
-                Number of Travelers
-              </FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  placeholder="e.g. 4"
-                  className="brutal-input max-w-xs"
-                  onChange={(e) =>
-                    field.onChange(parseInt(e.target.value) || 1)
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="travelerCount"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-semibold font-display">
+                  Number of Travelers
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    placeholder="e.g. 4"
+                    className="brutal-input w-full"
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value) || 1)
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="initialBudget"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-semibold font-display">
+                  Initial Budget
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    placeholder="e.g. 5000"
+                    className="brutal-input w-full"
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value
+                        ? parseInt(e.target.value)
+                        : undefined;
+                      field.onChange(value);
+                    }}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  You can update the budget anytime from the trip&apos;s
+                  Settings tab.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button
