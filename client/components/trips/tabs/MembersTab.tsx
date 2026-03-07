@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, UserPlus } from "lucide-react";
+import { Clock, MoreHorizontal, UserPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,6 +34,7 @@ import {
   useInviteMember,
   useUpdateMemberRole,
   useRemoveMember,
+  useRevokeInvite,
 } from "@/hooks/useMembers";
 import { toInitials, memberBg, mapRole } from "@/lib/helpers";
 
@@ -48,8 +49,10 @@ export function MembersTab({
   const inviteMember = useInviteMember(tripId);
   const updateRole = useUpdateMemberRole(tripId);
   const removeMember = useRemoveMember(tripId);
+  const revokeInvite = useRevokeInvite(tripId);
 
   const active = membersData?.active ?? [];
+  const pending = membersData?.pending ?? [];
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -180,6 +183,60 @@ export function MembersTab({
         })}
       </div>
 
+      {pending.length > 0 && (
+        <div className="mt-6">
+          <p className="font-display font-bold text-sm uppercase tracking-wide text-[#6B7280] mb-3 flex items-center gap-1.5">
+            <Clock size={13} />
+            Pending Invites ({pending.length})
+          </p>
+          <div className="space-y-2">
+            {pending.map((invite) => {
+              const { label, cls, Icon } = roleConfig[mapRole(invite.role)];
+              return (
+                <div
+                  key={invite._id}
+                  className="flex items-center gap-4 bg-white border-2 border-dashed border-[#1A1A1A] rounded-xl p-4"
+                >
+                  <div className="w-10 h-10 rounded-full border-2 border-dashed border-[#1A1A1A] bg-[#f4f4f5] flex items-center justify-center text-sm font-bold shrink-0 text-[#9CA3AF]">
+                    ?
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-[#6B7280]">
+                      {invite.email ?? invite.userId?.email ?? "Unknown"}
+                    </p>
+                    <p className="text-xs text-[#9CA3AF]">
+                      Invite sent · awaiting response
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      className={cn(
+                        "border text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 opacity-60",
+                        cls,
+                      )}
+                    >
+                      <Icon size={9} />
+                      {label}
+                    </Badge>
+                    {currentUserRole === "admin" && (
+                      <button
+                        onClick={() => revokeInvite.mutate(invite._id)}
+                        disabled={revokeInvite.isPending}
+                        title="Revoke invite"
+                        className="h-7 px-2 flex items-center gap-1 text-[11px] font-bold border-2 border-[#1A1A1A] rounded-lg shadow-[2px_2px_0px_#1A1A1A] bg-brand-coral text-[#111] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_#1A1A1A] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all disabled:opacity-50 disabled:pointer-events-none"
+                      >
+                        <X size={11} strokeWidth={2.5} />
+                        Revoke
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl max-w-sm">
           <DialogHeader>
@@ -187,6 +244,12 @@ export function MembersTab({
               Invite Member
             </DialogTitle>
           </DialogHeader>
+          <div className="rounded-lg bg-brand-lemon/40 border border-brand-lemon px-3 py-2.5 text-xs text-[#333] leading-relaxed">
+            <span className="font-bold text-[#111]">How it works: </span>
+            Enter the person&apos;s email below. They&apos;ll receive an email
+            with a link to accept or decline the invite. Once accepted, they
+            appear as an active member here.
+          </div>
           <div className="space-y-3">
             <div>
               <Label className="text-xs font-bold uppercase tracking-wide">

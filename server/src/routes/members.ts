@@ -38,6 +38,14 @@ router.patch(
   memberController.updateMemberRole,
 );
 
+// DELETE /api/v1/trips/:id/members/invites/:inviteId - revoke a pending invite (must be before /:uid)
+router.delete(
+  "/:id/members/invites/:inviteId",
+  ...auth,
+  requireRole(["owner"]),
+  memberController.revokeInvite,
+);
+
 // DELETE /api/v1/trips/:id/members/:uid - remove a member
 router.delete(
   "/:id/members/:uid",

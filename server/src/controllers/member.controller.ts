@@ -73,6 +73,38 @@ export async function removeMember(req: Request, res: Response): Promise<void> {
 }
 
 /**
+ * DELETE /api/v1/trips/:id/members/invites/:inviteId
+ * Revoke (cancel) a pending invite. Owner only.
+ */
+export async function revokeInvite(req: Request, res: Response): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  await memberService.revokeInvite(
+    req.params.id as string,
+    req.params.inviteId as string,
+    userId,
+  );
+  res.status(204).send();
+}
+
+/**
+ * GET /api/v1/invites/:token
+ * Return a lightweight preview of a pending invite.
+ */
+export async function getInvitePreview(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const preview = await memberService.getInvitePreview(
+    req.params.token as string,
+  );
+  res.json({ data: preview });
+}
+
+/**
  * POST /api/v1/invites/:token/accept
  * Accept a pending invite.
  */

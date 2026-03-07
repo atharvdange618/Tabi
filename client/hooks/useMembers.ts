@@ -92,6 +92,23 @@ export function useRemoveMember(tripId: string) {
   });
 }
 
+export function useRevokeInvite(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (inviteId: string) => {
+      await api.delete(`/api/v1/trips/${tripId}/members/invites/${inviteId}`);
+      return inviteId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      toast.success("Invite revoked");
+    },
+  });
+}
+
 export function useAcceptInvite() {
   const queryClient = useQueryClient();
 

@@ -6,6 +6,9 @@ const router = Router();
 
 const auth = [requireAuthentication, resolveDbUser] as const;
 
+// GET /api/v1/invites/:token - public preview
+router.get("/:token", memberController.getInvitePreview);
+
 // POST /api/v1/invites/:token/accept - accept a pending invite
 router.post("/:token/accept", ...auth, memberController.acceptInvite);
 
