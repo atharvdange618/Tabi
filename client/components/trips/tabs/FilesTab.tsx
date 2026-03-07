@@ -46,7 +46,7 @@ export function FilesTab({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-1">
         <p className="font-display font-bold text-base">
           {files.length} {files.length === 1 ? "file" : "files"}
         </p>
@@ -64,12 +64,18 @@ export function FilesTab({
             <input
               ref={fileInputRef}
               type="file"
+              accept=".jpg,.jpeg,.webp"
               className="hidden"
               onChange={handleFileChange}
             />
           </>
         )}
       </div>
+      {canEdit && (
+        <p className="text-xs text-muted-foreground mb-4">
+          JPEG, JPG, and WebP files are supported.
+        </p>
+      )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading

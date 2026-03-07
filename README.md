@@ -89,25 +89,25 @@ External Services
 
 ## Tech Stack
 
-| Layer        | Technology                 |
-| ------------ | -------------------------- |
-| Framework    | Next.js 16 (App Router)    |
-| Language     | TypeScript (strict)        |
-| Runtime      | Bun                        |
-| Styling      | Tailwind CSS + shadcn/ui   |
-| Server state | TanStack Query v5          |
-| Client state | Zustand                    |
-| API client   | Axios                      |
-| Auth         | Clerk                      |
-| Forms        | React Hook Form + Zod      |
-| Database     | MongoDB Atlas              |
-| ODM          | Mongoose                   |
-| Security     | Helmet, HPP                |
-| Media        | Cloudinary                 |
-| Charts       | Recharts                   |
-| Toasts       | Sonner                     |
-| Date picker  | react-day-picker           |
-| Icons        | Lucide React + react-icons |
+| Layer        | Technology               |
+| ------------ | ------------------------ |
+| Framework    | Next.js 16 (App Router)  |
+| Language     | TypeScript (strict)      |
+| Runtime      | Bun                      |
+| Styling      | Tailwind CSS + shadcn/ui |
+| Server state | TanStack Query v5        |
+| Client state | Zustand                  |
+| API client   | Axios                    |
+| Auth         | Clerk                    |
+| Forms        | React Hook Form + Zod    |
+| Database     | MongoDB Atlas            |
+| ODM          | Mongoose                 |
+| Security     | Helmet, HPP              |
+| Media        | Cloudinary               |
+| Charts       | Recharts                 |
+| Toasts       | Sonner                   |
+| Date picker  | react-day-picker         |
+| Icons        | Lucide React             |
 
 ---
 

@@ -203,9 +203,20 @@ export function ReservationsTab({
             ))}
 
         {!isLoading && !reservations.length && (
-          <p className="text-sm text-[#9CA3AF] font-medium text-center py-12">
-            No reservations yet.
-          </p>
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="font-display font-black text-xl uppercase text-[#9CA3AF]">
+              No reservations yet
+            </p>
+            {canEdit && (
+              <Button
+                className={cn(brutalBtnSm, "gap-1 mt-4")}
+                onClick={() => setAddOpen(true)}
+              >
+                <Plus size={12} />
+                Create one
+              </Button>
+            )}
+          </div>
         )}
       </div>
 

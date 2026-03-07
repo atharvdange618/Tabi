@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Users,
+  Banknote,
+  FolderOpen,
+  ClipboardList,
+  Ticket,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
@@ -40,9 +50,17 @@ const timeline = [
   },
 ];
 
-const features = [
+const features: {
+  Icon: LucideIcon;
+  animClass: string;
+  title: string;
+  description: string;
+  tag: string;
+  color: string;
+}[] = [
   {
-    emoji: "📅",
+    Icon: Calendar,
+    animClass: "icon-bounce",
     title: "The Itinerary That Actually Exists",
     description:
       "Day-by-day planning. Drag to reorder. Everyone can see it. Revolutionary, I know.",
@@ -50,7 +68,8 @@ const features = [
     color: "bg-brand-blue",
   },
   {
-    emoji: "👥",
+    Icon: Users,
+    animClass: "icon-pulse",
     title: "One Source of Truth",
     description:
       "Everyone has access to the same plan. No more 'let me send you the updated version'. One central place that everyone can see. Like a Google Doc but for trips and with better vibes.",
@@ -58,7 +77,8 @@ const features = [
     color: "bg-brand-mint",
   },
   {
-    emoji: "💸",
+    Icon: Banknote,
+    animClass: "icon-shake",
     title: "The Awkward Money Conversation, Automated",
     description:
       "Log expenses. Split them. See exactly who owes what. No voice notes. No 'oh I thought you were tracking it'. Just numbers, clean and honest.",
@@ -66,7 +86,8 @@ const features = [
     color: "bg-brand-peach",
   },
   {
-    emoji: "📁",
+    Icon: FolderOpen,
+    animClass: "icon-float",
     title: "Files That Don't Live in 7 Different Chats",
     description:
       "Flight tickets. Hotel confirmations. That one screenshot with the booking reference you forwarded to yourself at 5am. All in one place, attached to the trip.",
@@ -74,7 +95,8 @@ const features = [
     color: "bg-brand-lemon",
   },
   {
-    emoji: "✅",
+    Icon: ClipboardList,
+    animClass: "icon-wiggle",
     title: "Checklists for the Overthinkers",
     description:
       "Packing lists. Pre-trip TODOs. That one task nobody wants to do (exchange currency) sitting there, unchecked, judging everyone.",
@@ -82,7 +104,8 @@ const features = [
     color: "bg-brand-coral",
   },
   {
-    emoji: "🎫",
+    Icon: Ticket,
+    animClass: "icon-spin",
     title: "Reservations Hub",
     description:
       "All your confirmation numbers in one place. Reference IDs. Booking links. The stuff you're going to need at the airport at 4am when your brain has fully given up.",
@@ -123,6 +146,32 @@ export default function StoryPage() {
 
         .wiggle-card { animation: wiggle 4s ease-in-out infinite; }
         .float-badge { animation: float 3.5s ease-in-out infinite; }
+
+        @keyframes bounce-icon {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-5px); }
+        }
+        @keyframes pulse-icon {
+          0%, 100% { transform: scale(1); }
+          50%       { transform: scale(1.18); }
+        }
+        @keyframes shake-icon {
+          0%, 100% { transform: rotate(0deg); }
+          20%       { transform: rotate(-10deg); }
+          60%       { transform: rotate(10deg); }
+          80%       { transform: rotate(-5deg); }
+        }
+        @keyframes spin-icon {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .icon-bounce { animation: bounce-icon 2s ease-in-out infinite; }
+        .icon-pulse  { animation: pulse-icon 2.5s ease-in-out infinite; }
+        .icon-shake  { animation: shake-icon 2s ease-in-out infinite; }
+        .icon-float  { animation: float 3.5s ease-in-out infinite; }
+        .icon-wiggle { animation: wiggle 4s ease-in-out infinite; }
+        .icon-spin   { animation: spin-icon 5s linear infinite; }
 
         .brutal { border: 2px solid #1A1A1A; box-shadow: 4px 4px 0px #1A1A1A; }
         .brutal-sm { border: 2px solid #1A1A1A; box-shadow: 3px 3px 0px #1A1A1A; }
@@ -228,7 +277,7 @@ export default function StoryPage() {
                 <div className={cn("h-2", beat.color)} />
 
                 <div className="p-6 flex gap-5 flex-wrap">
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     <span className="font-display font-black text-[11px] uppercase tracking-widest text-[#9CA3AF]">
                       {beat.year}
                     </span>
@@ -241,7 +290,7 @@ export default function StoryPage() {
                       {beat.content}
                     </p>
                     <div className="flex items-start gap-2 bg-brand-cream border border-[#e5e7eb] rounded-lg px-3 py-2">
-                      <span className="text-sm flex-shrink-0">📌</span>
+                      <span className="text-sm shrink-0">📌</span>
                       <p className="text-[#6B7280] text-xs font-semibold italic">
                         {beat.aside}
                       </p>
@@ -257,7 +306,7 @@ export default function StoryPage() {
 
         <section className="bg-brand-blue border-y-2 border-[#1A1A1A] py-14 px-6">
           <div className="max-w-4xl mx-auto flex gap-8 items-center flex-wrap">
-            <div className="wiggle-card brutal bg-white rounded-2xl w-32 h-32 flex items-center justify-center flex-shrink-0 shadow-[6px_6px_0px_#1A1A1A]">
+            <div className="wiggle-card brutal bg-white rounded-2xl w-32 h-32 flex items-center justify-center shrink-0 shadow-[6px_6px_0px_#1A1A1A]">
               <span className="font-kanji text-7xl text-[#111]">旅</span>
             </div>
 
@@ -297,11 +346,11 @@ export default function StoryPage() {
                 <div className="flex items-start gap-4 mb-4">
                   <div
                     className={cn(
-                      "w-12 h-12 brutal-sm rounded-xl flex items-center justify-center text-2xl flex-shrink-0",
+                      "w-12 h-12 brutal-sm rounded-xl flex items-center justify-center shrink-0",
                       f.color,
                     )}
                   >
-                    {f.emoji}
+                    <f.Icon size={22} strokeWidth={2} className={f.animClass} />
                   </div>
                   <h3 className="font-display font-bold text-[17px] leading-snug text-[#111] mt-1">
                     {f.title}
@@ -370,7 +419,7 @@ export default function StoryPage() {
               </p>
             </div>
 
-            <div className="brutal bg-brand-blue rounded-2xl p-8 shadow-[8px_8px_0px_#1A1A1A] flex-shrink-0">
+            <div className="brutal bg-brand-blue rounded-2xl p-8 shadow-[8px_8px_0px_#1A1A1A] shrink-0">
               <div className="font-kanji text-8xl text-[#111] mb-3 leading-none">
                 旅
               </div>
@@ -389,7 +438,90 @@ export default function StoryPage() {
           </div>
         </section>
 
-        <section className="border-t-2 border-[#1A1A1A] bg-brand-cream px-6 py-20">
+        <div className="zigzag-border" />
+
+        <section className="max-w-4xl mx-auto px-6 py-16">
+          <p className="text-brand-blue text-xs font-bold uppercase tracking-[0.2em] mb-2">
+            The real MVPs
+          </p>
+          <h2 className="font-display font-black text-3xl uppercase tracking-tight mb-2">
+            The Testing Crew
+          </h2>
+          <p className="text-[#6B7280] font-medium text-sm mb-10 max-w-xl">
+            Building something alone means you lose perspective fast. Every bug
+            that didn&apos;t reach you was caught by these five. Voluntarily.
+            That&apos;s friendship.
+          </p>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              {
+                name: "Dipali Sharma",
+                handle: "Dipali2Sharma",
+                color: "bg-brand-coral",
+              },
+              {
+                name: "Nausheen Faiyaz",
+                handle: "codeXninjaDev",
+                color: "bg-brand-mint",
+              },
+              {
+                name: "Mohit Kumar",
+                handle: "Mohitvermacode7",
+                color: "bg-brand-lemon",
+              },
+              {
+                name: "Pritam Mandal",
+                handle: "rick_jsx",
+                color: "bg-brand-peach",
+              },
+              {
+                name: "Shyamendra Hazra",
+                handle: "ShyamHz",
+                color: "bg-brand-blue",
+              },
+            ].map((person) => (
+              <a
+                key={person.handle}
+                href={`https://x.com/${person.handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="brutal brutal-lift bg-white rounded-xl p-4 flex items-center gap-3 group no-underline"
+              >
+                <div
+                  className={`w-10 h-10 brutal-sm rounded-full flex items-center justify-center font-display font-black text-sm text-[#111] shrink-0 ${person.color}`}
+                >
+                  {person.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-display font-bold text-sm text-[#111] leading-snug truncate">
+                    {person.name}
+                  </p>
+                  <p className="text-[11px] font-semibold text-[#9CA3AF] group-hover:text-brand-blue transition-colors truncate">
+                    @{person.handle}
+                  </p>
+                </div>
+              </a>
+            ))}
+
+            <div className="brutal bg-[#111] rounded-xl p-4 flex items-center gap-3 sm:col-span-2 lg:col-span-1 lg:col-start-3">
+              <div className="w-10 h-10 rounded-full bg-brand-blue border-2 border-white/20 flex items-center justify-center text-lg shrink-0">
+                ❤️
+              </div>
+              <p className="text-white/80 text-xs font-medium leading-relaxed">
+                Broke things early so no one else had to.{" "}
+                <span className="text-white font-bold">Thank you.</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div className="zigzag-border" />
+
+        <section className="border-t-0 bg-brand-cream px-6 py-20">
           <div className="max-w-4xl mx-auto text-center">
             <p className="font-display font-black text-[clamp(36px,7vw,80px)] uppercase tracking-[-0.03em] leading-tight mb-6">
               Your journey,

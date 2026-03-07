@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { DollarSign, Plus, Trash2 } from "lucide-react";
+import { BadgeIndianRupee, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -189,7 +189,7 @@ export function BudgetTab({
                   categoryColors[exp.category] ?? "bg-brand-lemon",
                 )}
               >
-                <DollarSign size={14} />
+                <BadgeIndianRupee size={14} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm truncate">

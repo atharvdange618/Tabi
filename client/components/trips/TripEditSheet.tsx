@@ -185,10 +185,13 @@ function TripEditForm({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept=".jpg,.jpeg,.webp"
           className="hidden"
           onChange={handleCoverChange}
         />
+        <p className="text-xs text-muted-foreground">
+          JPEG, JPG, and WebP files are supported.
+        </p>
       </div>
 
       <div className="space-y-1.5">
@@ -266,6 +269,9 @@ function TripEditForm({
                 selected={startDate}
                 onSelect={setStartDate}
                 initialFocus
+                classNames={{
+                  today: "ring-2 ring-[#1A1A1A] rounded-md font-bold",
+                }}
               />
             </PopoverContent>
           </Popover>
@@ -296,6 +302,9 @@ function TripEditForm({
                 onSelect={setEndDate}
                 disabled={(date) => (startDate ? date < startDate : false)}
                 initialFocus
+                classNames={{
+                  today: "ring-2 ring-[#1A1A1A] rounded-md font-bold",
+                }}
               />
             </PopoverContent>
           </Popover>
