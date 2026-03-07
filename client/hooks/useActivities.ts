@@ -88,10 +88,15 @@ export function useReorderActivities(tripId: string, dayId: string) {
 
   return useMutation({
     mutationFn: async (activityIds: string[]) => {
+      const activities = activityIds.map((id, index) => ({
+        _id: id,
+        position: (index + 1) * 1024,
+      }));
+
       const { data } = await api.patch(
         `/api/v1/trips/${tripId}/days/${dayId}/activities/reorder`,
         {
-          activityIds,
+          activities,
         },
       );
       return data;
