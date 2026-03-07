@@ -10,9 +10,7 @@ export default function InvitePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-cream p-6">
       <div className="w-full max-w-2xl space-y-6 animate-fade-in-up">
-        {/* Header Card */}
         <div className="brutal-card rounded-2xl p-8 md:p-10 bg-white relative overflow-hidden">
-          {/* Decorative Elements */}
           <div className="absolute top-4 right-4 text-6xl md:text-8xl opacity-5 font-kanji select-none pointer-events-none">
             旅
           </div>
@@ -33,7 +31,6 @@ export default function InvitePage() {
           </div>
         </div>
 
-        {/* Features */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="brutal-card bg-white p-5 rounded-xl text-center hover:-translate-y-1 transition-transform">
             <div className="w-12 h-12 bg-brand-peach rounded-lg border-2 border-brutal-border shadow-[3px_3px_0px_theme(--color-brutal-shadow)] flex items-center justify-center mx-auto mb-3">
@@ -66,12 +63,10 @@ export default function InvitePage() {
           </div>
         </div>
 
-        {/* Actions Card */}
         <div className="brutal-card rounded-2xl p-8 bg-white">
           <InviteActions />
         </div>
 
-        {/* Footer Note */}
         <p className="text-center text-sm text-muted-foreground font-body">
           By accepting, you&apos;ll be added as a member of this trip.
         </p>

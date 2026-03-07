@@ -12,7 +12,6 @@ export default function AcceptInvitePage() {
   const acceptInvite = useAcceptInvite();
   const triggered = useRef(false);
 
-  // Middleware guarantees the user is signed in before reaching this page.
   useEffect(() => {
     if (triggered.current) return;
     triggered.current = true;

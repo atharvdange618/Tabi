@@ -8,6 +8,7 @@ import {
   RefreshCw,
   HelpCircle,
 } from "lucide-react";
+import { HomeFooter } from "@/components/home/HomeFooter";
 
 export const metadata = {
   title: "Terms of Service · Tabi",
@@ -27,7 +28,7 @@ const sections = [
       },
       {
         subtitle: "Your account",
-        text: "You're responsible for keeping your account secure. Authentication is handled by Clerk   use a strong password and don't share your credentials. If you suspect unauthorised access, log out of all sessions immediately via Clerk's dashboard.",
+        text: "You're responsible for keeping your account secure. Authentication is handled by Clerk   use a strong password and don't share your credentials. If you suspect unauthorised access, contact us at atharvdange.dev@proton.me immediately.",
       },
       {
         subtitle: "Acceptable use",
@@ -151,7 +152,6 @@ const sections = [
 export default function TermsPage() {
   return (
     <div className="bg-[#FAFAF8] min-h-screen text-[#111111] font-body selection:bg-[#93CDFF] selection:text-black">
-      {/* Nav */}
       <nav className="bg-white border-b-2 border-[#1A1A1A] px-6 h-16 flex items-center justify-between sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="bg-[#93CDFF] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] rounded-md w-7 h-7 flex items-center justify-center text-sm text-[#111111] font-kanji">
@@ -170,7 +170,6 @@ export default function TermsPage() {
       </nav>
 
       <div className="max-w-[1100px] mx-auto px-6 pt-16 pb-24 flex gap-12 items-start flex-col md:flex-row">
-        {/* Sidebar TOC */}
         <aside className="w-full md:w-60 shrink-0 md:sticky md:top-24 order-2 md:order-1">
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 fill-mode-both">
             <div className="bg-white rounded-xl p-5 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A]">
@@ -196,9 +195,7 @@ export default function TermsPage() {
           </div>
         </aside>
 
-        {/* Main content */}
         <main className="flex-1 min-w-0 order-1 md:order-2">
-          {/* Header */}
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100 fill-mode-both mb-12">
             <span className="bg-[#FFD6C0] border-2 border-[#1A1A1A] inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-4">
               <Scale size={11} strokeWidth={3} /> Terms of Service
@@ -229,7 +226,6 @@ export default function TermsPage() {
             </div>
           </div>
 
-          {/* Quick summary card */}
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200 fill-mode-both mb-10">
             <div className="border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-[#FFF3B0] rounded-xl p-6 md:p-7">
               <div className="font-display font-bold text-[15px] mb-3 uppercase tracking-wide">
@@ -247,15 +243,14 @@ export default function TermsPage() {
                     key={point}
                     className="flex items-start gap-2.5 text-sm font-medium leading-relaxed"
                   >
-                    <span className="mt-0.5 shrink-0 font-bold">→</span>
-                    {point}
+                    <span className="shrink-0 font-bold mt-px">→</span>
+                    <span>{point}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Acceptance notice */}
           <div className="mb-8 border-2 border-[#1A1A1A] rounded-xl p-4 md:p-5 bg-white flex gap-3 items-start shadow-[3px_3px_0px_#1A1A1A]">
             <AlertTriangle
               size={16}
@@ -269,7 +264,6 @@ export default function TermsPage() {
             </p>
           </div>
 
-          {/* Sections */}
           <div className="flex flex-col gap-6">
             {sections.map((section) => (
               <div
@@ -277,7 +271,6 @@ export default function TermsPage() {
                 id={section.title.toLowerCase().replace(/\s+/g, "-")}
                 className="scroll-mt-20 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-white rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[6px_6px_0px_#1A1A1A]"
               >
-                {/* Section header */}
                 <div className="flex items-center gap-3 p-5 border-b-2 border-[#1A1A1A] bg-[#FAFAF8]">
                   <div
                     className="w-9 h-9 border-2 border-[#1A1A1A] rounded-lg flex items-center justify-center shadow-[2px_2px_0px_#1A1A1A] shrink-0"
@@ -290,7 +283,6 @@ export default function TermsPage() {
                   </h2>
                 </div>
 
-                {/* Section body */}
                 <div className="p-6 flex flex-col gap-5">
                   {section.content.map((item) => (
                     <div key={item.subtitle}>
@@ -307,7 +299,6 @@ export default function TermsPage() {
             ))}
           </div>
 
-          {/* Contact */}
           <div className="mt-10 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-white rounded-xl p-7">
             <h2 className="font-display font-bold text-lg m-0 mb-2.5 text-[#111]">
               Questions about these terms?
@@ -318,10 +309,10 @@ export default function TermsPage() {
             </p>
             <div className="flex gap-4 flex-wrap">
               <a
-                href="mailto:hello@tabi.app"
+                href="mailto:atharvdange.dev@proton.me"
                 className="bg-[#93CDFF] px-5 py-2.5 rounded-lg text-[13px] text-[#111] font-bold border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] transition-all no-underline inline-flex items-center"
               >
-                hello@tabi.app
+                atharvdange.dev@proton.me
               </a>
               <Link
                 href="/privacy"
@@ -334,36 +325,7 @@ export default function TermsPage() {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t-2 border-[#1A1A1A] bg-white">
-        <div className="max-w-[1100px] mx-auto px-6 py-8 flex items-center justify-between gap-4 flex-wrap">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <div className="bg-[#93CDFF] border-2 border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] rounded-md w-6 h-6 flex items-center justify-center text-xs text-[#111111] font-kanji">
-              旅
-            </div>
-            <span className="font-display font-extrabold text-[15px] text-[#111111] tracking-[-0.02em]">
-              tabi
-            </span>
-          </Link>
-          <p className="text-gray-500 text-xs font-medium m-0">
-            © {new Date().getFullYear()} Tabi. Built for the journey.
-          </p>
-          <div className="flex gap-5">
-            <Link
-              href="/privacy"
-              className="font-bold text-[13px] text-[#111111] no-underline focus:underline hover:underline"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="font-bold text-[13px] text-[#111111] no-underline border-b-2 border-[#93CDFF] pb-0.5"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <HomeFooter />
     </div>
   );
 }

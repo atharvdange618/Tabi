@@ -8,6 +8,7 @@ import {
   Bell,
   Globe,
 } from "lucide-react";
+import { HomeFooter } from "@/components/home/HomeFooter";
 
 export const metadata = {
   title: "Privacy Policy · Tabi",
@@ -50,7 +51,7 @@ const sections = [
       },
       {
         subtitle: "To send you notifications",
-        text: "If we implement email notifications (invite accepted, new comment, etc.), we use your email for that. You can opt out at any time.",
+        text: "We use your email to send you notifications (invite accepted, new comment, etc.).",
       },
       {
         subtitle: "To improve Tabi",
@@ -69,7 +70,7 @@ const sections = [
       },
       {
         subtitle: "Service providers",
-        text: "We use Clerk (auth), MongoDB Atlas (database), Cloudinary (file storage), and Vercel/Hostinger (hosting). These are processors, not data buyers   they operate under their own privacy policies and only process what's necessary.",
+        text: "We use Clerk (auth), MongoDB Atlas (database), Cloudinary (file storage), and Hostinger (hosting). These are processors, not data buyers   they operate under their own privacy policies and only process what's necessary.",
       },
       {
         subtitle: "Legal requirements",
@@ -107,7 +108,7 @@ const sections = [
       },
       {
         subtitle: "Deletion",
-        text: "Delete your account and we'll remove your personal data from our systems within 30 days. Trip data you created may remain in anonymized form if other members have a legitimate need for it.",
+        text: "You can send an email to atharvdange.dev@proton.me and we'll remove your personal data from our systems within 30 days. Trip data you created may remain in anonymized form if other members have a legitimate need for it.",
       },
       {
         subtitle: "Export",
@@ -115,7 +116,7 @@ const sections = [
       },
       {
         subtitle: "Corrections",
-        text: "Your name and photo come from Clerk   update them there and the change propagates to Tabi automatically.",
+        text: "Your name and photo come from your social accounts update them there and the change propagates to Tabi automatically.",
       },
     ],
   },
@@ -140,10 +141,16 @@ const sections = [
   },
 ];
 
+const tldr = [
+  "We collect what's needed to run Tabi. Nothing more.",
+  "We don't sell your data. Not to anyone, ever.",
+  "Auth is handled by Clerk. We never touch your password.",
+  "We don't run third-party trackers or ad scripts.",
+];
+
 export default function PrivacyPage() {
   return (
     <div className="bg-[#FAFAF8] min-h-screen text-[#111111] font-body selection:bg-[#93CDFF] selection:text-black">
-      {/* Nav */}
       <nav className="bg-white border-b-2 border-[#1A1A1A] px-6 h-16 flex items-center justify-between sticky top-0 z-50">
         <Link href="/" className="flex items-center gap-2.5">
           <div className="bg-[#93CDFF] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] rounded-md w-7 h-7 flex items-center justify-center text-sm text-[#111111] font-kanji">
@@ -162,7 +169,6 @@ export default function PrivacyPage() {
       </nav>
 
       <div className="max-w-[1100px] mx-auto px-6 pt-16 pb-24 flex gap-12 items-start flex-col md:flex-row">
-        {/* Sidebar TOC */}
         <aside className="w-full md:w-60 shrink-0 md:sticky md:top-24 order-2 md:order-1">
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 fill-mode-both">
             <div className="bg-white rounded-xl p-5 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A]">
@@ -188,9 +194,7 @@ export default function PrivacyPage() {
           </div>
         </aside>
 
-        {/* Main content */}
         <main className="flex-1 min-w-0 order-1 md:order-2">
-          {/* Header */}
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100 fill-mode-both mb-12">
             <span className="bg-[#B8F0D4] border-2 border-[#1A1A1A] inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-4">
               <Shield size={11} strokeWidth={3} /> Privacy Policy
@@ -221,33 +225,25 @@ export default function PrivacyPage() {
             </div>
           </div>
 
-          {/* Quick summary card */}
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200 fill-mode-both mb-10">
             <div className="border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-[#FFF3B0] rounded-xl p-6 md:p-7">
               <div className="font-display font-bold text-[15px] mb-3 uppercase tracking-wide">
                 TL;DR
               </div>
               <div className="flex flex-col gap-2">
-                {[
-                  "We collect what's needed to run Tabi. Nothing more.",
-                  "We don't sell your data. Not to anyone, ever.",
-                  "Auth is handled by Clerk. We never touch your password.",
-                  "You can delete your account and your data any time.",
-                  "We don't run third-party trackers or ad scripts.",
-                ].map((point) => (
+                {tldr.map((point) => (
                   <div
                     key={point}
                     className="flex items-start gap-2.5 text-sm font-medium leading-relaxed"
                   >
-                    <span className="mt-0.5 shrink-0 font-bold">→</span>
-                    {point}
+                    <span className="shrink-0 font-bold text-[#1A1A1A]">→</span>
+                    <span className="text-gray-700">{point}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Sections */}
           <div className="flex flex-col gap-6">
             {sections.map((section) => (
               <div
@@ -255,7 +251,6 @@ export default function PrivacyPage() {
                 id={section.title.toLowerCase().replace(/\s+/g, "-")}
                 className="scroll-mt-20 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-white rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[6px_6px_0px_#1A1A1A]"
               >
-                {/* Section header */}
                 <div className="flex items-center gap-3 p-5 border-b-2 border-[#1A1A1A] bg-[#FAFAF8]">
                   <div
                     className="w-9 h-9 border-2 border-[#1A1A1A] rounded-lg flex items-center justify-center shadow-[2px_2px_0px_#1A1A1A] shrink-0"
@@ -268,7 +263,6 @@ export default function PrivacyPage() {
                   </h2>
                 </div>
 
-                {/* Section body */}
                 <div className="p-6 flex flex-col gap-5">
                   {section.content.map((item) => (
                     <div key={item.subtitle}>
@@ -285,7 +279,6 @@ export default function PrivacyPage() {
             ))}
           </div>
 
-          {/* Contact */}
           <div className="mt-10 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-white rounded-xl p-7">
             <h2 className="font-display font-bold text-lg m-0 mb-2.5 text-[#111]">
               Questions?
@@ -297,10 +290,10 @@ export default function PrivacyPage() {
             </p>
             <div className="flex gap-4 flex-wrap">
               <a
-                href="mailto:hello@tabi.app"
+                href="mailto:atharvdange.dev@proton.me"
                 className="bg-[#93CDFF] px-5 py-2.5 rounded-lg text-[13px] text-[#111] font-bold border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] transition-all no-underline inline-flex items-center"
               >
-                hello@tabi.app
+                atharvdange.dev@proton.me
               </a>
               <Link
                 href="/terms"
@@ -313,36 +306,7 @@ export default function PrivacyPage() {
         </main>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t-2 border-[#1A1A1A] bg-white">
-        <div className="max-w-[1100px] mx-auto px-6 py-8 flex items-center justify-between gap-4 flex-wrap">
-          <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <div className="bg-[#93CDFF] border-2 border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] rounded-md w-6 h-6 flex items-center justify-center text-xs text-[#111111] font-kanji">
-              旅
-            </div>
-            <span className="font-display font-extrabold text-[15px] text-[#111111] tracking-[-0.02em]">
-              tabi
-            </span>
-          </Link>
-          <p className="text-gray-500 text-xs font-medium m-0">
-            © {new Date().getFullYear()} Tabi. Built for the journey.
-          </p>
-          <div className="flex gap-5">
-            <Link
-              href="/privacy"
-              className="font-bold text-[13px] text-[#111111] no-underline border-b-2 border-[#93CDFF] pb-0.5"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="font-bold text-[13px] text-[#111111] no-underline focus:underline hover:underline"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <HomeFooter />
     </div>
   );
 }

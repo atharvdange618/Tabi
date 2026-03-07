@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign Up | Tabi",
+  title: "Sign Up",
   description: "Create a Tabi account and start planning your trips together.",
 };
 

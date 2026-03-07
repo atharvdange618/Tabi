@@ -79,7 +79,6 @@ export function useDeleteChecklist(tripId: string) {
   });
 }
 
-// Checklist Items
 export function useCreateChecklistItem(tripId: string) {
   const queryClient = useQueryClient();
 

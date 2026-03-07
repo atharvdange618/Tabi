@@ -19,7 +19,6 @@ export default function GlobalError({
   return (
     <div className="min-h-screen bg-brand-cream flex items-center justify-center p-4">
       <div className="brutal-card rounded-2xl p-8 max-w-md w-full bg-white shadow-[8px_8px_0px_theme(--color-brutal-shadow)] text-center relative overflow-hidden">
-        {/* Decorative elements */}
         <div className="absolute -top-6 -right-6 w-24 h-24 bg-brand-coral/20 rounded-full blur-2xl" />
         <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-brand-lemon/20 rounded-full blur-2xl" />
 

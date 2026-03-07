@@ -92,7 +92,6 @@ export function useRemoveMember(tripId: string) {
   });
 }
 
-// Global actions for invitations
 export function useAcceptInvite() {
   const queryClient = useQueryClient();
 

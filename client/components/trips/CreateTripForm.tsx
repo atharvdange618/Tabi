@@ -44,7 +44,6 @@ export default function CreateTripForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Title */}
         <FormField
           control={form.control}
           name="title"
@@ -65,7 +64,6 @@ export default function CreateTripForm() {
           )}
         />
 
-        {/* Description */}
         <FormField
           control={form.control}
           name="description"
@@ -87,7 +85,6 @@ export default function CreateTripForm() {
           )}
         />
 
-        {/* Date Range */}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             control={form.control}
@@ -189,7 +186,6 @@ export default function CreateTripForm() {
           />
         </div>
 
-        {/* Traveler Count */}
         <FormField
           control={form.control}
           name="travelerCount"
@@ -216,7 +212,6 @@ export default function CreateTripForm() {
           )}
         />
 
-        {/* Submit */}
         <div className="flex justify-end gap-3 pt-4">
           <Button
             type="submit"
