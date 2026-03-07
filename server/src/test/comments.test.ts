@@ -1,3 +1,27 @@
+/**
+ * comments.test.ts
+ *
+ * Comprehensive test suite for the Comments API.
+ *
+ * Structure:
+ *   1. "Comments API" - HTTP integration tests
+ *      - POST   /api/v1/trips/:id/comments
+ *      - GET    /api/v1/trips/:id/comments?targetType=&targetId=
+ *      - PATCH  /api/v1/trips/:id/comments/:commentId
+ *      - DELETE /api/v1/trips/:id/comments/:commentId
+ *
+ * Covers: comments on both day and activity targets, author-only edit enforcement,
+ * owner/editor moderation (deleting others' comments), cascade delete of child
+ * comments, and query-param validation.
+ *
+ * Auth strategy: same Clerk mock as trips.test.ts.
+ *
+ * Note: I have used AI to generate these tests based on the requirements and my
+ * knowledge of the codebase, but I have personally reviewed and edited each test
+ * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
+ * set of scenarios, including edge cases, to thoroughly validate the Comments CRUD functionality.
+ */
+
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";

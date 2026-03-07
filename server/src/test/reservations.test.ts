@@ -1,3 +1,26 @@
+/**
+ * reservations.test.ts
+ *
+ * Comprehensive test suite for the Reservations API.
+ *
+ * Structure:
+ *   1. "Reservations API" - HTTP integration tests
+ *      - POST   /api/v1/trips/:id/reservations
+ *      - GET    /api/v1/trips/:id/reservations
+ *      - PATCH  /api/v1/trips/:id/reservations/:resId
+ *      - DELETE /api/v1/trips/:id/reservations/:resId
+ *
+ * Covers: all reservation types, partial updates, cascade deletes, validation
+ * errors for missing required fields, and viewer role enforcement.
+ *
+ * Auth strategy: same Clerk mock as trips.test.ts.
+ *
+ * Note: I have used AI to generate these tests based on the requirements and my
+ * knowledge of the codebase, but I have personally reviewed and edited each test
+ * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
+ * set of scenarios, including edge cases, to thoroughly validate the Reservations CRUD functionality.
+ */
+
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";

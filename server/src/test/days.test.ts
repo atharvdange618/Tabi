@@ -4,13 +4,13 @@
  * Comprehensive test suite for the Days API and Service Layer.
  *
  * Structure:
- *   1. "Days Service" — direct service-layer tests
+ *   1. "Days Service" - direct service-layer tests
  *      - getDays
  *      - createDay
  *      - updateDay
  *      - deleteDay
  *
- *   2. "Days API" — HTTP integration tests
+ *   2. "Days API" - HTTP integration tests
  *      - GET    /api/v1/trips/:id/days
  *      - POST   /api/v1/trips/:id/days
  *      - PATCH  /api/v1/trips/:id/days/:dayId

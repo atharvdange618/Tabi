@@ -4,13 +4,13 @@
  * Comprehensive test suite for the Activities API and Service Layer.
  *
  * Structure:
- *   1. "Activities Service" — direct service-layer tests
+ *   1. "Activities Service" - direct service-layer tests
  *      - createActivity
  *      - updateActivity
  *      - deleteActivity
  *      - reorderActivities
  *
- *   2. "Activities API" — HTTP integration tests
+ *   2. "Activities API" - HTTP integration tests
  *      - GET    /api/v1/trips/:id/days/:dayId/activities
  *      - POST   /api/v1/trips/:id/days/:dayId/activities
  *      - PATCH  /api/v1/trips/:id/days/:dayId/activities/:actId

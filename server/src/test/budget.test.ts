@@ -2,6 +2,31 @@ import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
 
+/**
+ * budget.test.ts
+ *
+ * Comprehensive test suite for the Budget API.
+ *
+ * Structure:
+ *   1. "GET /budget/settings"   - read budget configuration
+ *   2. "PUT /budget/settings"   - upsert budget configuration
+ *   3. "GET /budget/expenses"   - list expenses
+ *   4. "POST /budget/expenses"  - create an expense
+ *   5. "PATCH /budget/expenses/:expId"  - update an expense
+ *   6. "DELETE /budget/expenses/:expId" - delete an expense
+ *   7. "GET /budget/summary"    - aggregated spend / remaining / by-category
+ *
+ * Covers: owner / editor / viewer role enforcement, validation errors,
+ * upsert idempotency, and sorting guarantees.
+ *
+ * Auth strategy: same Clerk mock as trips.test.ts.
+ *
+ * Note: I have used AI to generate these tests based on the requirements and my
+ * knowledge of the codebase, but I have personally reviewed and edited each test
+ * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
+ * set of scenarios, including edge cases, to thoroughly validate the Budget CRUD functionality.
+ */
+
 // Mock Clerk
 vi.mock("@clerk/express", () => ({
   clerkMiddleware: () => (_req: any, _res: any, next: any) => next(),

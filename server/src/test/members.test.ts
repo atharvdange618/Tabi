@@ -4,7 +4,7 @@
  * Comprehensive test suite for the Member & Invite System (Stage 6).
  *
  * Structure:
- *   1. "Member Service" — direct service-layer tests
+ *   1. "Member Service" - direct service-layer tests
  *      - getMembers
  *      - inviteMember (existing user + non-existing user paths)
  *      - acceptInvite
@@ -12,7 +12,7 @@
  *      - updateMemberRole
  *      - removeMember
  *
- *   2. "Member API" — HTTP integration tests
+ *   2. "Member API" - HTTP integration tests
  *      - GET    /api/v1/trips/:id/members
  *      - POST   /api/v1/trips/:id/members/invite
  *      - PATCH  /api/v1/trips/:id/members/:uid
@@ -41,7 +41,7 @@ vi.mock("@clerk/express", () => ({
   }),
 }));
 
-// Mock email module — no real emails during tests
+// Mock email module - no real emails during tests
 vi.mock("../lib/email.ts", () => ({
   sendInviteEmail: vi.fn().mockResolvedValue(undefined),
 }));
@@ -82,7 +82,7 @@ async function seedTrip(
 }
 
 // =============================================================================
-// 1. Member Service — unit / integration tests
+// 1. Member Service - unit / integration tests
 // =============================================================================
 
 describe("Member Service", () => {
@@ -600,7 +600,7 @@ describe("Member Service", () => {
 });
 
 // =============================================================================
-// 2. Member API — HTTP integration tests
+// 2. Member API - HTTP integration tests
 // =============================================================================
 
 describe("Member API", () => {

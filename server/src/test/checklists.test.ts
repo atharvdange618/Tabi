@@ -1,3 +1,31 @@
+/**
+ * checklists.test.ts
+ *
+ * Comprehensive test suite for the Checklists API.
+ *
+ * Structure:
+ *   1. "Checklists" - HTTP integration tests for checklist management
+ *      - POST   /api/v1/trips/:id/checklists
+ *      - GET    /api/v1/trips/:id/checklists
+ *      - PATCH  /api/v1/trips/:id/checklists/:clId
+ *      - DELETE /api/v1/trips/:id/checklists/:clId
+ *
+ *   2. "Checklist Items" - HTTP integration tests for item management
+ *      - POST   /api/v1/trips/:id/checklists/:clId/items
+ *      - PATCH  /api/v1/trips/:id/checklists/:clId/items/:itemId
+ *      - DELETE /api/v1/trips/:id/checklists/:clId/items/:itemId
+ *
+ * Covers: auto-position assignment, nested item retrieval, cascade deletes,
+ * check/uncheck toggling with checkedBy/checkedAt metadata, and viewer role enforcement.
+ *
+ * Auth strategy: same Clerk mock as trips.test.ts.
+ *
+ * Note: I have used AI to generate these tests based on the requirements and my
+ * knowledge of the codebase, but I have personally reviewed and edited each test
+ * case to ensure accuracy and relevance. The AI assisted in creating a comprehensive
+ * set of scenarios, including edge cases, to thoroughly validate the Checklists CRUD functionality.
+ */
+
 import { describe, it, expect, vi } from "vitest";
 import request from "supertest";
 import mongoose from "mongoose";
