@@ -410,7 +410,6 @@ export default function DashboardContent() {
 
   return (
     <div className="space-y-8">
-      {/* Section heading */}
       <div className="flex items-center gap-3 anim-2">
         <div className="w-10 h-10 bg-brand-blue border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] rounded-xl flex items-center justify-center rotate-3 shrink-0">
           <Clock size={18} strokeWidth={2.5} />
@@ -425,41 +424,41 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* Next Trip / Ongoing Banner */}
       <NextTripBanner trips={trips} />
 
-      {/* Trip grid with filter tabs */}
       <Tabs defaultValue="all" className="anim-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <h3 className="font-display font-extrabold text-lg uppercase tracking-tight">
             All Trips
           </h3>
-          <TabsList className="border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] rounded-lg h-auto p-1 bg-white gap-1">
-            <TabsTrigger
-              value="all"
-              className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-blue data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
-            >
-              All ({trips.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="upcoming"
-              className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-mint data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
-            >
-              Upcoming ({upcomingCount})
-            </TabsTrigger>
-            <TabsTrigger
-              value="ongoing"
-              className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-lemon data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
-            >
-              Ongoing ({ongoingCount})
-            </TabsTrigger>
-            <TabsTrigger
-              value="completed"
-              className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-peach data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
-            >
-              Done ({completedCount})
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto pb-1 -mb-1">
+            <TabsList className="border-2 border-[#1a1a1a] shadow-[3px_3px_0px_#1a1a1a] rounded-lg h-auto p-1 bg-white gap-1 w-max">
+              <TabsTrigger
+                value="all"
+                className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-blue data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
+              >
+                All ({trips.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="upcoming"
+                className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-mint data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
+              >
+                Upcoming ({upcomingCount})
+              </TabsTrigger>
+              <TabsTrigger
+                value="ongoing"
+                className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-lemon data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
+              >
+                Ongoing ({ongoingCount})
+              </TabsTrigger>
+              <TabsTrigger
+                value="completed"
+                className="rounded-md text-xs font-bold uppercase tracking-wide data-[state=active]:bg-brand-peach data-[state=active]:shadow-[2px_2px_0px_#1a1a1a] data-[state=active]:border data-[state=active]:border-[#1a1a1a]"
+              >
+                Done ({completedCount})
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         {(["all", "upcoming", "ongoing", "completed"] as const).map((tab) => {

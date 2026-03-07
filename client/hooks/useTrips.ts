@@ -2,7 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
-import type { Trip, ApiResponse } from "shared/types";
+import type {
+  Trip,
+  DashboardTrip,
+  ApiResponse,
+  PublicTrip,
+} from "shared/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -12,10 +17,24 @@ export function useTrips() {
   return useQuery({
     queryKey: queryKeys.trips(),
     queryFn: async () => {
-      const { data } = await api.get<ApiResponse<Trip[]>>("/api/v1/trips");
+      const { data } =
+        await api.get<ApiResponse<DashboardTrip[]>>("/api/v1/trips");
       return data.data;
     },
     enabled: isLoaded,
+  });
+}
+
+export function usePublicTrip(id: string) {
+  return useQuery({
+    queryKey: [...queryKeys.trip(id), "public"],
+    queryFn: async () => {
+      const { data } = await api.get<ApiResponse<PublicTrip>>(
+        `/api/v1/trips/public/${id}`,
+      );
+      return data.data;
+    },
+    enabled: !!id,
   });
 }
 
@@ -47,7 +66,7 @@ export function useCreateTrip() {
     onSuccess: (newTrip) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.trips() });
       toast.success("Trip created successfully!");
-      router.push(`/trips/${newTrip._id}/itinerary`);
+      router.push(`/trips/${newTrip._id}`);
     },
   });
 }
@@ -84,6 +103,31 @@ export function useDeleteTrip() {
       queryClient.invalidateQueries({ queryKey: queryKeys.trips() });
       toast.success("Trip deleted successfully!");
       router.push("/dashboard");
+    },
+  });
+}
+
+export function useUploadTripCoverImage(id: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append("cover", file);
+      const { data } = await api.post<ApiResponse<Trip>>(
+        `/api/v1/trips/${id}/cover`,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.trip(id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.trips() });
+      toast.success("Cover image updated!");
+    },
+    onError: () => {
+      toast.error("Failed to upload cover image.");
     },
   });
 }
