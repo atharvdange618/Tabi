@@ -1,10 +1,10 @@
-# <img src="social-avatar.png" alt="alt text" height="64" align="center" /> Tabi
+# <img src="social-avatar.png" alt="Tabi Logo" height="64" align="center" /> Tabi
 
 > **A collaborative itinerary planning platform. Plan trips together, not in separate chat threads.**
 
-Tabi (旅, Japanese for _journey_) is a full-stack collaborative trip planning web app built for groups. Create a trip, invite your people, build a day-wise itinerary, track your budget, manage files and reservations all in one shared workspace with proper role-based access so nobody accidentally breaks anything.
+Tabi (旅, Japanese for _journey_) is a full-stack collaborative trip planning web app designed for groups. Create a trip, invite members, build a day-wise itinerary, track your budget, manage files, and handle reservations in one shared workspace. Strict role-based access keeps your plans secure so nobody accidentally breaks your itinerary.
 
-Built for ChaiCode Buildathon. MERN stack. In active development.
+Built for the ChaiCode Buildathon.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
@@ -22,30 +22,30 @@ Built for ChaiCode Buildathon. MERN stack. In active development.
 
 ### Trip Planning
 
-- Create trips with title, date range, description, and traveler count
-- Auto-generated day-wise timeline from your trip dates
-- Add activities as cards with type, time, location, estimated cost, and notes
-- Drag-and-drop activity reordering within and across days
+- Create trips with specific dates and custom descriptions
+- Auto-generate a day-wise timeline based on your trip dates
+- Add activity cards specifying type, time, location, estimated cost, and notes
+- Reorder activities within and across days using drag-and-drop
 
 ### Collaboration
 
-- Invite members by email pending invites handled gracefully for non-registered users
-- Role-based access: **Owner**, **Editor**, **Viewer** enforced on the server, not just hidden in UI
-- Comment on specific days or individual activities, with one-level threaded replies
+- Invite members via email, handling pending invites gracefully for unregistered users
+- Enforce role-based access (Owner, Editor, Viewer). Permissions are validated on the server, not just hidden in the UI
+- Comment on specific days or individual activities with threaded replies
 
 ### Organization
 
-- Multiple checklists per trip (packing, to-do, pre-departure)
-- File attachments PDFs, tickets, images stored on Cloudinary
-- Manual reservation entries: flights, hotels, restaurants, car rentals
-- Budget tracking with per-category expense breakdown
+- Maintain multiple checklists per trip for packing, to-dos, and pre-departure tasks
+- Attach files like tickets, and images, hosted securely via Cloudinary
+- Enter manual reservations for flights, hotels, restaurants, and car rentals
+- Track budgets and view expense breakdowns by category
 
 ### Security
 
-- JWT verification via Clerk on every protected route
-- Helmet + HPP for header security and HTTP parameter pollution prevention
-- Zod validation on every request body, both client and server
-- 404 returned for non-member trip access, trip existence is never leaked
+- Verify JWT tokens via Clerk on every protected route
+- Use Helmet and HPP to secure headers and prevent HTTP parameter pollution
+- Validate request bodies on both client and server using Zod
+- Block non-member access immediately keeping trip existence private
 
 ---
 
@@ -111,63 +111,17 @@ External Services
 
 ---
 
-## Project Structure
-
-```
-tabi/
-├── client/                    # Next.js App
-│   ├── app/
-│   │   ├── layout.tsx         # Root layout, fonts, providers
-│   │   ├── (auth)/            # Clerk sign-in / sign-up pages
-│   │   ├── dashboard/         # Trip list
-│   │   ├── trips/[id]/        # Trip workspace
-│   │   │   ├── itinerary/
-│   │   │   ├── members/
-│   │   │   ├── checklists/
-│   │   │   ├── files/
-│   │   │   ├── reservations/
-│   │   │   └── budget/
-│   │   └── invites/[token]/
-│   │
-│   ├── components/
-│   ├── hooks/
-│   ├── lib/
-│   │   ├── axios.ts           # Axios instance + Clerk interceptor
-│   │   └── queryClient.ts
-│   └── store/                 # Zustand stores
-│
-├── server/                    # Express API
-│   ├── src/
-│   │   ├── index.ts
-│   │   ├── routes/
-│   │   ├── controllers/
-│   │   ├── services/
-│   │   ├── models/            # Mongoose models
-│   │   ├── middleware/
-│   │   │   ├── auth.ts              # Clerk JWT verification
-│   │   │   ├── permissions.ts       # Role checks
-│   │   │   └── validate.ts          # Zod middleware
-│   │   └── lib/
-│   │       ├── cloudinary.ts
-│   │       └── db.ts
-│   └── tsconfig.json
-│
-└── shared/                          # Shared TS types and Zod schemas
-    ├── types/
-    └── validations/
-```
-
 ## Getting Started
 
 ### Prerequisites
 
-```bash
-node >= 20
-bun >= 1.0
-MongoDB Atlas account (free M0 works)
-Clerk account (free tier)
-Cloudinary account (free tier)
-```
+You need the following installed or set up to run this project:
+
+- Node.js >= 20
+- Bun >= 1.0
+- MongoDB Atlas account (free M0 works)
+- Clerk account (free tier)
+- Cloudinary account (free tier)
 
 ### 1. Clone the repository
 
@@ -178,38 +132,44 @@ cd Tabi
 
 ### 2. Set up the server
 
+Start by installing backend dependencies:
+
 ```bash
 cd server
 bun install
 ```
 
-Create `server/.env`:
+Create a `server/.env` file and fill in your keys:
 
 ```env
 PORT=8000
-MONGODB_URI=your_mongodb_atlas_connection_string
+MONGODB_URI=your_mongodb_connection_string
 CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 CLOUDINARY_API_KEY=your_cloudinary_api_key
 CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 CLIENT_URL=http://localhost:3000
 ```
 
+Start the development server:
+
 ```bash
 bun run dev
 ```
 
-Server runs on `http://localhost:8000`.
+The Express server will start on `http://localhost:8000`.
 
 ### 3. Set up the client
+
+Open a new terminal window and navigate to the client workspace:
 
 ```bash
 cd client
 bun install
 ```
 
-Create `client/.env.local`:
+Create a `client/.env.local` file and fill in your keys:
 
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
@@ -221,27 +181,29 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
+Start the Next.js development server:
+
 ```bash
 bun run dev
 ```
 
-Client runs on `http://localhost:3000`.
+The client will start on `http://localhost:3000`.
 
 ### 4. Configure Clerk webhook
 
-In your Clerk dashboard, add a webhook pointing to:
+To sync Clerk user data into your MongoDB `users` collection, add a webhook in your Clerk Dashboard pointing to:
 
-```
+```text
 http://localhost:8000/api/v1/webhooks/clerk
 ```
 
-Subscribe to: `user.created`, `user.updated`
-
-This syncs Clerk users into your MongoDB `users` collection so trip member references work correctly.
+Make sure to subscribe to the `user.created` and `user.updated` events. Grab the Webhook Secret provided by Clerk and add it to your `server/.env` file as `CLERK_WEBHOOK_SECRET`. This step is necessary to ensure user references work correctly for trips and invites.
 
 ---
 
 ## Role-Based Access
+
+The platform assigns roles to participants to protect shared content. These limits are validated during server requests.
 
 | Action                | Owner | Editor | Viewer |
 | --------------------- | :---: | :----: | :----: |
@@ -256,8 +218,6 @@ This syncs Clerk users into your MongoDB `users` collection so trip member refer
 | Invite members        |  ✅   |   ❌   |   ❌   |
 | Delete trip           |  ✅   |   ❌   |   ❌   |
 
-Role checks run server-side in Express middleware. The UI reflects permissions, but the server enforces them regardless.
-
 ---
 
 ## Deployment
@@ -270,25 +230,24 @@ Role checks run server-side in Express middleware. The UI reflects permissions, 
 | Auth     | Clerk         |
 | Media    | Cloudinary    |
 
-**Live:** [tabi.vercel.app](https://tabi.vercel.app)  
-**API:** [tabi-api.hogyoku.cloud](https://tabi-api.hogyoku.cloud)
+**Live Platform:** [tabi.atharvdangedev.in](https://tabi.atharvdangedev.in)
 
 ---
 
 ## Design
 
-Tabi uses a **neobrutalism + pastel** design system:
+Tabi utilizes a **neobrutalism + pastel** design system to stand out:
 
-- Thick `2px` dark borders (`#1A1A1A`) on all interactive elements
-- Offset drop shadows: `4px 4px 0px #1A1A1A` no blur
-- Pastel fills: blue `#93CDFF`, peach `#FFD6C0`, mint `#B8F0D4`
-- Typography: **Space Grotesk** (headings) + **DM Sans** (body) + **JetBrains Mono** (code/IDs)
+- Distinctive `2px` dark borders (`#1A1A1A`) on interactive elements
+- Offset drop shadows (`4px 4px 0px #1A1A1A`) with zero blur
+- Soft pastel fills like blue (`#93CDFF`), peach (`#FFD6C0`), and mint (`#B8F0D4`)
+- Clean typography hierarchy balancing **Space Grotesk** (headings), **DM Sans** (body), and **JetBrains Mono** (mono/IDs)
 
 ---
 
 ## License
 
-MIT see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.
 
 ---
 
