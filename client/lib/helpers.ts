@@ -21,9 +21,9 @@ export function formatTime(time?: string) {
     return null;
   }
   try {
-    const [h, m] = time.split(":");
+    const [h, rawMinute] = time.split(":");
     const hour = parseInt(h ?? "0", 10);
-    const minute = m ?? "00";
+    const minute = (rawMinute ?? "00").replace(/\s*(AM|PM)$/i, "").trim();
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minute} ${ampm}`;

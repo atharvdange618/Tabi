@@ -11,13 +11,14 @@ export async function generateMetadata({
     const { getToken } = await auth();
     const token = await getToken();
     if (token) {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/trips/${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          next: { revalidate: 60 },
-        },
-      );
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "http://localhost:3000";
+      const res = await fetch(`${baseUrl}/api/v1/trips/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 60 },
+      });
       if (res.ok) {
         const { data: trip } = await res.json();
         if (trip?.title) {

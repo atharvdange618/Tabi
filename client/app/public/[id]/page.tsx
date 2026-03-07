@@ -33,12 +33,13 @@ type FetchPublicTripResult =
 
 const fetchPublicTrip = async (id: string): Promise<FetchPublicTripResult> => {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/v1/trips/public/${id}`,
-      {
-        cache: "no-store",
-      },
-    );
+    const baseUrl =
+      process.env.API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:5000";
+    const res = await fetch(`${baseUrl}/api/v1/trips/public/${id}`, {
+      cache: "no-store",
+    });
     if (res.status === 403) return { status: "private" };
     if (!res.ok) return { status: "not_found" };
     const data = await res.json();
