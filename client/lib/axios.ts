@@ -24,6 +24,9 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
+    if (err.response?.status === 403) {
+      return Promise.reject(err);
+    }
     if (typeof window !== "undefined") {
       let message = "An unexpected error occurred";
       const dataError = err.response?.data?.error;

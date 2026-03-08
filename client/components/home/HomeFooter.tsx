@@ -15,10 +15,6 @@ export function HomeFooter() {
           </div>
         </Link>
 
-        <p className="text-gray-500 text-[13px] font-medium m-0">
-          &copy; {new Date().getFullYear()} Tabi. Built for the journey.
-        </p>
-
         <div className="flex gap-6">
           {["Privacy", "Terms"].map((link) => (
             <Link
@@ -37,6 +33,10 @@ export function HomeFooter() {
             The Story ❤️
           </Link>
         </div>
+
+        <p className="text-gray-500 text-[13px] font-medium m-0 w-full text-center">
+          &copy; {new Date().getFullYear()} Tabi. Built for the journey.
+        </p>
       </div>
     </footer>
   );

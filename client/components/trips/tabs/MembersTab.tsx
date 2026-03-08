@@ -238,7 +238,7 @@ export function MembersTab({
       )}
 
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-        <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl max-w-sm">
+        <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="font-display font-black text-xl uppercase">
               Invite Member

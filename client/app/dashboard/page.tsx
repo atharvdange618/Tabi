@@ -73,6 +73,7 @@ interface NormalizedTrip {
   daysUntil: number;
   accentColor: string;
   members: Array<{ initials: string; bg: string }>;
+  isPublic: boolean;
 }
 
 function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
@@ -92,6 +93,7 @@ function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
       initials: getInitials(m.name),
       bg: MEMBER_COLORS[i % MEMBER_COLORS.length],
     })),
+    isPublic: trip.isPublic ?? false,
   };
 }
 
@@ -236,6 +238,13 @@ function TripCard({
                     className="font-medium text-sm cursor-pointer"
                     onClick={(e) => {
                       e.preventDefault();
+                      if (!trip.isPublic) {
+                        toast.warning("Trip is private", {
+                          description:
+                            "Enable public sharing in trip Settings before sharing.",
+                        });
+                        return;
+                      }
                       router.push(`/public/${trip.id}`);
                     }}
                   >
