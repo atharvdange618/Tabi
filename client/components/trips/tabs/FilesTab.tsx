@@ -64,7 +64,7 @@ export function FilesTab({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".jpg,.jpeg,.webp"
+              accept=".jpg,.jpeg,.webp,.pdf"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -73,7 +73,7 @@ export function FilesTab({
       </div>
       {canEdit && (
         <p className="text-xs text-muted-foreground mb-4">
-          JPEG, JPG, and WebP files are supported.
+          JPEG, JPG, WebP, and PDF files are supported.
         </p>
       )}
 

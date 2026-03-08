@@ -1,10 +1,24 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { Download, File as FileIcon, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import type { FileDoc } from "shared/types";
+
+const PdfViewer = dynamic(
+  () => import("./PdfViewer").then((m) => m.PdfViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
+        <Loader2 className="animate-spin" size={18} />
+        Loading PDF…
+      </div>
+    ),
+  },
+);
 
 interface FileViewerModalProps {
   file: FileDoc | null;
@@ -35,7 +49,8 @@ export function FileViewerModal({ file, onClose }: FileViewerModalProps) {
 
   const isImage = file.mimeType.startsWith("image/");
   const isText = isTextFile;
-  const isUnsupported = !isImage && !isText;
+  const isPdf = file.mimeType === "application/pdf";
+  const isUnsupported = !isImage && !isText && !isPdf;
 
   return (
     <Dialog open={!!file} onOpenChange={(open) => !open && onClose()}>
@@ -76,6 +91,8 @@ export function FileViewerModal({ file, onClose }: FileViewerModalProps) {
               )}
             </div>
           )}
+
+          {isPdf && <PdfViewer url={file.cloudinaryUrl} />}
 
           {isUnsupported && (
             <div className="flex-1 w-full flex flex-col items-center justify-center p-8 text-center">

@@ -1,7 +1,10 @@
 import mongoose from "mongoose";
-import streamifier from "streamifier";
 import { File } from "../models/index.ts";
-import { LimitExceededError, NotFoundError, ValidationError } from "../lib/errors.ts";
+import {
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
 import cloudinary from "../lib/cloudinary.ts";
 import type { CloudinaryResourceType } from "../models/File.ts";
@@ -61,38 +64,12 @@ export async function uploadFile(
   const publicId =
     resourceType === "raw" ? sanitizePublicId(file.originalname) : undefined;
 
-  const uploadResult = await new Promise<{
-    public_id: string;
-    secure_url: string;
-    bytes: number;
-  }>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        folder: `tabi/${tripId}`,
-        resource_type: resourceType,
-        ...(publicId && { public_id: publicId }),
-      },
-      (error: unknown, result) => {
-        if (error) {
-          // eslint-disable-next-line no-console
-          console.error("Cloudinary upload error:", error);
-          const errMsg =
-            error instanceof Error ? error.message : "Upload failed";
-          reject(new Error(errMsg));
-          return;
-        }
-        if (!result) {
-          reject(new Error("Cloudinary returned no result"));
-          return;
-        }
-        resolve({
-          public_id: result.public_id,
-          secure_url: result.secure_url,
-          bytes: result.bytes,
-        });
-      },
-    );
-    streamifier.createReadStream(file.buffer).pipe(stream);
+  const dataURI = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
+
+  const uploadResult = await cloudinary.uploader.upload(dataURI, {
+    folder: `tabi/${tripId}`,
+    resource_type: resourceType,
+    ...(publicId && { public_id: publicId }),
   });
 
   return File.create({

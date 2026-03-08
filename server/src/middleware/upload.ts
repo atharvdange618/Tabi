@@ -7,6 +7,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/gif",
   "image/webp",
   "image/svg+xml",
+  "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
@@ -15,7 +16,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "text/csv",
 ]);
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
 export const upload = multer({
   storage: multer.memoryStorage(),
