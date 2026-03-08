@@ -144,3 +144,6 @@ context/
 *.zip
 
 ecosystem.config.js
+
+# prototype
+pdf-service/
