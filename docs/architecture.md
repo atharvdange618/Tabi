@@ -35,7 +35,7 @@ graph LR
 
 **Three deployable units:**
 
-1. **Client** (Next.js on Vercel) handles rendering, routing, and client-side state.
+1. **Client** (Next.js on Hostinger KVM2) handles rendering, routing, and client-side state.
 2. **Server** (Express on Hostinger KVM2 with Bun runtime) handles business logic, data access, and file uploads.
 3. **Database** (MongoDB Atlas M0) stores all application data.
 
@@ -65,7 +65,7 @@ The App Router is the right choice here because trip detail pages benefit from s
 
 Keeping the API separate from the Next.js app is a deliberate choice:
 
-1. **Independent scaling.** The API can be deployed on a different machine (Hostinger KVM2) from the frontend (Vercel). This matters for a hackathon where free-tier limits are real.
+1. **Independent scaling.** Both the API and frontend are deployed on Hostinger KVM2, keeping everything on one server and simplifying infrastructure management.
 2. **Middleware control.** Express middleware ordering (Helmet → HPP → CORS → JSON → Auth → Route) is explicit and testable. Next.js API routes don't give this level of control.
 3. **Bun performance.** Bun as the runtime gives faster cold starts and lower memory usage compared to Node.js on the same hardware.
 4. **Testability.** Supertest can bind directly to the Express `app` object without starting a server, making integration tests fast and deterministic.
@@ -140,7 +140,7 @@ sequenceDiagram
 | 5     | `clerkMiddleware()`  | Global | Verifies Clerk JWT on every request                    |
 | 6     | `requireAuth`        | Route  | Rejects unauthenticated requests                       |
 | 7     | `resolveDbUser`      | Route  | Maps `clerkId` → internal `userId` on `req.user`       |
-| 8     | `requireMembership`  | Route  | Checks `trip_members` for access. Returns 404, not 403 |
+| 8     | `requireMembership`  | Route  | Checks `trip_members` for access. Returns 403 if not a member |
 | 9     | `requireRole(roles)` | Route  | Further restricts to specific roles (owner, editor)    |
 | 10    | `validate(schema)`   | Route  | Zod validation on `req.body`                           |
 
@@ -295,11 +295,8 @@ Both layers use the same Zod schemas from `shared/validations/`.
 
 ```mermaid
 graph LR
-    subgraph Vercel
-        A[Next.js Client<br/>Auto-deploy on push]
-    end
-
     subgraph Hostinger KVM2
+        A[Next.js Client]
         B[Express API<br/>Bun runtime]
     end
 
@@ -324,7 +321,7 @@ graph LR
 
 | Service  | Platform       | Why this platform                                      |
 | -------- | -------------- | ------------------------------------------------------ |
-| Client   | Vercel         | Zero-config Next.js deploys, free preview environments |
+| Client   | Hostinger KVM2 | Next.js frontend, co-located with API server           |
 | Server   | Hostinger KVM2 | Bun support, persistent process, low cost              |
 | Database | MongoDB Atlas  | Free M0 cluster, managed backups, Atlas UI             |
 | Auth     | Clerk          | Managed auth with generous free tier (10k MAU)         |

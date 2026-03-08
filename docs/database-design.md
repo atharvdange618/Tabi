@@ -435,4 +435,4 @@ This is implemented as a service-layer function (`deleteTripCascade`) that runs 
 
 ### Collection Count
 
-**13 collections** total: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`.
+**14 collections** total: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`.
