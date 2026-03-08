@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
+import { toast } from "sonner";
 import {
   Plus,
   Users,
@@ -15,6 +16,7 @@ import {
   Plane,
   LogOut,
   MapPin,
+  Vibrate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -381,6 +383,23 @@ export default function DashboardPage() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
+  useEffect(() => {
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    if (!isTouchDevice) return;
+    if (localStorage.getItem("tabi-haptic-hint-shown")) return;
+
+    const timer = setTimeout(() => {
+      toast("Haptic feedback is enabled!", {
+        description: "Tap any button to feel it.",
+        icon: <Vibrate size={16} />,
+        duration: 5000,
+      });
+      localStorage.setItem("tabi-haptic-hint-shown", "1");
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="min-h-screen bg-brand-cream font-body text-[#111] flex flex-col">
       <nav className="sticky top-0 z-50 h-16 bg-white border-b-2 border-[#1A1A1A] flex items-center justify-between px-6">
@@ -436,6 +455,10 @@ export default function DashboardPage() {
             <h1 className="font-display font-black text-4xl tracking-tight uppercase">
               Your Trips
             </h1>
+            <p className="hidden pointer-coarse:flex items-center gap-1.5 mt-1.5 text-xs text-[#9CA3AF] font-medium">
+              <Vibrate size={11} />
+              Haptic feedback is on! tap any button to feel it
+            </p>
           </div>
 
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
