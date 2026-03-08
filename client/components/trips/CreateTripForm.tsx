@@ -2,7 +2,8 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createTripSchema, type CreateTripPayload } from "shared/validations";
+import { createTripSchema, tripBaseSchema, type CreateTripPayload } from "shared/validations";
+import { z } from "zod";
 import { useCreateTrip } from "../../hooks/useTrips";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ export default function CreateTripForm({
 }: { onSuccess?: () => void } = {}) {
   const createTrip = useCreateTrip();
 
-  const form = useForm<CreateTripPayload>({
+  const form = useForm<z.infer<typeof tripBaseSchema>>({
     resolver: zodResolver(createTripSchema),
     defaultValues: {
       title: "",

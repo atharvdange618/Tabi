@@ -39,7 +39,7 @@ export const expenseCategories = [
 
 // --- Trip Schemas ---
 
-const tripBaseSchema = z.object({
+export const tripBaseSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().max(500).optional(),
   destination: z.string().max(200).optional(),
