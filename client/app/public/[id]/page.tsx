@@ -25,6 +25,12 @@ import {
   MEMBER_COLORS,
 } from "@/lib/helpers";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import {
+  generateOGImageUrl,
+  createCanonicalUrl,
+  generateTripSchema,
+  SITE_NAME,
+} from "@/lib/seo";
 
 type FetchPublicTripResult =
   | { status: "ok"; trip: PublicTrip }
@@ -57,16 +63,53 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const result = await fetchPublicTrip(id);
-  if (result.status !== "ok")
+
+  if (result.status !== "ok") {
     return {
       title: result.status === "private" ? "Private Trip" : "Trip Not Found",
+      robots: { index: false, follow: false },
     };
+  }
+
+  const { trip } = result;
+  const description =
+    trip.description ||
+    `Explore the itinerary for ${trip.destination || "this trip"} on ${SITE_NAME}. View activities, timeline, and trip details.`;
+
+  const ogImageUrl = generateOGImageUrl({
+    title: trip.title,
+    description: trip.destination || description,
+    coverImage: trip.coverImageUrl,
+  });
+
+  const tripUrl = createCanonicalUrl(`/public/${id}`);
 
   return {
-    title: result.trip.title,
-    description:
-      result.trip.description ||
-      `Itinerary for ${result.trip.destination || "a trip"}`,
+    title: trip.title,
+    description,
+    alternates: {
+      canonical: tripUrl,
+    },
+    openGraph: {
+      title: `${trip.title} | ${SITE_NAME}`,
+      description,
+      url: tripUrl,
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: trip.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${trip.title} | ${SITE_NAME}`,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -165,8 +208,43 @@ export default async function PublicTripPage({
 
   const totalActivities = trip.activities.length;
 
+  const tripSchema = generateTripSchema({
+    name: trip.title,
+    description: trip.description || undefined,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    url: createCanonicalUrl(`/public/${id}`),
+  });
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: createCanonicalUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: trip.title,
+        item: createCanonicalUrl(`/public/${id}`),
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-brand-cream font-body text-[#111]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(tripSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <nav className="sticky top-0 z-50 h-14 bg-white border-b-2 border-[#1A1A1A] flex items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2 group">
           <div className="w-7 h-7 bg-brand-blue border-2 border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] rounded-md flex items-center justify-center font-kanji text-sm group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0px_#1A1A1A] transition-all duration-150">

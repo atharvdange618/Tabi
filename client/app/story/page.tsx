@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowLeft,
   ArrowRight,
@@ -12,11 +13,46 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { generateOGImageUrl, createCanonicalUrl } from "@/lib/seo";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "The Story of Tabi · 旅",
   description:
-    "How a chaotic WhatsApp group, one too many shared Google Sheets, and a hackathon deadline created Tabi.",
+    "How a chaotic WhatsApp group, one too many shared Google Sheets, and a hackathon deadline created Tabi - the collaborative trip planning tool that actually works.",
+  alternates: {
+    canonical: createCanonicalUrl("/story"),
+  },
+  openGraph: {
+    title: "The Story of Tabi · 旅",
+    description:
+      "How a chaotic WhatsApp group and shared Google Sheets chaos led to building Tabi.",
+    url: createCanonicalUrl("/story"),
+    images: [
+      {
+        url: generateOGImageUrl({
+          title: "The Story of Tabi · 旅",
+          description: "From WhatsApp chaos to collaborative trip planning",
+          forceGenerate: true,
+        }),
+        width: 1200,
+        height: 630,
+        alt: "The Story of Tabi",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Story of Tabi · 旅",
+    description:
+      "How a chaotic WhatsApp group and shared Google Sheets chaos led to building Tabi.",
+    images: [
+      generateOGImageUrl({
+        title: "The Story of Tabi · 旅",
+        description: "From WhatsApp chaos to collaborative trip planning",
+        forceGenerate: true,
+      }),
+    ],
+  },
 };
 
 const timeline = [
@@ -124,8 +160,31 @@ const facts = [
 ];
 
 export default function StoryPage() {
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: createCanonicalUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Story",
+        item: createCanonicalUrl("/story"),
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(24px); }

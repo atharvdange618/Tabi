@@ -7,6 +7,16 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import {
+  SITE_NAME,
+  SITE_DESCRIPTION,
+  SITE_URL,
+  PRIMARY_KEYWORDS,
+  DEFAULT_OG_IMAGE,
+  generateOrganizationSchema,
+  generateWebSiteSchema,
+  generateSoftwareApplicationSchema,
+} from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -33,37 +43,70 @@ const notoSansJp = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Tabi - Collaborative Trip Planning",
-    template: "%s | Tabi",
+    default: `${SITE_NAME} - Collaborative Trip Planning`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description:
-    "Plan trips together. Build itineraries, track budgets, and collaborate in real time.",
-  keywords: [
-    "trip planning",
-    "travel itinerary",
-    "collaborative travel",
-    "group trips",
-  ],
-  robots: { index: true, follow: true },
+  description: SITE_DESCRIPTION,
+  keywords: PRIMARY_KEYWORDS,
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     type: "website",
-    siteName: "Tabi",
-    title: "Tabi - Collaborative Trip Planning",
-    description:
-      "Plan trips together. Build itineraries, track budgets, and collaborate in real time.",
-    images: ["/og-default.png"],
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} - Collaborative Trip Planning`,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "en_US",
+    images: [
+      {
+        url: DEFAULT_OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} - Plan trips together seamlessly`,
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tabi - Collaborative Trip Planning",
-    description:
-      "Plan trips together. Build itineraries, track budgets, and collaborate in real time.",
-    images: ["/og-default.png"],
+    title: `${SITE_NAME} - Collaborative Trip Planning`,
+    description: SITE_DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+    creator: "@atharvdangedev",
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: SITE_NAME,
+  },
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  applicationName: SITE_NAME,
+  category: "travel",
 };
 
 export default function RootLayout({
@@ -71,10 +114,34 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationSchema = generateOrganizationSchema();
+  const websiteSchema = generateWebSiteSchema();
+  const softwareApplicationSchema = generateSoftwareApplicationSchema();
+
   return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(softwareApplicationSchema),
+          }}
+        />
       </head>
       <body
         className={`${spaceGrotesk.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${notoSansJp.variable} antialiased`}

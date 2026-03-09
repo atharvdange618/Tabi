@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
+import { generateOGImageUrl, SITE_NAME } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -22,16 +23,44 @@ export async function generateMetadata({
       if (res.ok) {
         const { data: trip } = await res.json();
         if (trip?.title) {
+          const description = trip.destination
+            ? `Collaborative trip to ${trip.destination}`
+            : "A collaborative trip on Tabi";
+
           return {
             title: trip.title,
-            description: trip.destination
-              ? `Collaborative trip to ${trip.destination}`
-              : "A collaborative trip on Tabi",
+            description,
+            robots: {
+              index: false,
+              follow: false,
+            },
             openGraph: {
-              title: `${trip.title} | Tabi`,
-              description: trip.destination
-                ? `Collaborative trip to ${trip.destination}`
-                : "A collaborative trip on Tabi",
+              title: `${trip.title} | ${SITE_NAME}`,
+              description,
+              images: [
+                {
+                  url: generateOGImageUrl({
+                    title: trip.title,
+                    description: trip.destination || description,
+                    coverImage: trip.coverImageUrl,
+                  }),
+                  width: 1200,
+                  height: 630,
+                  alt: trip.title,
+                },
+              ],
+            },
+            twitter: {
+              card: "summary_large_image",
+              title: `${trip.title} | ${SITE_NAME}`,
+              description,
+              images: [
+                generateOGImageUrl({
+                  title: trip.title,
+                  description: trip.destination || description,
+                  coverImage: trip.coverImageUrl,
+                }),
+              ],
             },
           };
         }
@@ -41,6 +70,10 @@ export async function generateMetadata({
   return {
     title: "Trip Details",
     description: "Manage your trip itinerary, budget, and more.",
+    robots: {
+      index: false,
+      follow: false,
+    },
   };
 }
 

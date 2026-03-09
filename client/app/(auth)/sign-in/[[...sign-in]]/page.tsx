@@ -1,9 +1,17 @@
 import { SignIn } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { createCanonicalUrl, SITE_NAME } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Sign In",
-  description: "Sign in to your Tabi account to manage your trips.",
+  description: `Sign in to your ${SITE_NAME} account to access your trip itineraries, budgets, and collaborative planning tools.`,
+  alternates: {
+    canonical: createCanonicalUrl("/sign-in"),
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function SignInPage({
