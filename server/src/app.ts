@@ -7,6 +7,9 @@ import { errorHandler } from "./middleware/errorHandler.ts";
 import { clerkAuth } from "./middleware/auth.ts";
 import { httpLogger } from "./lib/logger.ts";
 import { env } from "./lib/env.ts";
+import { registerNotificationEventListeners } from "./services/notification.service.ts";
+
+registerNotificationEventListeners();
 
 const app = express();
 

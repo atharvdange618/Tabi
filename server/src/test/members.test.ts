@@ -20,6 +20,17 @@
  *      - POST   /api/v1/invites/:token/accept
  *      - POST   /api/v1/invites/:token/decline
  *
+ *   3. "Transfer Ownership" - Service & API tests
+ *      - transferOwnership (success, ForbiddenError, NotFoundError, ValidationError)
+ *      - Atomic transaction: exactly one owner after transfer
+ *      - Event emission: ownership.transferred
+ *      - POST /api/v1/trips/:id/members/transfer-ownership
+ *
+ *   4. "Leave Trip" - Service & API tests
+ *      - leaveTripSelf (success as editor/viewer, ForbiddenError for owner)
+ *      - Event emission: member.left
+ *      - DELETE /api/v1/trips/:id/members/me
+ *
  * Auth strategy: same Clerk mock as trips.test.ts.
  * Email: mocked via vi.mock so no real emails are sent.
  *
@@ -50,6 +61,10 @@ import app from "../app.ts";
 import { User, TripMember, PendingInvite } from "../models/index.ts";
 import * as tripService from "../services/trip.service.ts";
 import * as memberService from "../services/member.service.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
 import {
   TripMemberRole,
   TripMemberStatus,
@@ -874,6 +889,540 @@ describe("Member API", () => {
 
     it("returns 401 without auth", async () => {
       await request(app).post("/api/v1/invites/some-token/decline").expect(401);
+    });
+  });
+});
+
+// =============================================================================
+// 3. Transfer Ownership - Service & API tests
+// =============================================================================
+
+describe("Transfer Ownership", () => {
+  // ── Service layer ────────────────────────────────────────────────────────
+
+  describe("transferOwnership (service)", () => {
+    it("transfers ownership - old owner becomes editor, target becomes owner", async () => {
+      const owner = await createTestUser({ name: "Original Owner" });
+      const editor = await createTestUser({ name: "New Owner" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      await memberService.transferOwnership(
+        trip._id.toString(),
+        owner._id.toString(),
+        editor._id.toString(),
+      );
+
+      const ownerMember = await TripMember.findOne({
+        tripId: trip._id,
+        userId: owner._id,
+      });
+      const editorMember = await TripMember.findOne({
+        tripId: trip._id,
+        userId: editor._id,
+      });
+
+      expect(ownerMember!.role).toBe(TripMemberRole.EDITOR);
+      expect(editorMember!.role).toBe(TripMemberRole.OWNER);
+    });
+
+    it("returns updated member list after transfer", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({ email: "editor-t@example.com" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      const members = await memberService.transferOwnership(
+        trip._id.toString(),
+        owner._id.toString(),
+        editor._id.toString(),
+      );
+
+      expect(members).toBeInstanceOf(Array);
+      expect(
+        members.some(
+          (m: any) =>
+            (m.userId?._id?.toString() ?? m.userId?.toString()) ===
+              editor._id.toString() && m.role === TripMemberRole.OWNER,
+        ),
+      ).toBe(true);
+    });
+
+    it("throws ForbiddenError when requester is not the owner", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({ email: "editor-f@example.com" });
+      const viewer = await createTestUser({ email: "viewer-f@example.com" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.insertMany([
+        {
+          tripId: trip._id,
+          userId: editor._id,
+          role: TripMemberRole.EDITOR,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+        {
+          tripId: trip._id,
+          userId: viewer._id,
+          role: TripMemberRole.VIEWER,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+      ]);
+
+      await expect(
+        memberService.transferOwnership(
+          trip._id.toString(),
+          editor._id.toString(), // editor trying to transfer
+          viewer._id.toString(),
+        ),
+      ).rejects.toThrow("Only the trip owner can transfer ownership");
+    });
+
+    it("throws NotFoundError when target is not an active member", async () => {
+      const owner = await createTestUser();
+      const stranger = await createTestUser({
+        email: "stranger-t@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await expect(
+        memberService.transferOwnership(
+          trip._id.toString(),
+          owner._id.toString(),
+          stranger._id.toString(), // not a member of the trip
+        ),
+      ).rejects.toThrow("Target user is not an active member of this trip");
+    });
+
+    it("throws ValidationError when target is already the owner", async () => {
+      const owner = await createTestUser();
+      const trip = await seedTrip(owner._id.toString());
+
+      await expect(
+        memberService.transferOwnership(
+          trip._id.toString(),
+          owner._id.toString(),
+          owner._id.toString(), // targeting self (owner)
+        ),
+      ).rejects.toThrow("Target user is already the owner");
+    });
+
+    it("atomically updates both members - trip has exactly one owner after transfer", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({
+        email: "editor-atomic@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      await memberService.transferOwnership(
+        trip._id.toString(),
+        owner._id.toString(),
+        editor._id.toString(),
+      );
+
+      const ownerMembers = await TripMember.find({
+        tripId: trip._id,
+        role: TripMemberRole.OWNER,
+      });
+
+      expect(ownerMembers).toHaveLength(1);
+      expect(ownerMembers[0]!.userId.toString()).toBe(editor._id.toString());
+    });
+
+    it("emits ownership.transferred event after successful transfer", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({ email: "editor-emit@example.com" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      const eventSpy = vi.fn();
+      notificationEvents.once(
+        NotificationEvents.OWNERSHIP_TRANSFERRED,
+        eventSpy,
+      );
+
+      await memberService.transferOwnership(
+        trip._id.toString(),
+        owner._id.toString(),
+        editor._id.toString(),
+      );
+
+      expect(eventSpy).toHaveBeenCalledOnce();
+      expect(eventSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tripId: trip._id.toString(),
+          oldOwnerId: owner._id.toString(),
+          newOwnerId: editor._id.toString(),
+        }),
+      );
+    });
+  });
+
+  // ── API layer ─────────────────────────────────────────────────────────────
+
+  describe("POST /trips/:id/members/transfer-ownership (API)", () => {
+    it("returns 200 and transfers ownership", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_to_1" });
+      const editor = await createTestUser({
+        clerkId: "clerk_to_2",
+        email: "api-editor@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      const res = await request(app)
+        .post(`/api/v1/trips/${trip._id}/members/transfer-ownership`)
+        .set("x-test-clerk-id", owner.clerkId)
+        .send({ targetUserId: editor._id.toString() })
+        .expect(200);
+
+      expect(res.body.data).toBeInstanceOf(Array);
+      expect(
+        res.body.data.some(
+          (m: any) =>
+            (m.userId?._id ?? m.userId) === editor._id.toString() &&
+            m.role === TripMemberRole.OWNER,
+        ),
+      ).toBe(true);
+    });
+
+    it("returns 403 when non-owner attempts transfer", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_to_3" });
+      const editor = await createTestUser({
+        clerkId: "clerk_to_4",
+        email: "notown@example.com",
+      });
+      const viewer = await createTestUser({
+        clerkId: "clerk_to_5",
+        email: "target-to@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.insertMany([
+        {
+          tripId: trip._id,
+          userId: editor._id,
+          role: TripMemberRole.EDITOR,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+        {
+          tripId: trip._id,
+          userId: viewer._id,
+          role: TripMemberRole.VIEWER,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+      ]);
+
+      await request(app)
+        .post(`/api/v1/trips/${trip._id}/members/transfer-ownership`)
+        .set("x-test-clerk-id", editor.clerkId)
+        .send({ targetUserId: viewer._id.toString() })
+        .expect(403);
+    });
+
+    it("returns 400 when targetUserId is not a valid ObjectId", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_to_6" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await request(app)
+        .post(`/api/v1/trips/${trip._id}/members/transfer-ownership`)
+        .set("x-test-clerk-id", owner.clerkId)
+        .send({ targetUserId: "not-a-valid-id" })
+        .expect(400);
+    });
+
+    it("returns 401 without authentication", async () => {
+      const owner = await createTestUser();
+      const trip = await seedTrip(owner._id.toString());
+      const fakeUserId = new mongoose.Types.ObjectId().toString();
+
+      await request(app)
+        .post(`/api/v1/trips/${trip._id}/members/transfer-ownership`)
+        .send({ targetUserId: fakeUserId })
+        .expect(401);
+    });
+  });
+});
+
+// =============================================================================
+// 4. Leave Trip (self-removal) - Service & API tests
+// =============================================================================
+
+describe("Leave Trip (leaveTripSelf)", () => {
+  // ── Service layer ────────────────────────────────────────────────────────
+
+  describe("leaveTripSelf (service)", () => {
+    it("removes the member from the trip", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({
+        email: "leave-editor@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      await memberService.leaveTripSelf(
+        trip._id.toString(),
+        editor._id.toString(),
+      );
+
+      const found = await TripMember.findOne({
+        tripId: trip._id,
+        userId: editor._id,
+      });
+      expect(found).toBeNull();
+    });
+
+    it("allows viewer to leave a trip", async () => {
+      const owner = await createTestUser();
+      const viewer = await createTestUser({
+        email: "leave-viewer@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: viewer._id,
+        role: TripMemberRole.VIEWER,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      await memberService.leaveTripSelf(
+        trip._id.toString(),
+        viewer._id.toString(),
+      );
+
+      const found = await TripMember.findOne({
+        tripId: trip._id,
+        userId: viewer._id,
+      });
+      expect(found).toBeNull();
+    });
+
+    it("throws ForbiddenError when owner tries to leave", async () => {
+      const owner = await createTestUser();
+      const trip = await seedTrip(owner._id.toString());
+
+      await expect(
+        memberService.leaveTripSelf(trip._id.toString(), owner._id.toString()),
+      ).rejects.toThrow("Trip owner must transfer ownership before leaving");
+    });
+
+    it("throws NotFoundError when user is not a member", async () => {
+      const owner = await createTestUser();
+      const stranger = await createTestUser({
+        email: "stranger-leave@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await expect(
+        memberService.leaveTripSelf(
+          trip._id.toString(),
+          stranger._id.toString(),
+        ),
+      ).rejects.toThrow("You are not a member of this trip");
+    });
+
+    it("emits member.left event after successful leave", async () => {
+      const owner = await createTestUser();
+      const editor = await createTestUser({
+        name: "Leaving User",
+        email: "leaving-emit@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      const eventSpy = vi.fn();
+      notificationEvents.once(NotificationEvents.MEMBER_LEFT, eventSpy);
+
+      await memberService.leaveTripSelf(
+        trip._id.toString(),
+        editor._id.toString(),
+      );
+
+      expect(eventSpy).toHaveBeenCalledOnce();
+      expect(eventSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tripId: trip._id.toString(),
+          userId: editor._id.toString(),
+          userName: "Leaving User",
+        }),
+      );
+    });
+
+    it("does not affect other members when a member leaves", async () => {
+      const owner = await createTestUser();
+      const editor1 = await createTestUser({ email: "stay1@example.com" });
+      const editor2 = await createTestUser({ email: "leave-e2@example.com" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.insertMany([
+        {
+          tripId: trip._id,
+          userId: editor1._id,
+          role: TripMemberRole.EDITOR,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+        {
+          tripId: trip._id,
+          userId: editor2._id,
+          role: TripMemberRole.EDITOR,
+          status: TripMemberStatus.ACTIVE,
+          invitedBy: owner._id,
+          joinedAt: new Date(),
+        },
+      ]);
+
+      await memberService.leaveTripSelf(
+        trip._id.toString(),
+        editor2._id.toString(),
+      );
+
+      const remainingMembers = await TripMember.find({ tripId: trip._id });
+      expect(remainingMembers).toHaveLength(2); // owner + editor1
+      expect(
+        remainingMembers.some(
+          (m) => m.userId.toString() === editor1._id.toString(),
+        ),
+      ).toBe(true);
+      expect(
+        remainingMembers.some(
+          (m) => m.userId.toString() === owner._id.toString(),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  // ── API layer ─────────────────────────────────────────────────────────────
+
+  describe("DELETE /trips/:id/members/me (API)", () => {
+    it("returns 200 when editor leaves the trip", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_leave_1" });
+      const editor = await createTestUser({
+        clerkId: "clerk_leave_2",
+        email: "api-leave@example.com",
+      });
+      const trip = await seedTrip(owner._id.toString());
+
+      await TripMember.create({
+        tripId: trip._id,
+        userId: editor._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      });
+
+      await request(app)
+        .delete(`/api/v1/trips/${trip._id}/members/me`)
+        .set("x-test-clerk-id", editor.clerkId)
+        .expect(200);
+
+      const found = await TripMember.findOne({
+        tripId: trip._id,
+        userId: editor._id,
+      });
+      expect(found).toBeNull();
+    });
+
+    it("returns 403 when owner tries to leave", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_leave_3" });
+      const trip = await seedTrip(owner._id.toString());
+
+      const res = await request(app)
+        .delete(`/api/v1/trips/${trip._id}/members/me`)
+        .set("x-test-clerk-id", owner.clerkId)
+        .expect(403);
+
+      expect(res.body.error).toContain("transfer ownership");
+    });
+
+    it("returns 403 when user is not a member of the trip", async () => {
+      const owner = await createTestUser({ clerkId: "clerk_leave_4" });
+      const stranger = await createTestUser({ clerkId: "clerk_leave_5" });
+      const trip = await seedTrip(owner._id.toString());
+
+      await request(app)
+        .delete(`/api/v1/trips/${trip._id}/members/me`)
+        .set("x-test-clerk-id", stranger.clerkId)
+        .expect(403);
+    });
+
+    it("returns 401 without authentication", async () => {
+      const owner = await createTestUser();
+      const trip = await seedTrip(owner._id.toString());
+
+      await request(app)
+        .delete(`/api/v1/trips/${trip._id}/members/me`)
+        .expect(401);
     });
   });
 });

@@ -39,6 +39,11 @@ vi.mock("../lib/cloudinary.ts", () => {
   return {
     default: {
       uploader: {
+        upload: vi.fn().mockResolvedValue({
+          public_id: "fake_public_id",
+          secure_url: "https://fake-cloudinary.com/fake_id.png",
+          bytes: 1024,
+        }),
         upload_stream: vi.fn().mockImplementation((_opts, cb) => {
           // Fake a stream that instantly triggers callback
           cb(null, {

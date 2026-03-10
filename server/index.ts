@@ -2,7 +2,6 @@ import app from "./src/app.ts";
 import { connectDB } from "./src/lib/db.ts";
 import logger from "./src/lib/logger.ts";
 import { env } from "./src/lib/env.ts";
-import { registerNotificationEventListeners } from "./src/services/notification.service.ts";
 
 process.on("unhandledRejection", (reason) => {
   logger.error("Unhandled promise rejection", { reason });
@@ -19,8 +18,6 @@ const PORT = env.PORT;
 async function start(): Promise<void> {
   try {
     await connectDB();
-
-    registerNotificationEventListeners();
 
     app.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`, {
