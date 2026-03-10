@@ -65,10 +65,16 @@ export async function updateActivity(
   req: Request,
   res: Response,
 ): Promise<void> {
+  if (!req.dbUserId) {
+    res.status(401).json({ error: "Unauthorized: Missing user ID" });
+    return;
+  }
+
   const activity = await activityService.updateActivity(
     req.params.id as string,
     req.params.dayId as string,
     req.params.actId as string,
+    req.dbUserId,
     req.body as UpdateActivityPayload,
   );
   res.json({ data: activity });
@@ -82,10 +88,16 @@ export async function deleteActivity(
   req: Request,
   res: Response,
 ): Promise<void> {
+  if (!req.dbUserId) {
+    res.status(401).json({ error: "Unauthorized: Missing user ID" });
+    return;
+  }
+
   await activityService.deleteActivity(
     req.params.id as string,
     req.params.dayId as string,
     req.params.actId as string,
+    req.dbUserId,
   );
   res.status(204).send();
 }
