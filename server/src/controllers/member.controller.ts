@@ -3,6 +3,7 @@ import * as memberService from "../services/member.service.ts";
 import type {
   InviteMemberPayload,
   UpdateMemberRolePayload,
+  TransferOwnershipPayload,
 } from "../../../shared/validations/index.ts";
 
 /**
@@ -136,4 +137,48 @@ export async function declineInvite(
   }
   await memberService.declineInvite(req.params.token as string, userId);
   res.json({ message: "Invite declined" });
+}
+
+/**
+ * POST /api/v1/trips/:id/members/transfer-ownership
+ * Transfer ownership to another active member.
+ */
+export async function transferOwnership(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const { targetUserId } = req.body as TransferOwnershipPayload;
+
+  const members = await memberService.transferOwnership(
+    req.params.id as string,
+    userId,
+    targetUserId,
+  );
+
+  res.json({ data: members, message: "Ownership transferred successfully" });
+}
+
+/**
+ * DELETE /api/v1/trips/:id/members/me
+ * Leave a trip (self-removal).
+ */
+export async function leaveTripSelf(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  await memberService.leaveTripSelf(req.params.id as string, userId);
+
+  res.json({ message: "Successfully left the trip" });
 }

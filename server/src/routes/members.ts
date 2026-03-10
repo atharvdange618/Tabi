@@ -5,6 +5,7 @@ import { validate } from "../middleware/validate.ts";
 import {
   inviteMemberSchema,
   updateMemberRoleSchema,
+  transferOwnershipSchema,
 } from "../../../shared/validations/index.ts";
 import * as memberController from "../controllers/member.controller.ts";
 
@@ -27,6 +28,23 @@ router.post(
   requireRole(["owner"]),
   validate(inviteMemberSchema),
   memberController.inviteMember,
+);
+
+// POST /api/v1/trips/:id/members/transfer-ownership - transfer ownership to another member
+router.post(
+  "/:id/members/transfer-ownership",
+  ...auth,
+  requireRole(["owner"]),
+  validate(transferOwnershipSchema),
+  memberController.transferOwnership,
+);
+
+// DELETE /api/v1/trips/:id/members/me - leave trip (self-removal)
+router.delete(
+  "/:id/members/me",
+  ...auth,
+  requireMembership(),
+  memberController.leaveTripSelf,
 );
 
 // PATCH /api/v1/trips/:id/members/:uid - update a member's role

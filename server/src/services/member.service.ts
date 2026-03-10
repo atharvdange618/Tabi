@@ -19,6 +19,10 @@ import type {
 } from "../../../shared/validations/index.ts";
 import { sendInviteEmail } from "../lib/email.ts";
 import logger from "../lib/logger.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
 
 /**
  * Return all members for a trip, with user info populated.
@@ -434,4 +438,133 @@ export async function revokeInvite(
     }
     await PendingInvite.deleteOne({ _id: invite._id });
   }
+}
+
+/**
+ * Transfer trip ownership from current owner to another active member.
+ * Uses Mongoose transaction to ensure atomicity.
+ * Emits ownership.transferred event for notification system.
+ */
+export async function transferOwnership(
+  tripId: string,
+  currentOwnerId: string,
+  targetUserId: string,
+) {
+  const currentOwner = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(currentOwnerId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!currentOwner || currentOwner.role !== TripMemberRole.OWNER) {
+    throw new ForbiddenError("Only the trip owner can transfer ownership");
+  }
+
+  const targetMember = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(targetUserId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!targetMember) {
+    throw new NotFoundError("Target user is not an active member of this trip");
+  }
+
+  if (targetMember.status === TripMemberStatus.PENDING) {
+    throw new ValidationError("Cannot transfer ownership to a pending member");
+  }
+
+  if (targetMember.role === TripMemberRole.OWNER) {
+    throw new ValidationError("Target user is already the owner");
+  }
+
+  const trip = await Trip.findById(tripId).select("title").lean();
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await TripMember.updateOne(
+        { _id: currentOwner._id },
+        { $set: { role: TripMemberRole.EDITOR } },
+        { session },
+      );
+
+      await TripMember.updateOne(
+        { _id: targetMember._id },
+        { $set: { role: TripMemberRole.OWNER } },
+        { session },
+      );
+    });
+
+    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFERRED, {
+      tripId,
+      tripTitle: trip.title,
+      oldOwnerId: currentOwnerId,
+      newOwnerId: targetUserId,
+      actorId: currentOwnerId,
+    });
+
+    logger.info("Ownership transferred successfully", {
+      tripId,
+      oldOwnerId: currentOwnerId,
+      newOwnerId: targetUserId,
+    });
+
+    return await getMembers(tripId);
+  } catch (error) {
+    logger.error("Failed to transfer ownership", { error, tripId });
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ * Allow a member to leave a trip (self-removal).
+ * Owner cannot leave without transferring ownership first.
+ * Emits member.left event for notification system.
+ */
+export async function leaveTripSelf(tripId: string, userId: string) {
+  const member = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(userId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!member) {
+    throw new NotFoundError("You are not a member of this trip");
+  }
+
+  if (member.role === TripMemberRole.OWNER) {
+    throw new ForbiddenError(
+      "Trip owner must transfer ownership before leaving",
+    );
+  }
+
+  const [trip, user] = await Promise.all([
+    Trip.findById(tripId).select("title").lean(),
+    User.findById(userId).select("name").lean(),
+  ]);
+
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  await TripMember.deleteOne({ _id: member._id });
+
+  notificationEvents.emit(NotificationEvents.MEMBER_LEFT, {
+    tripId,
+    tripTitle: trip.title,
+    userId,
+    userName: user.name,
+  });
+
+  logger.info("Member left trip successfully", { tripId, userId });
 }

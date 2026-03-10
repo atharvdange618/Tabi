@@ -92,8 +92,13 @@ export const updateMemberRoleSchema = z.object({
   role: z.enum(tripMemberRoles),
 });
 
+export const transferOwnershipSchema = z.object({
+  targetUserId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid user ID format"),
+});
+
 export type InviteMemberPayload = z.infer<typeof inviteMemberSchema>;
 export type UpdateMemberRolePayload = z.infer<typeof updateMemberRoleSchema>;
+export type TransferOwnershipPayload = z.infer<typeof transferOwnershipSchema>;
 
 // --- Day Schemas ---
 
