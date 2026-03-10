@@ -46,6 +46,7 @@ export async function getNotifications(
     options,
   );
 
+  res.setHeader("Cache-Control", "no-store");
   res.json({ data: notifications });
 }
 
@@ -65,6 +66,7 @@ export async function getUnreadCount(
 
   const count = await notificationService.getUnreadCount(userId);
 
+  res.setHeader("Cache-Control", "no-store");
   res.json({ data: { count } });
 }
 

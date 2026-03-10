@@ -35,7 +35,7 @@ export function useNotifications(filters?: NotificationFilters) {
       );
       return data.data;
     },
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 }
 
@@ -52,7 +52,7 @@ export function useUnreadCount() {
       setUnreadCount(count);
       return count;
     },
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 }
 
