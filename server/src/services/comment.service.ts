@@ -1,10 +1,15 @@
-import { Comment } from "../models/Comment.ts";
+import { Comment, Trip } from "../models/index.ts";
 import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
 import type {
   CreateCommentPayload,
   UpdateCommentPayload,
 } from "../../../shared/validations/index.ts";
+import logger from "../lib/logger.ts";
 
 /**
  * Get comments for a specific target (Day or Activity) inside a trip.
@@ -49,6 +54,26 @@ export async function createComment(
 
   await comment.save();
   await comment.populate("authorId", "name avatarUrl");
+
+  try {
+    const trip = await Trip.findById(tripId).lean();
+    if (trip) {
+      notificationEvents.emit(NotificationEvents.COMMENT_CREATED, {
+        tripId,
+        tripTitle: trip.title,
+        commentId: comment._id.toString(),
+        authorId,
+        targetType: data.targetType,
+        targetId: data.targetId,
+      });
+    }
+  } catch (error) {
+    logger.error("Failed to emit comment created event", {
+      error,
+      commentId: comment._id,
+    });
+  }
+
   return comment;
 }
 
