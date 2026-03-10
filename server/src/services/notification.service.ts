@@ -136,23 +136,25 @@ export async function getUnreadCount(userId: string): Promise<number> {
 /**
  * Mark a single notification as read
  */
-export async function markAsRead(
-  notificationId: string,
-  userId: string,
-): Promise<void> {
-  const notification = await Notification.findOne({
-    _id: new mongoose.Types.ObjectId(notificationId),
-    userId: new mongoose.Types.ObjectId(userId),
-  });
+export async function markAsRead(notificationId: string, userId: string) {
+  const notification = await Notification.findOneAndUpdate(
+    {
+      _id: new mongoose.Types.ObjectId(notificationId),
+      userId: new mongoose.Types.ObjectId(userId),
+    },
+    { $set: { isRead: true } },
+    { new: true },
+  )
+    .populate("userId", "name email avatarUrl")
+    .populate("actorId", "name avatarUrl")
+    .populate("tripId", "title")
+    .lean();
 
   if (!notification) {
     throw new NotFoundError("Notification not found");
   }
 
-  await Notification.updateOne(
-    { _id: notification._id },
-    { $set: { isRead: true } },
-  );
+  return notification;
 }
 
 /**

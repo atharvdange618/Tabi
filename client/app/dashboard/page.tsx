@@ -47,6 +47,7 @@ import {
 } from "@/lib/helpers";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import CreateTripForm from "@/components/trips/CreateTripForm";
+import { NotificationCenter } from "@/components/shared/NotificationCenter";
 
 type TripStatus = "upcoming" | "planning" | "completed";
 
@@ -422,6 +423,7 @@ export default function DashboardPage() {
         </Link>
 
         <div className="flex items-center gap-1.5">
+          <NotificationCenter />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-lg border border-transparent hover:border-[#1A1A1A] hover:bg-brand-cream transition-all">

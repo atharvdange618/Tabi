@@ -86,9 +86,9 @@ export async function markAsRead(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  await notificationService.markAsRead(id, userId);
+  const notification = await notificationService.markAsRead(id, userId);
 
-  res.json({ message: "Notification marked as read" });
+  res.json({ data: notification });
 }
 
 /**

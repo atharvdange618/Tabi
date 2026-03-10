@@ -4,6 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { MapPin, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -83,9 +84,7 @@ export function ReservationsTab({
         title: form.title,
         confirmationNumber: form.confirmationNumber || undefined,
         provider: form.provider || undefined,
-        datetime: form.datetime
-          ? new Date(form.datetime).toISOString()
-          : undefined,
+        datetime: form.datetime || undefined,
         notes: form.notes || undefined,
         status: form.status as Reservation["status"],
       },
@@ -151,7 +150,7 @@ export function ReservationsTab({
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {res.datetime && (
                       <span className="text-[11px] text-[#9CA3AF] font-medium">
-                        {format(new Date(res.datetime), "MMM d")}
+                        {format(new Date(res.datetime), "MMM d, h:mm a")}
                       </span>
                     )}
                     {res.confirmationNumber && (
@@ -291,11 +290,12 @@ export function ReservationsTab({
               <Label className="text-xs font-bold uppercase tracking-wide">
                 Date & Time
               </Label>
-              <input
-                type="datetime-local"
+              <DatePicker
                 value={form.datetime}
-                onChange={(e) => setForm({ ...form, datetime: e.target.value })}
-                className="mt-1 w-full h-10 px-3 border-2 border-[#1A1A1A] rounded-lg text-sm bg-white"
+                onChange={(date) => setForm({ ...form, datetime: date })}
+                placeholder="Select date & time"
+                className="mt-1"
+                showTimePicker={true}
               />
             </div>
             <div>

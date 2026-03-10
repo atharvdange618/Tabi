@@ -225,3 +225,30 @@ export type UpdateBudgetSettingsPayload = z.infer<
 export type CreateExpensePayload = z.infer<typeof createExpenseSchema>;
 export type UpdateExpensePayload = z.infer<typeof updateExpenseSchema>;
 export type CreateSettlementPayload = z.infer<typeof createSettlementSchema>;
+
+// --- Notification Schemas ---
+
+export const notificationQuerySchema = z.object({
+  isRead: z
+    .string()
+    .optional()
+    .transform((val) =>
+      val === "true" ? true : val === "false" ? false : undefined,
+    ),
+  tripId: z
+    .string()
+    .regex(/^[0-9a-fA-F]{24}$/)
+    .optional(),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 20))
+    .pipe(z.number().int().positive().max(100)),
+  skip: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 0))
+    .pipe(z.number().int().nonnegative()),
+});
+
+export type NotificationQueryPayload = z.infer<typeof notificationQuerySchema>;

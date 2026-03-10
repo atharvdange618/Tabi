@@ -296,6 +296,82 @@ export interface PopulatedNotification extends Omit<
   tripId: { _id: string; title: string };
 }
 
+// --- Event Payload Types ---
+
+export interface OwnershipTransferredPayload {
+  tripId: string;
+  tripTitle: string;
+  oldOwnerId: string;
+  newOwnerId: string;
+  actorId: string;
+}
+
+export interface MemberLeftPayload {
+  tripId: string;
+  tripTitle: string;
+  userId: string;
+  userName: string;
+}
+
+export interface MemberInvitedPayload {
+  tripId: string;
+  tripTitle: string;
+  invitedEmail: string;
+  invitedById: string;
+  role: TripMemberRole;
+}
+
+export interface CommentCreatedPayload {
+  tripId: string;
+  tripTitle: string;
+  commentId: string;
+  authorId: string;
+  targetType: CommentTargetType;
+  targetId: string;
+}
+
+export interface ExpenseAddedPayload {
+  tripId: string;
+  tripTitle: string;
+  expenseId: string;
+  createdById: string;
+  amount: number;
+  description: string;
+}
+
+export interface RoleChangedPayload {
+  tripId: string;
+  tripTitle: string;
+  userId: string;
+  oldRole: TripMemberRole;
+  newRole: TripMemberRole;
+  changedById: string;
+}
+
+export interface ActivityUpdatedPayload {
+  tripId: string;
+  tripTitle: string;
+  activityId: string;
+  updatedById: string;
+  action: "created" | "updated" | "deleted";
+}
+
+export interface ReservationAddedPayload {
+  tripId: string;
+  tripTitle: string;
+  reservationId: string;
+  createdById: string;
+  type: ReservationType;
+  title: string;
+}
+
+export interface TripUpdatedPayload {
+  tripId: string;
+  tripTitle: string;
+  updatedById: string;
+  changes: string[];
+}
+
 // --- Public Trip Types ---
 
 export interface PublicActivity {

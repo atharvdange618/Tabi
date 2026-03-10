@@ -4,6 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { BadgeIndianRupee, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ export function BudgetTab({
         amount: parseFloat(form.amount),
         category: form.category as PopulatedExpense["category"],
         paidBy: form.paidBy,
-        date: form.date ? new Date(form.date).toISOString() : undefined,
+        date: form.date || undefined,
       },
       {
         onSuccess: () => {
@@ -317,11 +318,11 @@ export function BudgetTab({
               <Label className="text-xs font-bold uppercase tracking-wide">
                 Date (optional)
               </Label>
-              <input
-                type="date"
+              <DatePicker
                 value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="mt-1 w-full h-10 px-3 border-2 border-[#1A1A1A] rounded-lg text-sm bg-white"
+                onChange={(date) => setForm({ ...form, date })}
+                placeholder="Select date"
+                className="mt-1"
               />
             </div>
           </div>

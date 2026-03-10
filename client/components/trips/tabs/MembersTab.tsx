@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, MoreHorizontal, UserPlus, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Clock,
+  MoreHorizontal,
+  UserPlus,
+  X,
+  LogOut,
+  Crown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,6 +43,8 @@ import {
   useUpdateMemberRole,
   useRemoveMember,
   useRevokeInvite,
+  useTransferOwnership,
+  useLeaveTripSelf,
 } from "@/hooks/useMembers";
 import { toInitials, memberBg, mapRole } from "@/lib/helpers";
 
@@ -45,11 +55,14 @@ export function MembersTab({
   tripId: string;
   currentUserRole: "admin" | "editor" | "viewer";
 }) {
+  const router = useRouter();
   const { data: membersData } = useMembers(tripId);
   const inviteMember = useInviteMember(tripId);
   const updateRole = useUpdateMemberRole(tripId);
   const removeMember = useRemoveMember(tripId);
   const revokeInvite = useRevokeInvite(tripId);
+  const transferOwnership = useTransferOwnership(tripId);
+  const leaveTripSelf = useLeaveTripSelf(tripId);
 
   const active = membersData?.active ?? [];
   const pending = membersData?.pending ?? [];
@@ -57,6 +70,17 @@ export function MembersTab({
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("editor");
+  const [transferOwnershipOpen, setTransferOwnershipOpen] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<{
+    userId: string;
+    name: string;
+  } | null>(null);
+  const [leaveTripOpen, setLeaveTripOpen] = useState(false);
+
+  const isOwner = currentUserRole === "admin";
+  const currentTripTitle =
+    document.querySelector<HTMLHeadingElement>("h1")?.textContent ||
+    "this trip";
 
   function handleInvite() {
     inviteMember.mutate(
@@ -69,6 +93,25 @@ export function MembersTab({
         },
       },
     );
+  }
+
+  function handleTransferOwnership() {
+    if (!transferTarget) return;
+    transferOwnership.mutate(transferTarget.userId, {
+      onSuccess: () => {
+        setTransferOwnershipOpen(false);
+        setTransferTarget(null);
+      },
+    });
+  }
+
+  function handleLeaveTrip() {
+    leaveTripSelf.mutate(undefined, {
+      onSuccess: () => {
+        setLeaveTripOpen(false);
+        router.push("/dashboard");
+      },
+    });
   }
 
   return (
@@ -143,6 +186,24 @@ export function MembersTab({
                       align="end"
                       className="w-40 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl"
                     >
+                      {isOwner && member.status === "active" && (
+                        <>
+                          <DropdownMenuItem
+                            className="text-xs font-medium cursor-pointer"
+                            onSelect={() => {
+                              setTransferTarget({
+                                userId: member.userId?._id ?? "",
+                                name: member.userId?.name ?? "this member",
+                              });
+                              setTransferOwnershipOpen(true);
+                            }}
+                          >
+                            <Crown size={12} className="mr-1.5" />
+                            Transfer ownership
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem
                         className="text-xs font-medium cursor-pointer"
                         onSelect={() =>
@@ -182,6 +243,19 @@ export function MembersTab({
           );
         })}
       </div>
+
+      {!isOwner && (
+        <div className="mt-6">
+          <Button
+            variant="outline"
+            className="w-full border-2 border-[#1A1A1A] rounded-lg font-bold text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={() => setLeaveTripOpen(true)}
+          >
+            <LogOut size={14} className="mr-2" />
+            Leave Trip
+          </Button>
+        </div>
+      )}
 
       {pending.length > 0 && (
         <div className="mt-6">
@@ -303,6 +377,79 @@ export function MembersTab({
               className="bg-brand-blue text-[#111] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-brand-blue transition-all rounded-lg"
             >
               {inviteMember.isPending ? "Sending…" : "Send invite"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={transferOwnershipOpen}
+        onOpenChange={setTransferOwnershipOpen}
+      >
+        <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-xl">
+              Transfer Ownership
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-lg bg-brand-lemon/40 border border-brand-lemon px-3 py-2.5 text-xs text-[#333] leading-relaxed">
+            <span className="font-bold text-[#111]">Warning: </span>
+            You will become an editor. {transferTarget?.name} must accept this
+            transfer to become the owner. Until accepted, you remain the owner.
+          </div>
+          <p className="text-sm text-gray-700">
+            Are you sure you want to transfer ownership of this trip to{" "}
+            <span className="font-bold">{transferTarget?.name}</span>?
+          </p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="border-2 border-[#1A1A1A] rounded-lg font-bold"
+              onClick={() => {
+                setTransferOwnershipOpen(false);
+                setTransferTarget(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={transferOwnership.isPending}
+              onClick={handleTransferOwnership}
+              className="bg-brand-blue text-[#111] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-brand-blue transition-all rounded-lg"
+            >
+              {transferOwnership.isPending ? "Transferring…" : "Transfer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Leave Trip Dialog */}
+      <Dialog open={leaveTripOpen} onOpenChange={setLeaveTripOpen}>
+        <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-bold text-xl">
+              Leave Trip
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-700">
+            Are you sure you want to leave{" "}
+            <span className="font-bold">{currentTripTitle}</span>? You will lose
+            access to all trip data and will need to be re-invited to rejoin.
+          </p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="border-2 border-[#1A1A1A] rounded-lg font-bold"
+              onClick={() => setLeaveTripOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={leaveTripSelf.isPending}
+              onClick={handleLeaveTrip}
+              className="bg-brand-coral text-[#111] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-brand-coral transition-all rounded-lg"
+            >
+              {leaveTripSelf.isPending ? "Leaving…" : "Leave Trip"}
             </Button>
           </DialogFooter>
         </DialogContent>

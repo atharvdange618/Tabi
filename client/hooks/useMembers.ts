@@ -135,3 +135,53 @@ export function useDeclineInvite() {
     },
   });
 }
+
+export function useTransferOwnership(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (targetUserId: string) => {
+      const { data } = await api.post<ApiResponse<PopulatedTripMember[]>>(
+        `/api/v1/trips/${tripId}/members/transfer-ownership`,
+        { targetUserId },
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trip(tripId),
+      });
+      toast.success("Ownership transfer initiated");
+    },
+    onError: () => {
+      toast.error("Failed to transfer ownership");
+    },
+  });
+}
+
+export function useLeaveTripSelf(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await api.delete(`/api/v1/trips/${tripId}/members/me`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trips(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      toast.success("You have left the trip");
+    },
+    onError: (error: unknown) => {
+      const apiError = error as { response?: { data?: { error?: string } } };
+      const message = apiError?.response?.data?.error || "Failed to leave trip";
+      toast.error(message);
+    },
+  });
+}
