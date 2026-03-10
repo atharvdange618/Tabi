@@ -404,11 +404,11 @@ sequenceDiagram
 
 | Event Type              | Triggered By        | Recipients                              |
 | ----------------------- | ------------------- | --------------------------------------- |
-| `ownership_transferred` | transferOwnership() | Old owner, new owner, all other members |
+| `ownership_transferred` | acceptOwnershipTransfer() | Old owner, new owner, all other members |
 | `member_left`           | leaveTripSelf()     | All remaining trip members              |
 | `member_invited`        | inviteMember()      | All existing trip members               |
 | `comment_created`       | createComment()     | All trip members (configurable)         |
-| `expense_added`         | createExpense()     | All trip members                        |
+| `expense_added`         | createExpense()     | All trip members except expense creator |
 | `role_changed`          | updateMemberRole()  | Target user + trip owner                |
 
 ### Design Decisions

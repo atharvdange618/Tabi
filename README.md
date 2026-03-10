@@ -29,16 +29,20 @@ Built for the ChaiCode Buildathon.
 
 ### Collaboration
 
-- Invite members via email, handling pending invites gracefully for unregistered users
-- Enforce role-based access (Owner, Editor, Viewer). Permissions are validated on the server, not just hidden in the UI
-- Comment on specific days or individual activities with threaded replies
+- **Member Management**: Invite members via email, handling pending invites gracefully for unregistered users
+- **Role-Based Access**: Enforce permissions (Owner, Editor, Viewer) validated on the server, not just hidden in the UI
+- **Ownership Transfer**: Owners can transfer ownership to any member via an acceptance workflow - creates pending request, target receives notification to accept/decline
+- **Comments**: Comment on specific days or individual activities with threaded replies
+- **Real-Time Notifications**: Event-driven notification system with bell icon + unread badge, toast notifications, and 10-second polling
+- **Activity Tracking**: Get notified about ownership changes, new comments, expenses, member updates, and content modifications
 
 ### Organization
 
-- Maintain multiple checklists per trip for packing, to-dos, and pre-departure tasks
-- Attach files like tickets, and images, hosted securely via Cloudinary
-- Enter manual reservations for flights, hotels, restaurants, and car rentals
-- Track budgets and view expense breakdowns by category
+- **Checklists**: Maintain multiple checklists per trip for packing, to-dos, and pre-departure tasks
+- **File Management**: Attach files like tickets and images, hosted securely via Cloudinary
+- **Reservations**: Enter manual reservations for flights, hotels, restaurants, and car rentals
+- **Budget Tracking**: Track expenses with automatic notifications to all trip members and view breakdowns by category
+- **Notification Center**: Centralized notification hub with unread badges, auto-expiring notifications (90 days), and event-driven updates
 
 ### Security
 
@@ -56,10 +60,11 @@ Built for the ChaiCode Buildathon.
 │                     Client                          │
 │   Next.js 16 (App Router) + TypeScript              │
 │                                                     │
-│   TanStack Query ──── server state / caching        │
+│   TanStack Query ──── server state / caching (10s)  │
 │   Zustand ─────────── UI state (sidebar, active day)│
 │   Axios ───────────── API client + Clerk token      │
 │   React Hook Form + Zod ── form validation          │
+│   NotificationCenter ─ real-time notifications      │
 └────────────────────┬────────────────────────────────┘
                      │ REST (Bearer JWT)
                      ▼
@@ -71,6 +76,7 @@ Built for the ChaiCode Buildathon.
 │   permissions.ts ─── role-based route guards        │
 │   Zod middleware  ─── request body validation       │
 │   Helmet + HPP    ─── security headers              │
+│   EventEmitter    ─── notification events           │
 └────────────────────┬────────────────────────────────┘
                      │ Mongoose ODM
                      ▼
@@ -78,6 +84,7 @@ Built for the ChaiCode Buildathon.
 │                     MongoDB                         │
 │   trips · days · activities · comments              │
 │   checklists · files · reservations · expenses      │
+│   notifications · pending ownership transfers       │
 └─────────────────────────────────────────────────────┘
 
 External Services
@@ -216,6 +223,8 @@ The platform assigns roles to participants to protect shared content. These limi
 | Post comments         |  ✅   |   ✅   |   ✅   |
 | View all content      |  ✅   |   ✅   |   ✅   |
 | Invite members        |  ✅   |   ❌   |   ❌   |
+| Transfer ownership    |  ✅   |   ❌   |   ❌   |
+| Accept ownership      |  ✅   |   ✅   |   ✅   |
 | Delete trip           |  ✅   |   ❌   |   ❌   |
 
 ---

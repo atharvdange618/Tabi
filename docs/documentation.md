@@ -46,7 +46,7 @@ Members are invited by email. The system handles two cases: if the invitee alrea
 
 Three roles: **Owner** (full control, can delete the trip, transfer ownership), **Editor** (can create/edit/delete content), **Viewer** (read-only). Permissions are enforced at the API level not just hidden in the UI. Direct API calls can't bypass role restrictions.
 
-**Ownership Transfer**: Owners can transfer ownership to any active member. The old owner becomes an editor, and the target becomes the new owner. All trip members are notified of the change.
+**Ownership Transfer**: Owners can transfer ownership to any active member. The process requires acceptance: the owner initiates a transfer which creates a pending request, the target member receives a notification and can accept or decline the transfer. Upon acceptance, the old owner becomes an editor and the target becomes the new owner. All trip members are notified of the change.
 
 **Leave Trip**: Non-owners can leave a trip at any time. Owners must transfer ownership before leaving. When someone leaves, all remaining members are notified.
 

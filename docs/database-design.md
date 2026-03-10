@@ -92,16 +92,19 @@ The central entity. Every other collection (except `users`) hangs off a trip via
 
 The junction table between users and trips. This is the **most queried collection** in the system because every single authenticated API request to a trip resource needs to verify membership first.
 
-| Field       | Type     | Required | Default    | Notes                                 |
-| ----------- | -------- | -------- | ---------- | ------------------------------------- |
-| `_id`       | ObjectId | auto     |            |                                       |
-| `tripId`    | ObjectId | yes      |            | Ref → `trips`                         |
-| `userId`    | ObjectId | yes      |            | Ref → `users`                         |
-| `role`      | String   | yes      |            | Enum: `owner`, `editor`, `viewer`     |
-| `status`    | String   | yes      | `"active"` | Enum: `active`, `pending`             |
-| `invitedBy` | ObjectId | yes      |            | Ref → `users`. Self-ref for the owner |
-| `joinedAt`  | Date     | no       |            | Set when status changes to `active`   |
-| `createdAt` | Date     | auto     | `Date.now` |                                       |
+| Field                                    | Type     | Required | Default    | Notes                                   |
+| ---------------------------------------- | -------- | -------- | ---------- | --------------------------------------- |
+| `_id`                                    | ObjectId | auto     |            |                                         |
+| `tripId`                                 | ObjectId | yes      |            | Ref → `trips`                           |
+| `userId`                                 | ObjectId | yes      |            | Ref → `users`                           |
+| `role`                                   | String   | yes      |            | Enum: `owner`, `editor`, `viewer`       |
+| `status`                                 | String   | yes      | `"active"` | Enum: `active`, `pending`               |
+| `invitedBy`                              | ObjectId | yes      |            | Ref → `users`. Self-ref for the owner   |
+| `joinedAt`                               | Date     | no       |            | Set when status changes to `active`     |
+| `pendingOwnershipTransfer`               | Object   | no       |            | Present when ownership transfer pending |
+| `pendingOwnershipTransfer.fromUserId`    | ObjectId | no       |            | Ref → `users`. Who initiated transfer   |
+| `pendingOwnershipTransfer.transferredAt` | Date     | no       |            | When transfer was initiated             |
+| `createdAt`                              | Date     | auto     | `Date.now` |                                         |
 
 **Indexes:**
 | Index | Type | Rationale |
@@ -113,7 +116,7 @@ The junction table between users and trips. This is the **most queried collectio
 
 1. Exactly **one** member with role `owner` per trip at all times.
 2. The owner **cannot** leave or be removed without first transferring ownership.
-3. Ownership transfer is a single atomic operation: update old owner to `editor`, update target to `owner`.
+3. Ownership transfer requires acceptance: initiating creates `pendingOwnershipTransfer` on target member, accepting changes roles atomically, declining removes pending state.
 
 **Design decisions:**
 
