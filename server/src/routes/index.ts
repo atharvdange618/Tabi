@@ -10,6 +10,7 @@ import checklistRoutes from "./checklists.ts";
 import fileRoutes from "./files.ts";
 import reservationRoutes from "./reservations.ts";
 import budgetRoutes from "./budget.ts";
+import notificationRoutes from "./notifications.ts";
 
 const router = Router();
 
@@ -45,5 +46,8 @@ router.use("/trips/:id/reservations", reservationRoutes);
 
 // Budget API
 router.use("/trips/:id/budget", budgetRoutes);
+
+// Notifications API
+router.use("/notifications", notificationRoutes);
 
 export { router };

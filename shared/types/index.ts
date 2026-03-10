@@ -67,6 +67,20 @@ export const ExpenseCategory = {
 export type ExpenseCategory =
   (typeof ExpenseCategory)[keyof typeof ExpenseCategory];
 
+export const NotificationType = {
+  OWNERSHIP_TRANSFERRED: "ownership_transferred",
+  MEMBER_LEFT: "member_left",
+  MEMBER_INVITED: "member_invited",
+  COMMENT_CREATED: "comment_created",
+  EXPENSE_ADDED: "expense_added",
+  ROLE_CHANGED: "role_changed",
+  ACTIVITY_UPDATED: "activity_updated",
+  RESERVATION_ADDED: "reservation_added",
+  TRIP_UPDATED: "trip_updated",
+} as const;
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
 // --- Document Types ---
 
 export interface User {
@@ -259,6 +273,27 @@ export interface Expense {
 
 export interface PopulatedExpense extends Omit<Expense, "paidBy"> {
   paidBy: PopulatedUser;
+}
+
+export interface Notification {
+  _id: string;
+  userId: string;
+  tripId: string;
+  type: NotificationType;
+  actorId: string;
+  message: string;
+  metadata: Record<string, unknown>;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface PopulatedNotification extends Omit<
+  Notification,
+  "userId" | "actorId" | "tripId"
+> {
+  userId: PopulatedUser;
+  actorId: PopulatedUser;
+  tripId: { _id: string; title: string };
 }
 
 // --- Public Trip Types ---

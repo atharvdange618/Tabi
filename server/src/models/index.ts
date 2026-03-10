@@ -15,3 +15,4 @@ export {
 } from "./BudgetSettings.ts";
 export { Expense, type ExpenseDocument } from "./Expense.ts";
 export { Settlement, type SettlementDocument } from "./Settlement.ts";
+export { Notification, type NotificationDocument } from "./Notification.ts";
