@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
+import { useUser } from "@clerk/nextjs";
 import {
   ArrowLeft,
   Calendar,
@@ -40,6 +41,7 @@ import { ReservationsTab } from "@/components/trips/tabs/ReservationsTab";
 import { MembersTab } from "@/components/trips/tabs/MembersTab";
 import { SettingsTab } from "@/components/trips/tabs/SettingsTab";
 import TripEditSheet from "@/components/trips/TripEditSheet";
+import { OwnershipTransferAlert } from "@/components/members/OwnershipTransferAlert";
 import { TabValue, useTripStore } from "@/store/tripStore";
 
 const TAB_CONFIG = [
@@ -55,6 +57,7 @@ const TAB_CONFIG = [
 export default function TripPage() {
   const params = useParams();
   const tripId = params.id as string;
+  const { user: clerkUser } = useUser();
 
   const { data: trip, isPending: tripPending } = useTrip(tripId);
   const { data: membersData } = useMembers(tripId);
@@ -70,6 +73,10 @@ export default function TripPage() {
   const activeMembers = membersData?.active ?? [];
   const stackMembers = activeMembers.slice(0, 3);
   const overflowCount = Math.max(0, activeMembers.length - 3);
+
+  const currentUserMember = activeMembers.find(
+    (m) => m.userId?.email === clerkUser?.emailAddresses[0]?.emailAddress,
+  );
 
   const {
     Icon: RoleIcon,
@@ -275,58 +282,69 @@ export default function TripPage() {
         </div>
 
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
-          <Tabs
-            value={activeTab}
-            onValueChange={(t) => setActiveTab(tripId, t as TabValue)}
+          <OwnershipTransferAlert
+            tripId={tripId}
+            currentUser={currentUserMember}
+          />
+
+          <div
+            className={
+              currentUserMember?.pendingOwnershipTransfer ? "mt-4" : ""
+            }
           >
-            <div className="overflow-x-auto pb-1 mb-6">
-              <TabsList className="bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-1 h-auto gap-1 w-max">
-                {TAB_CONFIG.map(({ value, label, Icon }) => (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap data-[state=active]:bg-[#111] data-[state=active]:text-white data-[state=active]:shadow-none data-[state=inactive]:hover:bg-[#f0f0ec]"
-                  >
-                    <Icon size={13} />
-                    {label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </div>
+            <Tabs
+              value={activeTab}
+              onValueChange={(t) => setActiveTab(tripId, t as TabValue)}
+            >
+              <div className="overflow-x-auto pb-1 mb-6">
+                <TabsList className="bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-1 h-auto gap-1 w-max">
+                  {TAB_CONFIG.map(({ value, label, Icon }) => (
+                    <TabsTrigger
+                      key={value}
+                      value={value}
+                      className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold rounded-lg transition-all whitespace-nowrap data-[state=active]:bg-[#111] data-[state=active]:text-white data-[state=active]:shadow-none data-[state=inactive]:hover:bg-[#f0f0ec]"
+                    >
+                      <Icon size={13} />
+                      {label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
-            <TabsContent value="itinerary" className="mt-0">
-              <ItineraryTab tripId={tripId} canEdit={canEdit} />
-            </TabsContent>
+              <TabsContent value="itinerary" className="mt-0">
+                <ItineraryTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
 
-            <TabsContent value="budget" className="mt-0">
-              <BudgetTab tripId={tripId} canEdit={canEdit} />
-            </TabsContent>
+              <TabsContent value="budget" className="mt-0">
+                <BudgetTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
 
-            <TabsContent value="files" className="mt-0">
-              <FilesTab tripId={tripId} canEdit={canEdit} />
-            </TabsContent>
+              <TabsContent value="files" className="mt-0">
+                <FilesTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
 
-            <TabsContent value="checklists" className="mt-0">
-              <ChecklistsTab tripId={tripId} canEdit={canEdit} />
-            </TabsContent>
+              <TabsContent value="checklists" className="mt-0">
+                <ChecklistsTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
 
-            <TabsContent value="reservations" className="mt-0">
-              <ReservationsTab tripId={tripId} canEdit={canEdit} />
-            </TabsContent>
+              <TabsContent value="reservations" className="mt-0">
+                <ReservationsTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
 
-            <TabsContent value="members" className="mt-0">
-              <MembersTab tripId={tripId} currentUserRole={displayRole} />
-            </TabsContent>
+              <TabsContent value="members" className="mt-0">
+                <MembersTab tripId={tripId} currentUserRole={displayRole} />
+              </TabsContent>
 
-            <TabsContent value="settings" className="mt-0">
-              <SettingsTab
-                tripId={tripId}
-                isOwner={isOwner}
-                canEdit={canEdit}
-                tripTitle={trip.title}
-              />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="settings" className="mt-0">
+                <SettingsTab
+                  tripId={tripId}
+                  isOwner={isOwner}
+                  canEdit={canEdit}
+                  tripTitle={trip.title}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
 
         <TripEditSheet

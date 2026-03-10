@@ -161,7 +161,57 @@ export async function transferOwnership(
     targetUserId,
   );
 
-  res.json({ data: members, message: "Ownership transferred successfully" });
+  res.json({
+    data: members,
+    message: "Ownership transfer initiated - awaiting acceptance",
+  });
+}
+
+/**
+ * POST /api/v1/trips/:id/members/ownership/accept
+ * Accept a pending ownership transfer.
+ */
+export async function acceptOwnershipTransfer(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const members = await memberService.acceptOwnershipTransfer(
+    req.params.id as string,
+    userId,
+  );
+
+  res.json({
+    data: members,
+    message: "Ownership transfer accepted successfully",
+  });
+}
+
+/**
+ * POST /api/v1/trips/:id/members/ownership/decline
+ * Decline a pending ownership transfer.
+ */
+export async function declineOwnershipTransfer(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const members = await memberService.declineOwnershipTransfer(
+    req.params.id as string,
+    userId,
+  );
+
+  res.json({ data: members, message: "Ownership transfer declined" });
 }
 
 /**

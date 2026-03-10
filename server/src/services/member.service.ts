@@ -33,6 +33,7 @@ export async function getMembers(tripId: string) {
     TripMember.find({ tripId })
       .populate("userId", "name email avatarUrl")
       .populate("invitedBy", "name email")
+      .populate("pendingOwnershipTransfer.fromUserId", "name email avatarUrl")
       .lean(),
     PendingInvite.find({ tripId }).populate("invitedBy", "name email").lean(),
   ]);
@@ -442,7 +443,7 @@ export async function revokeInvite(
 
 /**
  * Transfer trip ownership from current owner to another active member.
- * Uses Mongoose transaction to ensure atomicity.
+ * Creates a pending ownership transfer that requires acceptance.
  * Emits ownership.transferred event for notification system.
  */
 export async function transferOwnership(
@@ -478,6 +479,90 @@ export async function transferOwnership(
     throw new ValidationError("Target user is already the owner");
   }
 
+  if (targetMember.pendingOwnershipTransfer) {
+    throw new ValidationError("User already has a pending ownership transfer");
+  }
+
+  const trip = await Trip.findById(tripId).select("title").lean();
+  if (!trip) {
+    throw new NotFoundError("Trip not found");
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await TripMember.updateOne(
+        { _id: targetMember._id },
+        {
+          $set: {
+            pendingOwnershipTransfer: {
+              fromUserId: new mongoose.Types.ObjectId(currentOwnerId),
+              transferredAt: new Date(),
+            },
+          },
+        },
+        { session },
+      );
+    });
+
+    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFERRED, {
+      tripId,
+      tripTitle: trip.title,
+      oldOwnerId: currentOwnerId,
+      newOwnerId: targetUserId,
+      actorId: currentOwnerId,
+    });
+
+    logger.info("Ownership transfer initiated", {
+      tripId,
+      oldOwnerId: currentOwnerId,
+      newOwnerId: targetUserId,
+    });
+
+    return await getMembers(tripId);
+  } catch (error) {
+    logger.error("Failed to initiate ownership transfer", { error, tripId });
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ * Accept a pending ownership transfer.
+ * Completes the ownership transfer by updating both members' roles.
+ */
+export async function acceptOwnershipTransfer(
+  tripId: string,
+  acceptingUserId: string,
+) {
+  const targetMember = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(acceptingUserId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!targetMember) {
+    throw new NotFoundError("User is not an active member of this trip");
+  }
+
+  if (!targetMember.pendingOwnershipTransfer) {
+    throw new ValidationError("No pending ownership transfer found");
+  }
+
+  const fromUserId =
+    targetMember.pendingOwnershipTransfer.fromUserId.toString();
+
+  const currentOwner = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(fromUserId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!currentOwner || currentOwner.role !== TripMemberRole.OWNER) {
+    throw new ValidationError("Original owner is no longer the owner");
+  }
+
   const trip = await Trip.findById(tripId).select("title").lean();
   if (!trip) {
     throw new NotFoundError("Trip not found");
@@ -494,28 +579,69 @@ export async function transferOwnership(
 
       await TripMember.updateOne(
         { _id: targetMember._id },
-        { $set: { role: TripMemberRole.OWNER } },
+        {
+          $set: { role: TripMemberRole.OWNER },
+          $unset: { pendingOwnershipTransfer: 1 },
+        },
         { session },
       );
     });
 
-    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFERRED, {
+    logger.info("Ownership transfer accepted", {
       tripId,
-      tripTitle: trip.title,
-      oldOwnerId: currentOwnerId,
-      newOwnerId: targetUserId,
-      actorId: currentOwnerId,
-    });
-
-    logger.info("Ownership transferred successfully", {
-      tripId,
-      oldOwnerId: currentOwnerId,
-      newOwnerId: targetUserId,
+      oldOwnerId: fromUserId,
+      newOwnerId: acceptingUserId,
     });
 
     return await getMembers(tripId);
   } catch (error) {
-    logger.error("Failed to transfer ownership", { error, tripId });
+    logger.error("Failed to accept ownership transfer", { error, tripId });
+    throw error;
+  } finally {
+    await session.endSession();
+  }
+}
+
+/**
+ * Decline a pending ownership transfer.
+ * Removes the pending transfer state without changing roles.
+ */
+export async function declineOwnershipTransfer(
+  tripId: string,
+  decliningUserId: string,
+) {
+  const targetMember = await TripMember.findOne({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    userId: new mongoose.Types.ObjectId(decliningUserId),
+    status: TripMemberStatus.ACTIVE,
+  });
+
+  if (!targetMember) {
+    throw new NotFoundError("User is not an active member of this trip");
+  }
+
+  if (!targetMember.pendingOwnershipTransfer) {
+    throw new ValidationError("No pending ownership transfer found");
+  }
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await TripMember.updateOne(
+        { _id: targetMember._id },
+        { $unset: { pendingOwnershipTransfer: 1 } },
+        { session },
+      );
+    });
+
+    logger.info("Ownership transfer declined", {
+      tripId,
+      decliningUserId,
+    });
+
+    return await getMembers(tripId);
+  } catch (error) {
+    logger.error("Failed to decline ownership transfer", { error, tripId });
     throw error;
   } finally {
     await session.endSession();

@@ -35,6 +35,21 @@ const tripMemberSchema = new Schema(
     joinedAt: {
       type: Date,
     },
+    pendingOwnershipTransfer: {
+      type: {
+        fromUserId: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        transferredAt: {
+          type: Date,
+          required: true,
+        },
+      },
+      required: false,
+      default: undefined,
+    },
   },
   { timestamps: true },
 );

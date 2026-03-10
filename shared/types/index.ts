@@ -129,6 +129,10 @@ export interface TripMember {
   status: TripMemberStatus;
   invitedBy: string;
   joinedAt?: string;
+  pendingOwnershipTransfer?: {
+    fromUserId: string;
+    transferredAt: string;
+  };
   createdAt: string;
 }
 
@@ -141,10 +145,14 @@ export interface PopulatedUser {
 
 export interface PopulatedTripMember extends Omit<
   TripMember,
-  "userId" | "invitedBy"
+  "userId" | "invitedBy" | "pendingOwnershipTransfer"
 > {
   userId: PopulatedUser | null;
   invitedBy: PopulatedUser;
+  pendingOwnershipTransfer?: {
+    fromUserId: PopulatedUser;
+    transferredAt: string;
+  };
   email?: string;
 }
 

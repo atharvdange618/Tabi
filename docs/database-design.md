@@ -10,6 +10,7 @@
 erDiagram
     USERS ||--o{ TRIPS : "creates"
     USERS ||--o{ TRIP_MEMBERS : "joins"
+    USERS ||--o{ NOTIFICATIONS : "receives"
     TRIPS ||--o{ TRIP_MEMBERS : "has"
     TRIPS ||--o{ PENDING_INVITES : "has"
     TRIPS ||--o{ DAYS : "contains"
@@ -17,11 +18,13 @@ erDiagram
     TRIPS ||--o{ CHECKLISTS : "has"
     TRIPS ||--o{ FILES : "stores"
     TRIPS ||--o{ RESERVATIONS : "tracks"
+    TRIPS ||--o{ NOTIFICATIONS : "generates"
     TRIPS ||--|{ BUDGET_SETTINGS : "configures"
     TRIPS ||--o{ EXPENSES : "logs"
     DAYS ||--o{ ACTIVITIES : "schedules"
     CHECKLISTS ||--o{ CHECKLIST_ITEMS : "contains"
     COMMENTS ||--o{ COMMENTS : "threads"
+    USERS ||--o{ NOTIFICATIONS : "triggers"
 ```
 
 ---
@@ -415,9 +418,52 @@ files            WHERE tripId = ?  (+ Cloudinary cleanup for each)
 reservations     WHERE tripId = ?
 budget_settings  WHERE tripId = ?
 expenses         WHERE tripId = ?
+notifications    WHERE tripId = ?
 ```
 
 This is implemented as a service-layer function (`deleteTripCascade`) that runs all deletions. Mongoose middleware (`pre('deleteOne')`) could also work, but explicit service-layer logic is more testable and transparent.
+
+---
+
+## 15. Notifications
+
+In-app notification system supporting multiple event types with automatic 90-day expiry.
+
+| Field       | Type     | Required | Default    | Notes                                     |
+| ----------- | -------- | -------- | ---------- | ----------------------------------------- |
+| `_id`       | ObjectId | auto     |            | Mongoose default                          |
+| `userId`    | ObjectId | yes      |            | Ref: User - who receives the notification |
+| `tripId`    | ObjectId | yes      |            | Ref: Trip - context trip                  |
+| `type`      | String   | yes      |            | Enum: notification type                   |
+| `actorId`   | ObjectId | yes      |            | Ref: User - who triggered the event       |
+| `message`   | String   | yes      |            | Human-readable notification message       |
+| `metadata`  | Mixed    | no       | `{}`       | Event-specific data (JSON object)         |
+| `isRead`    | Boolean  | no       | `false`    | Read/unread status                        |
+| `createdAt` | Date     | auto     | `Date.now` | TTL: expires after 90 days                |
+
+**Indexes:**
+| Index | Type | Rationale |
+|----------------------------------------|--------|-------------------------------------------------------|
+| `{ userId: 1, isRead: 1, createdAt: -1 }` | Compound | Primary query: get user's notifications sorted by date |
+| `{ tripId: 1, createdAt: -1 }` | Compound | Trip-specific notifications |
+| `{ userId: 1, tripId: 1, createdAt: -1 }` | Compound | User notifications for specific trip |
+
+**Notification Types:**
+
+- `ownership_transferred` - Trip ownership changed
+- `member_left` - Member left the trip
+- `member_invited` - New member invited
+- `comment_created` - New comment added
+- `expense_added` - New expense logged
+- `role_changed` - Member role updated
+- `activity_updated` - Activity modified
+- `reservation_added` - New reservation
+- `trip_updated` - Trip details changed
+
+**TTL Expiry:** Documents automatically deleted after 90 days via MongoDB TTL index on `createdAt`.
+
+**Event-Driven Architecture:**
+Notifications are created via application events using Node.js EventEmitter. Services emit events (e.g., `'ownership.transferred'`) and the notification service listens to create appropriate notification records.
 
 ### Query Access Patterns Summary
 
@@ -432,7 +478,10 @@ This is implemented as a service-layer function (`deleteTripCascade`) that runs 
 | Budget summary by category             | `expenses`        | `{ tripId: 1, category: 1 }`                |
 | Accept invite by token                 | `pending_invites` | `{ token: 1 }`                              |
 | Find user by email (invite resolution) | `users`           | `{ email: 1 }`                              |
+| Get user notifications (unread first)  | `notifications`   | `{ userId: 1, isRead: 1, createdAt: -1 }`   |
+| Get unread notification count          | `notifications`   | `{ userId: 1, isRead: 1 }`                  |
+| Get trip-specific notifications        | `notifications`   | `{ tripId: 1, createdAt: -1 }`              |
 
 ### Collection Count
 
-**14 collections** total: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`.
+**15 collections** total: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`, `notifications`.

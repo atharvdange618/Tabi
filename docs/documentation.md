@@ -46,6 +46,22 @@ Members are invited by email. The system handles two cases: if the invitee alrea
 
 Three roles: **Owner** (full control, can delete the trip, transfer ownership), **Editor** (can create/edit/delete content), **Viewer** (read-only). Permissions are enforced at the API level not just hidden in the UI. Direct API calls can't bypass role restrictions.
 
+**Ownership Transfer**: Owners can transfer ownership to any active member. The old owner becomes an editor, and the target becomes the new owner. All trip members are notified of the change.
+
+**Leave Trip**: Non-owners can leave a trip at any time. Owners must transfer ownership before leaving. When someone leaves, all remaining members are notified.
+
+### Notification System
+
+Real-time in-app notifications keep users informed of trip activity. The system supports multiple event types:
+
+- **Ownership changes**: When ownership is transferred or someone leaves
+- **Content updates**: New comments, activities, expenses, reservations
+- **Member changes**: New invites, role updates
+
+Notifications appear in a **notification center** (bell icon with unread badge) and as **toast notifications** for immediate awareness. The system uses event-driven architecture with 10-second polling for real-time updates without WebSocket complexity.
+
+Notifications auto-expire after 90 days to prevent database bloat.
+
 ### Public Trip View
 
 Any trip can be shared as a read-only public page. The public view shows the full itinerary but hides budget details, files, checklists, and reservations. Designed for sharing trip plans with people who aren't on the platform.
@@ -84,7 +100,7 @@ The `requireMembership` middleware returns **403** when a user isn't a member of
 
 ## Database Design
 
-14 collections: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`.
+15 collections: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`, `notifications`.
 
 The most queried collection is `trip_members` every single authenticated request to a trip resource hits this collection first to verify membership. The compound index `{ tripId: 1, userId: 1 }` serves both the uniqueness constraint and the permission check in a single lookup.
 

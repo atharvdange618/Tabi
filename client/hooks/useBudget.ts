@@ -53,6 +53,7 @@ export function useExpenses(tripId: string) {
       return data.data;
     },
     enabled: !!tripId,
+    refetchInterval: 10_000,
   });
 }
 
@@ -66,6 +67,7 @@ export function useBudgetSummary(tripId: string) {
       return data.data;
     },
     enabled: !!tripId,
+    refetchInterval: 10_000,
   });
 }
 
@@ -141,6 +143,7 @@ export function useSettlements(tripId: string) {
       return data.data;
     },
     enabled: !!tripId,
+    refetchInterval: 10_000,
   });
 }
 

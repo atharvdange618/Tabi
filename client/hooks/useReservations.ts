@@ -14,6 +14,7 @@ export function useReservations(tripId: string) {
       return data.data;
     },
     enabled: !!tripId,
+    refetchInterval: 10_000,
   });
 }
 

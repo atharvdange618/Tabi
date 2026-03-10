@@ -14,7 +14,7 @@ export function useActivities(tripId: string, dayId: string) {
       return data.data;
     },
     enabled: !!tripId && !!dayId,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 }
 
@@ -28,7 +28,7 @@ export function useAllActivities(tripId: string) {
       return data.data;
     },
     enabled: !!tripId,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
 }
 

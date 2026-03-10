@@ -131,18 +131,18 @@ sequenceDiagram
 
 ### Middleware Stack
 
-| Order | Middleware           | Scope  | Purpose                                                |
-| ----- | -------------------- | ------ | ------------------------------------------------------ |
-| 1     | `helmet()`           | Global | Security headers (CSP, HSTS, X-Frame-Options, etc.)    |
-| 2     | `hpp()`              | Global | Prevents HTTP Parameter Pollution                      |
-| 3     | `cors()`             | Global | Restricts origins to `CLIENT_URL`                      |
-| 4     | `express.json()`     | Global | Parses JSON body, 10MB limit                           |
-| 5     | `clerkMiddleware()`  | Global | Verifies Clerk JWT on every request                    |
-| 6     | `requireAuth`        | Route  | Rejects unauthenticated requests                       |
-| 7     | `resolveDbUser`      | Route  | Maps `clerkId` → internal `userId` on `req.user`       |
+| Order | Middleware           | Scope  | Purpose                                                       |
+| ----- | -------------------- | ------ | ------------------------------------------------------------- |
+| 1     | `helmet()`           | Global | Security headers (CSP, HSTS, X-Frame-Options, etc.)           |
+| 2     | `hpp()`              | Global | Prevents HTTP Parameter Pollution                             |
+| 3     | `cors()`             | Global | Restricts origins to `CLIENT_URL`                             |
+| 4     | `express.json()`     | Global | Parses JSON body, 10MB limit                                  |
+| 5     | `clerkMiddleware()`  | Global | Verifies Clerk JWT on every request                           |
+| 6     | `requireAuth`        | Route  | Rejects unauthenticated requests                              |
+| 7     | `resolveDbUser`      | Route  | Maps `clerkId` → internal `userId` on `req.user`              |
 | 8     | `requireMembership`  | Route  | Checks `trip_members` for access. Returns 403 if not a member |
-| 9     | `requireRole(roles)` | Route  | Further restricts to specific roles (owner, editor)    |
-| 10    | `validate(schema)`   | Route  | Zod validation on `req.body`                           |
+| 9     | `requireRole(roles)` | Route  | Further restricts to specific roles (owner, editor)           |
+| 10    | `validate(schema)`   | Route  | Zod validation on `req.body`                                  |
 
 Middleware 1-5 runs on every request. Middleware 6-10 is applied per-route as needed.
 
@@ -319,13 +319,13 @@ graph LR
     A -->|Session| D
 ```
 
-| Service  | Platform       | Why this platform                                      |
-| -------- | -------------- | ------------------------------------------------------ |
-| Client   | Hostinger KVM2 | Next.js frontend, co-located with API server           |
-| Server   | Hostinger KVM2 | Bun support, persistent process, low cost              |
-| Database | MongoDB Atlas  | Free M0 cluster, managed backups, Atlas UI             |
-| Auth     | Clerk          | Managed auth with generous free tier (10k MAU)         |
-| Media    | Cloudinary     | Free tier (25GB), built-in image transformations       |
+| Service  | Platform       | Why this platform                                |
+| -------- | -------------- | ------------------------------------------------ |
+| Client   | Hostinger KVM2 | Next.js frontend, co-located with API server     |
+| Server   | Hostinger KVM2 | Bun support, persistent process, low cost        |
+| Database | MongoDB Atlas  | Free M0 cluster, managed backups, Atlas UI       |
+| Auth     | Clerk          | Managed auth with generous free tier (10k MAU)   |
+| Media    | Cloudinary     | Free tier (25GB), built-in image transformations |
 
 ### Environment Variable Separation
 
@@ -352,6 +352,72 @@ The test setup (`src/test/setup.ts`) spins up an in-memory MongoDB via `mongodb-
 ### Client Testing (future)
 
 Client testing is deferred to after core features are built. When implemented, it will use Vitest + React Testing Library for component tests and Playwright for E2E flows (login, create trip, invite member).
+
+---
+
+## Notification System Architecture
+
+The notification system uses an **event-driven architecture** to decouple notification creation from business logic operations.
+
+### Event Flow
+
+```mermaid
+sequenceDiagram
+    participant Service as Business Service
+    participant Emitter as NotificationEmitter
+    participant NotifService as NotificationService
+    participant DB as MongoDB
+    participant Client as Frontend
+
+    Service->>+Emitter: emit('ownership.transferred', payload)
+    Emitter->>+NotifService: trigger event listeners
+    NotifService->>+DB: bulk create notifications
+    DB-->>-NotifService: success
+    NotifService-->>-Emitter: complete
+    Emitter-->>-Service: event handled
+
+    Note over Client: Polling every 10 seconds
+    Client->>+DB: GET /api/v1/notifications
+    DB-->>-Client: return notifications + unread count
+    Client->>Client: show toast + update bell badge
+```
+
+### Components
+
+1. **NotificationEmitter** (`server/src/lib/notificationEmitter.ts`)
+   - Type-safe EventEmitter singleton
+   - Defines event constants and payload interfaces
+   - Events: `ownership.transferred`, `member.left`, `comment.created`, etc.
+
+2. **NotificationService** (`server/src/services/notification.service.ts`)
+   - Registers listeners for all notification events
+   - Creates notification records for relevant users
+   - Provides CRUD operations for notifications
+
+3. **Frontend System**
+   - **NotificationCenter**: Bell icon with unread badge + side sheet
+   - **NotificationStore**: Zustand store for real-time unread count
+   - **Auto-polling**: TanStack Query refetches every 10 seconds
+   - **Toast notifications**: Shows new notifications regardless of page
+
+### Event Types & Recipients
+
+| Event Type              | Triggered By        | Recipients                              |
+| ----------------------- | ------------------- | --------------------------------------- |
+| `ownership_transferred` | transferOwnership() | Old owner, new owner, all other members |
+| `member_left`           | leaveTripSelf()     | All remaining trip members              |
+| `member_invited`        | inviteMember()      | All existing trip members               |
+| `comment_created`       | createComment()     | All trip members (configurable)         |
+| `expense_added`         | createExpense()     | All trip members                        |
+| `role_changed`          | updateMemberRole()  | Target user + trip owner                |
+
+### Design Decisions
+
+- **Polling over WebSockets**: Matches existing patterns, no new infrastructure
+- **Event-driven decoupling**: Easy to add new notification types
+- **10-second polling**: Balance between real-time feel and server load
+- **90-day TTL**: Notifications auto-expire to prevent database bloat
+- **Generic metadata field**: Extensible for future notification types
 
 ---
 

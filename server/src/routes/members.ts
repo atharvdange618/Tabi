@@ -39,6 +39,22 @@ router.post(
   memberController.transferOwnership,
 );
 
+// POST /api/v1/trips/:id/members/ownership/accept - accept a pending ownership transfer
+router.post(
+  "/:id/members/ownership/accept",
+  ...auth,
+  requireMembership(),
+  memberController.acceptOwnershipTransfer,
+);
+
+// POST /api/v1/trips/:id/members/ownership/decline - decline a pending ownership transfer
+router.post(
+  "/:id/members/ownership/decline",
+  ...auth,
+  requireMembership(),
+  memberController.declineOwnershipTransfer,
+);
+
 // DELETE /api/v1/trips/:id/members/me - leave trip (self-removal)
 router.delete(
   "/:id/members/me",

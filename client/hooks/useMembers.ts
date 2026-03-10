@@ -23,6 +23,7 @@ export function useMembers(tripId: string) {
       pending: members.filter((m) => m.status === "pending"),
     }),
     enabled: !!tripId,
+    refetchInterval: 10_000,
   });
 }
 
@@ -154,10 +155,57 @@ export function useTransferOwnership(tripId: string) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.trip(tripId),
       });
-      toast.success("Ownership transfer initiated");
+      toast.success("Ownership transfer pending - awaiting acceptance");
     },
     onError: () => {
       toast.error("Failed to transfer ownership");
+    },
+  });
+}
+
+export function useAcceptOwnershipTransfer(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<ApiResponse<PopulatedTripMember[]>>(
+        `/api/v1/trips/${tripId}/members/ownership/accept`,
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.trip(tripId),
+      });
+      toast.success("Ownership transfer accepted! You are now the owner.");
+    },
+    onError: () => {
+      toast.error("Failed to accept ownership transfer");
+    },
+  });
+}
+
+export function useDeclineOwnershipTransfer(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<ApiResponse<PopulatedTripMember[]>>(
+        `/api/v1/trips/${tripId}/members/ownership/decline`,
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      toast.success("Ownership transfer declined");
+    },
+    onError: () => {
+      toast.error("Failed to decline ownership transfer");
     },
   });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,23 @@ export function NotificationCenter() {
 
   const unreadNotifications = notifications.filter((n) => !n.isRead);
   const readNotifications = notifications.filter((n) => n.isRead);
+
+  useEffect(() => {
+    const handleOpenNotificationCenter = () => {
+      setOpen(true);
+    };
+
+    window.addEventListener(
+      "openNotificationCenter",
+      handleOpenNotificationCenter,
+    );
+    return () => {
+      window.removeEventListener(
+        "openNotificationCenter",
+        handleOpenNotificationCenter,
+      );
+    };
+  }, []);
 
   const handleMarkAsRead = (notificationId: string) => {
     markAsRead.mutate(notificationId);

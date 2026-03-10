@@ -4,9 +4,15 @@ import {
   Expense,
   Settlement,
   TripMember,
+  Trip,
 } from "../models/index.ts";
 import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
+import logger from "../lib/logger.ts";
 import type {
   UpdateBudgetSettingsPayload,
   CreateExpensePayload,
@@ -67,7 +73,7 @@ export async function createExpense(
     );
   }
 
-  return Expense.create({
+  const expense = await Expense.create({
     ...payload,
     tripId: new mongoose.Types.ObjectId(tripId),
     paidBy: new mongoose.Types.ObjectId(payload.paidBy),
@@ -76,6 +82,27 @@ export async function createExpense(
       : null,
     createdBy: new mongoose.Types.ObjectId(userId),
   });
+
+  try {
+    const trip = await Trip.findById(tripId).lean();
+    if (trip) {
+      notificationEvents.emit(NotificationEvents.EXPENSE_ADDED, {
+        tripId,
+        tripTitle: trip.title,
+        expenseId: expense._id.toString(),
+        addedByUserId: userId,
+        amount: payload.amount,
+        description: payload.description,
+      });
+    }
+  } catch (error) {
+    logger.error("Failed to emit expense added event", {
+      error,
+      expenseId: expense._id,
+    });
+  }
+
+  return expense;
 }
 
 /**
