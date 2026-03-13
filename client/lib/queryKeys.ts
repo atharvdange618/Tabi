@@ -16,6 +16,7 @@ export const queryKeys = {
   tripComments: (id: string, targetType?: string, targetId?: string) =>
     ["trips", id, "comments", targetType, targetId].filter(Boolean) as string[],
   tripAllActivities: (id: string) => ["trips", id, "activities"] as const,
+  tripPolls: (id: string) => ["trips", id, "polls"] as const,
   notifications: (filters?: {
     isRead?: boolean;
     tripId?: string;

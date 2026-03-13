@@ -16,3 +16,4 @@ export {
 export { Expense, type ExpenseDocument } from "./Expense.ts";
 export { Settlement, type SettlementDocument } from "./Settlement.ts";
 export { Notification, type NotificationDocument } from "./Notification.ts";
+export { Poll, type PollDocument } from "./Poll.ts";

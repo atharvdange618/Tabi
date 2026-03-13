@@ -13,6 +13,7 @@ import {
   type ActivityUpdatedPayload,
   type ReservationAddedPayload,
   type TripUpdatedPayload,
+  type PollCreatedPayload,
 } from "../lib/notificationEmitter.ts";
 import type { NotificationType } from "../../../shared/types/index.ts";
 import logger from "../lib/logger.ts";
@@ -536,6 +537,43 @@ async function handleTripUpdated(payload: TripUpdatedPayload) {
 }
 
 /**
+ * Event handler: Poll created
+ * Creates notifications for all active trip members except the creator
+ */
+async function handlePollCreated(payload: PollCreatedPayload) {
+  try {
+    const { tripId, tripTitle, pollId, createdByUserId, question } = payload;
+
+    const members = await TripMember.find({
+      tripId: new mongoose.Types.ObjectId(tripId),
+      status: "active",
+      userId: { $ne: new mongoose.Types.ObjectId(createdByUserId) },
+    }).lean();
+
+    const preview =
+      question.length > 60 ? `${question.slice(0, 60)}…` : question;
+    const notifications = members.map((member) => ({
+      userId: member.userId.toString(),
+      tripId,
+      type: "poll_created" as NotificationType,
+      actorId: createdByUserId,
+      message: `New poll in "${tripTitle}": "${preview}"`,
+      metadata: { pollId, question },
+    }));
+
+    if (notifications.length > 0) {
+      await bulkCreateNotifications(notifications);
+      logger.info("Poll created notifications sent", {
+        tripId,
+        count: notifications.length,
+      });
+    }
+  } catch (error) {
+    logger.error("Failed to handle poll created event", { error, payload });
+  }
+}
+
+/**
  * Register all event listeners.
  */
 export function registerNotificationEventListeners() {
@@ -568,6 +606,8 @@ export function registerNotificationEventListeners() {
   );
 
   notificationEvents.on(NotificationEvents.TRIP_UPDATED, handleTripUpdated);
+
+  notificationEvents.on(NotificationEvents.POLL_CREATED, handlePollCreated);
 
   logger.info("Notification event listeners registered");
 }

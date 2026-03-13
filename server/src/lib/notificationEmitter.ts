@@ -13,6 +13,7 @@ export const NotificationEvents = {
   ACTIVITY_UPDATED: "activity.updated",
   RESERVATION_ADDED: "reservation.added",
   TRIP_UPDATED: "trip.updated",
+  POLL_CREATED: "poll.created",
 } as const;
 
 export interface OwnershipTransferredPayload {
@@ -85,6 +86,14 @@ export interface TripUpdatedPayload {
   changes: string[];
 }
 
+export interface PollCreatedPayload {
+  tripId: string;
+  tripTitle: string;
+  pollId: string;
+  createdByUserId: string;
+  question: string;
+}
+
 /**
  * Type map for event names to their payloads.
  */
@@ -98,6 +107,7 @@ export interface NotificationEventMap {
   [NotificationEvents.ACTIVITY_UPDATED]: ActivityUpdatedPayload;
   [NotificationEvents.RESERVATION_ADDED]: ReservationAddedPayload;
   [NotificationEvents.TRIP_UPDATED]: TripUpdatedPayload;
+  [NotificationEvents.POLL_CREATED]: PollCreatedPayload;
 }
 
 /**

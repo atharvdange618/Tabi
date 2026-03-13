@@ -27,6 +27,7 @@ const notificationSchema = new Schema(
         "activity_updated",
         "reservation_added",
         "trip_updated",
+        "poll_created",
       ],
     },
     actorId: {

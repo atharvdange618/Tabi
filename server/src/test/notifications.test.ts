@@ -217,7 +217,7 @@ describe("Notification Service", () => {
         { isRead: false },
       );
 
-      expect(notifications.every((n) => n.isRead === false)).toBe(true);
+      expect(notifications.every((n) => !n.isRead)).toBe(true);
     });
 
     it("filters by isRead=true (read only)", async () => {

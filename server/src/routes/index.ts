@@ -11,6 +11,7 @@ import fileRoutes from "./files.ts";
 import reservationRoutes from "./reservations.ts";
 import budgetRoutes from "./budget.ts";
 import notificationRoutes from "./notifications.ts";
+import pollRoutes from "./polls.ts";
 
 const router = Router();
 
@@ -49,5 +50,8 @@ router.use("/trips/:id/budget", budgetRoutes);
 
 // Notifications API
 router.use("/notifications", notificationRoutes);
+
+// Polls API
+router.use("/trips/:id/polls", pollRoutes);
 
 export { router };

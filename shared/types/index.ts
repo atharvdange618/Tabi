@@ -77,7 +77,14 @@ export const NotificationType = {
   ACTIVITY_UPDATED: "activity_updated",
   RESERVATION_ADDED: "reservation_added",
   TRIP_UPDATED: "trip_updated",
+  POLL_CREATED: "poll_created",
 } as const;
+
+export const PollStatus = {
+  OPEN: "open",
+  CLOSED: "closed",
+} as const;
+export type PollStatus = (typeof PollStatus)[keyof typeof PollStatus];
 export type NotificationType =
   (typeof NotificationType)[keyof typeof NotificationType];
 
@@ -263,6 +270,24 @@ export interface Reservation {
   updatedAt: string;
 }
 
+export interface PollOption {
+  _id: string;
+  text: string;
+  votes: string[];
+}
+
+export interface Poll {
+  _id: string;
+  tripId: string;
+  question: string;
+  options: PollOption[];
+  status: PollStatus;
+  winningOptionId?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BudgetSettings {
   _id: string;
   tripId: string;
@@ -385,6 +410,14 @@ export interface TripUpdatedPayload {
   tripTitle: string;
   updatedById: string;
   changes: string[];
+}
+
+export interface PollCreatedPayload {
+  tripId: string;
+  tripTitle: string;
+  pollId: string;
+  createdById: string;
+  question: string;
 }
 
 // --- Public Trip Types ---

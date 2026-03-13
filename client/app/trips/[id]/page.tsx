@@ -13,11 +13,13 @@ import {
   BadgeIndianRupee,
   FileText,
   Globe,
+  LayoutDashboard,
   MapPin,
   Pencil,
   Settings,
   Users,
   UserPlus,
+  Vote,
 } from "lucide-react";
 import { useTrip } from "@/hooks/useTrips";
 import { useMembers } from "@/hooks/useMembers";
@@ -40,17 +42,21 @@ import { ChecklistsTab } from "@/components/trips/tabs/ChecklistsTab";
 import { ReservationsTab } from "@/components/trips/tabs/ReservationsTab";
 import { MembersTab } from "@/components/trips/tabs/MembersTab";
 import { SettingsTab } from "@/components/trips/tabs/SettingsTab";
+import { OverviewTab } from "@/components/trips/tabs/OverviewTab";
+import { PollsTab } from "@/components/trips/tabs/PollsTab";
 import TripEditSheet from "@/components/trips/TripEditSheet";
 import { OwnershipTransferAlert } from "@/components/members/OwnershipTransferAlert";
 import { TabValue, useTripStore } from "@/store/tripStore";
 
 const TAB_CONFIG = [
+  { value: "overview", label: "Overview", Icon: LayoutDashboard },
   { value: "itinerary", label: "Itinerary", Icon: Calendar },
   { value: "budget", label: "Budget", Icon: BadgeIndianRupee },
   { value: "files", label: "Files", Icon: FileText },
   { value: "checklists", label: "Checklists", Icon: CheckCircle2 },
   { value: "reservations", label: "Reservations", Icon: MapPin },
   { value: "members", label: "Members", Icon: Users },
+  { value: "polls", label: "Polls", Icon: Vote },
   { value: "settings", label: "Settings", Icon: Settings },
 ] as const;
 
@@ -311,6 +317,10 @@ export default function TripPage() {
                 </TabsList>
               </div>
 
+              <TabsContent value="overview" className="mt-0">
+                <OverviewTab tripId={tripId} canEdit={canEdit} />
+              </TabsContent>
+
               <TabsContent value="itinerary" className="mt-0">
                 <ItineraryTab
                   tripId={tripId}
@@ -337,6 +347,10 @@ export default function TripPage() {
 
               <TabsContent value="members" className="mt-0">
                 <MembersTab tripId={tripId} currentUserRole={displayRole} />
+              </TabsContent>
+
+              <TabsContent value="polls" className="mt-0">
+                <PollsTab tripId={tripId} canEdit={canEdit} />
               </TabsContent>
 
               <TabsContent value="settings" className="mt-0">

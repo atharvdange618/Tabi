@@ -259,4 +259,26 @@ export const notificationQuerySchema = z.object({
     .pipe(z.number().int().nonnegative()),
 });
 
+// --- Poll Schemas ---
+
+export const createPollSchema = z.object({
+  question: z.string().min(1, "Question is required").max(500),
+  options: z
+    .array(z.string().min(1, "Option cannot be empty").max(200))
+    .min(2, "At least 2 options required")
+    .max(10, "At most 10 options allowed"),
+});
+
+export const votePollSchema = z.object({
+  optionId: z.string().min(1, "Option ID is required"),
+});
+
+export const closePollSchema = z.object({
+  winningOptionId: z.string().min(1, "Winning option is required"),
+});
+
+export type CreatePollPayload = z.infer<typeof createPollSchema>;
+export type VotePollPayload = z.infer<typeof votePollSchema>;
+export type ClosePollPayload = z.infer<typeof closePollSchema>;
+
 export type NotificationQueryPayload = z.infer<typeof notificationQuerySchema>;
