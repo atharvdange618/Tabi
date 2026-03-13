@@ -86,7 +86,7 @@ export interface MapViewProps {
   tripDestination?: string;
 }
 
-export default function MapView({ activities, tripDestination }: MapViewProps) {
+export default function MapView({ activities }: MapViewProps) {
   const withLocation = useMemo(
     () => activities.filter((a) => !!a.location),
     [activities],
@@ -112,14 +112,14 @@ export default function MapView({ activities, tripDestination }: MapViewProps) {
   }, []);
 
   useEffect(() => {
-    if (!withLocation.length) {
-      safeSetLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
     async function run() {
+      if (!withLocation.length) {
+        safeSetLoading(false);
+        return;
+      }
+
       safeSetLoading(true);
       const results: GeocodedActivity[] = [];
 

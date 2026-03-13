@@ -133,7 +133,7 @@ export async function toggleReaction(
   const existing = reactions.find((r) => r.emoji === emoji);
 
   if (existing) {
-    const idx = existing.users.findIndex((u) => u.toString() === userId);
+    const idx = existing.users.findIndex((u) => u === userId);
     if (idx !== -1) {
       existing.users.splice(idx, 1);
       if (existing.users.length === 0) {

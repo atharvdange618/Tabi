@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
               opacity: 0.15,
             }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={coverImage}
               alt="Cover"
@@ -186,8 +187,8 @@ export async function GET(request: NextRequest) {
         height: 630,
       },
     );
-  } catch (e: any) {
-    console.error(`Failed to generate OG image: ${e.message}`);
+  } catch (e: unknown) {
+    console.error(`Failed to generate OG image: ${(e as Error).message}`);
     return new Response(`Failed to generate image`, {
       status: 500,
     });
