@@ -155,7 +155,7 @@ describe("Activities API", () => {
     const days = await dayService.getTripDays(trip._id.toString());
     const day = days[0]!;
 
-    const act = await activityService.createActivity(
+    const { activity: act } = await activityService.createActivity(
       trip._id.toString(),
       day._id.toString(),
       owner._id.toString(),
@@ -177,13 +177,13 @@ describe("Activities API", () => {
     const days = await dayService.getTripDays(trip._id.toString());
     const day = days[0]!;
 
-    const act1 = await activityService.createActivity(
+    const { activity: act1 } = await activityService.createActivity(
       trip._id.toString(),
       day._id.toString(),
       owner._id.toString(),
       { title: "First", type: ActivityType.SIGHTSEEING },
     );
-    const act2 = await activityService.createActivity(
+    const { activity: act2 } = await activityService.createActivity(
       trip._id.toString(),
       day._id.toString(),
       owner._id.toString(),
@@ -219,7 +219,7 @@ describe("Activities API", () => {
     const days = await dayService.getTripDays(trip._id.toString());
     const day = days[0]!;
 
-    const act = await activityService.createActivity(
+    const { activity: act } = await activityService.createActivity(
       trip._id.toString(),
       day._id.toString(),
       owner._id.toString(),

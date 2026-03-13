@@ -48,13 +48,13 @@ export async function createActivity(
     return;
   }
 
-  const activity = await activityService.createActivity(
+  const { activity, warnings } = await activityService.createActivity(
     req.params.id as string,
     req.params.dayId as string,
     req.dbUserId,
     req.body as CreateActivityPayload,
   );
-  res.status(201).json({ data: activity });
+  res.status(201).json({ data: activity, warnings });
 }
 
 /**
@@ -70,14 +70,14 @@ export async function updateActivity(
     return;
   }
 
-  const activity = await activityService.updateActivity(
+  const { activity, warnings } = await activityService.updateActivity(
     req.params.id as string,
     req.params.dayId as string,
     req.params.actId as string,
     req.dbUserId,
     req.body as UpdateActivityPayload,
   );
-  res.json({ data: activity });
+  res.json({ data: activity, warnings });
 }
 
 /**

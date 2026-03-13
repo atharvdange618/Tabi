@@ -13,6 +13,77 @@ import type {
 } from "../../../shared/validations/index.ts";
 import logger from "../lib/logger.ts";
 
+// ── Time conflict helpers ─────────────────────────────────────────────────────
+
+/**
+ * Convert a 12-hour time string ("h:mm AM/PM") to total minutes from midnight.
+ * Returns null if the string cannot be parsed.
+ */
+function parseTimeToMinutes(time: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(time);
+  if (!match) {
+    return null;
+  }
+  const [, hourStr, minStr, period] = match as unknown as [
+    string,
+    string,
+    string,
+    string,
+  ];
+  let h = parseInt(hourStr, 10);
+  const m = parseInt(minStr, 10);
+  if (period.toUpperCase() === "AM" && h === 12) {
+    h = 0;
+  }
+  if (period.toUpperCase() === "PM" && h !== 12) {
+    h += 12;
+  }
+  return h * 60 + m;
+}
+
+/**
+ * Returns true if the candidate time range overlaps with any activity in the
+ * provided list. Pass excludeId to skip an activity (used on updates).
+ */
+function detectTimeConflict(
+  activities: {
+    _id: { toString(): string };
+    startTime?: string | null;
+    endTime?: string | null;
+  }[],
+  excludeId: string | null,
+  candidateStart: string,
+  candidateEnd?: string | null,
+): boolean {
+  const candStart = parseTimeToMinutes(candidateStart);
+  if (candStart === null) {
+    return false;
+  }
+  const candEnd = candidateEnd
+    ? (parseTimeToMinutes(candidateEnd) ?? candStart + 60)
+    : candStart + 60;
+
+  for (const act of activities) {
+    if (excludeId && act._id.toString() === excludeId) {
+      continue;
+    }
+    if (!act.startTime) {
+      continue;
+    }
+    const actStart = parseTimeToMinutes(act.startTime);
+    if (actStart === null) {
+      continue;
+    }
+    const actEnd = act.endTime
+      ? (parseTimeToMinutes(act.endTime) ?? actStart + 60)
+      : actStart + 60;
+    if (candStart < actEnd && actStart < candEnd) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Get all activities for a specific day, ordered by position.
  */
@@ -69,6 +140,22 @@ export async function createActivity(
     position: nextPosition,
   });
 
+  // Detect time conflicts against the other activities already in the day
+  const warnings: string[] = [];
+  if (payload.startTime) {
+    const existing = await Activity.find({ dayId, tripId }).lean();
+    if (
+      detectTimeConflict(
+        existing,
+        activity._id.toString(),
+        payload.startTime,
+        payload.endTime,
+      )
+    ) {
+      warnings.push("time_conflict");
+    }
+  }
+
   try {
     const trip = await Trip.findById(tripId).lean();
     if (trip) {
@@ -86,7 +173,7 @@ export async function createActivity(
     });
   }
 
-  return activity;
+  return { activity, warnings };
 }
 
 /**
@@ -109,6 +196,19 @@ export async function updateActivity(
     throw new NotFoundError("Activity not found");
   }
 
+  // Detect time conflicts with other activities on the same day
+  const warnings: string[] = [];
+  const checkStart =
+    payload.startTime ?? (activity.startTime as string | undefined);
+  if (checkStart) {
+    const checkEnd =
+      payload.endTime ?? (activity.endTime as string | undefined);
+    const others = await Activity.find({ dayId, tripId }).lean();
+    if (detectTimeConflict(others, activityId, checkStart, checkEnd)) {
+      warnings.push("time_conflict");
+    }
+  }
+
   try {
     const trip = await Trip.findById(tripId).lean();
     if (trip) {
@@ -126,7 +226,7 @@ export async function updateActivity(
     });
   }
 
-  return activity;
+  return { activity, warnings };
 }
 
 /**

@@ -6,12 +6,11 @@ import { cn } from "@/lib/utils";
 import { activityColor, formatDisplayTime } from "@/lib/helpers";
 import type { Day, Activity } from "shared/types";
 
-// ─── Constants ───────────────────────────────────────────────────────────────
-const START_HOUR = 6; // 6 AM
-const END_HOUR = 23; // 11 PM
-const HOUR_HEIGHT = 64; // px per hour
-const COL_WIDTH = 220; // px per day column
-const HOUR_GUTTER = 52; // px for the hour-label left column
+const START_HOUR = 6;
+const END_HOUR = 23;
+const HOUR_HEIGHT = 64;
+const COL_WIDTH = 220;
+const HOUR_GUTTER = 52;
 
 const HOURS = Array.from(
   { length: END_HOUR - START_HOUR },
@@ -19,7 +18,6 @@ const HOURS = Array.from(
 );
 const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 function parseTotalMinutes(time: string): number {
   const ampm = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (ampm) {
@@ -33,6 +31,30 @@ function parseTotalMinutes(time: string): number {
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
+/**
+ * Returns the set of activity IDs that have a time overlap with at
+ * least one other activity in the provided list.
+ */
+function computeConflictedIds(activities: Activity[]): Set<string> {
+  const conflicted = new Set<string>();
+  const scheduled = activities.filter((a) => !!a.startTime);
+  for (let i = 0; i < scheduled.length; i++) {
+    for (let j = i + 1; j < scheduled.length; j++) {
+      const a = scheduled[i]!;
+      const b = scheduled[j]!;
+      const aStart = parseTotalMinutes(a.startTime!);
+      const aEnd = a.endTime ? parseTotalMinutes(a.endTime) : aStart + 60;
+      const bStart = parseTotalMinutes(b.startTime!);
+      const bEnd = b.endTime ? parseTotalMinutes(b.endTime) : bStart + 60;
+      if (aStart < bEnd && bStart < aEnd) {
+        conflicted.add(a._id);
+        conflicted.add(b._id);
+      }
+    }
+  }
+  return conflicted;
+}
+
 function formatHour(h: number) {
   if (h === 0) return "12 AM";
   if (h < 12) return `${h} AM`;
@@ -40,8 +62,13 @@ function formatHour(h: number) {
   return `${h - 12} PM`;
 }
 
-// ─── Activity block (positioned on the timeline) ─────────────────────────────
-function ActivityBlock({ activity }: { activity: Activity }) {
+function ActivityBlock({
+  activity,
+  isConflicted,
+}: {
+  activity: Activity;
+  isConflicted?: boolean;
+}) {
   const startMin = activity.startTime
     ? parseTotalMinutes(activity.startTime)
     : null;
@@ -63,10 +90,11 @@ function ActivityBlock({ activity }: { activity: Activity }) {
   return (
     <div
       className={cn(
-        "absolute left-1 right-1 rounded-md border border-[#1A1A1A]/25 px-2 py-1",
+        "absolute left-1 right-1 rounded-md border-2 px-2 py-1",
         "overflow-hidden select-none hover:z-10 hover:shadow-[2px_2px_0px_#1A1A1A]",
         "transition-shadow duration-100",
         colorClass,
+        isConflicted ? "border-amber-500" : "border-[#1A1A1A]/25",
       )}
       style={{ top: clampedStartOffset, height }}
       title={activity.title}
@@ -87,11 +115,15 @@ function ActivityBlock({ activity }: { activity: Activity }) {
           {activity.location}
         </p>
       )}
+      {isConflicted && (
+        <span className="absolute top-1 right-1 text-[8px] font-black text-amber-700">
+          ⚠️
+        </span>
+      )}
     </div>
   );
 }
 
-// ─── Main CalendarView ────────────────────────────────────────────────────────
 export function CalendarView({
   days,
   activitiesByDay,
@@ -99,7 +131,14 @@ export function CalendarView({
   days: Day[];
   activitiesByDay: Record<string, Activity[]>;
 }) {
-  // Partition activities into scheduled (has startTime) vs unscheduled
+  const conflictedIds = new Set<string>();
+  for (const day of days) {
+    const acts = activitiesByDay[day._id] ?? [];
+    for (const id of computeConflictedIds(acts)) {
+      conflictedIds.add(id);
+    }
+  }
+
   const scheduled: Record<string, Activity[]> = {};
   const unscheduled: Record<string, Activity[]> = {};
   let hasUnscheduled = false;
@@ -117,9 +156,7 @@ export function CalendarView({
     <div className="rounded-xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] bg-white overflow-hidden">
       <div className="overflow-x-auto">
         <div style={{ minWidth: totalInnerWidth }}>
-          {/* ── Day header row ───────────────────────────────────── */}
           <div className="flex border-b-2 border-[#1A1A1A] bg-brand-cream sticky top-0 z-20">
-            {/* gutter spacer */}
             <div
               style={{ width: HOUR_GUTTER }}
               className="shrink-0 border-r border-[#1A1A1A]/20"
@@ -128,9 +165,7 @@ export function CalendarView({
               let dateLabel = day.date;
               try {
                 dateLabel = format(parseISO(day.date), "EEE, MMM d");
-              } catch {
-                /* keep raw */
-              }
+              } catch {}
               const isLast = i === days.length - 1;
               return (
                 <div
@@ -157,7 +192,6 @@ export function CalendarView({
             })}
           </div>
 
-          {/* ── Unscheduled row (only renders if any day has untimed activities) ── */}
           {hasUnscheduled && (
             <div className="flex border-b border-[#1A1A1A]/15 bg-[#fafaf7]">
               <div
@@ -205,9 +239,7 @@ export function CalendarView({
             </div>
           )}
 
-          {/* ── Timeline grid ─────────────────────────────────────── */}
           <div className="flex" style={{ height: TOTAL_HEIGHT }}>
-            {/* Hour labels */}
             <div
               style={{ width: HOUR_GUTTER }}
               className="shrink-0 relative border-r border-[#1A1A1A]/20 bg-white"
@@ -228,7 +260,6 @@ export function CalendarView({
               ))}
             </div>
 
-            {/* Day columns */}
             {days.map((day, i) => {
               const isLast = i === days.length - 1;
               return (
@@ -240,7 +271,6 @@ export function CalendarView({
                     !isLast && "border-r border-[#1A1A1A]/20",
                   )}
                 >
-                  {/* Hour gridlines */}
                   {HOURS.map((h) => (
                     <div
                       key={h}
@@ -251,19 +281,21 @@ export function CalendarView({
                       className="absolute left-0 right-0 border-b border-[#1A1A1A]/[0.07]"
                     />
                   ))}
-                  {/* Half-hour dashed gridlines */}
                   {HOURS.map((h) => (
                     <div
                       key={`${h}-half`}
                       style={{
                         top: (h - START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2,
                       }}
-                      className="absolute left-0 right-0 border-b border-dashed border-[#1A1A1A]/[0.04]"
+                      className="absolute left-0 right-0 border-b border-dashed border-[#1A1A1A]/4"
                     />
                   ))}
-                  {/* Scheduled activities */}
                   {(scheduled[day._id] ?? []).map((act) => (
-                    <ActivityBlock key={act._id} activity={act} />
+                    <ActivityBlock
+                      key={act._id}
+                      activity={act}
+                      isConflicted={conflictedIds.has(act._id)}
+                    />
                   ))}
                 </div>
               );
