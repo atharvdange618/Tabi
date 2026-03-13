@@ -193,6 +193,11 @@ export interface Activity {
   updatedAt: string;
 }
 
+export interface CommentReaction {
+  emoji: string;
+  users: string[];
+}
+
 export interface Comment {
   _id: string;
   tripId: string;
@@ -202,6 +207,7 @@ export interface Comment {
   authorId: string;
   parentId?: string;
   isEdited: boolean;
+  reactions: CommentReaction[];
   createdAt: string;
   updatedAt: string;
 }
@@ -274,6 +280,7 @@ export interface Expense {
   paidBy: string;
   date?: string;
   activityId?: string;
+  fileId?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

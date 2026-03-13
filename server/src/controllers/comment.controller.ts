@@ -4,6 +4,7 @@ import { Comment } from "../models/Comment.ts";
 import type {
   CreateCommentPayload,
   UpdateCommentPayload,
+  ToggleCommentReactionPayload,
 } from "../../../shared/validations/index.ts";
 
 /**
@@ -115,4 +116,29 @@ export async function deleteComment(
 
   await commentService.deleteComment(commentId as string);
   res.json({ message: "Comment deleted successfully" });
+}
+
+/**
+ * POST /api/v1/trips/:id/comments/:commentId/reactions
+ * Toggle an emoji reaction on a comment. Any trip member can react.
+ */
+export async function toggleReaction(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const userId = req.dbUserId;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized: Missing user ID" });
+    return;
+  }
+
+  const { commentId } = req.params;
+  if (!commentId || typeof commentId !== "string") {
+    res.status(400).json({ error: "commentId is required" });
+    return;
+  }
+  const { emoji } = req.body as ToggleCommentReactionPayload;
+
+  const comment = await commentService.toggleReaction(commentId, userId, emoji);
+  res.json({ data: comment });
 }

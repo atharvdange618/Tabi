@@ -6,6 +6,7 @@ import { validate } from "../middleware/validate.ts";
 import {
   createCommentSchema,
   updateCommentSchema,
+  toggleCommentReactionSchema,
 } from "../../../shared/validations/index.ts";
 
 const router = Router({ mergeParams: true });
@@ -44,6 +45,15 @@ router.delete(
   ...auth,
   requireRole(["owner", "editor", "viewer"]),
   commentController.deleteComment,
+);
+
+// POST /api/v1/trips/:id/comments/:commentId/reactions
+router.post(
+  "/:commentId/reactions",
+  ...auth,
+  requireRole(["owner", "editor", "viewer"]),
+  validate(toggleCommentReactionSchema),
+  commentController.toggleReaction,
 );
 
 export default router;

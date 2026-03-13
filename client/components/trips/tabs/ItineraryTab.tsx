@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { format } from "date-fns";
 import {
   DndContext,
@@ -27,6 +28,7 @@ import {
   Tag,
   List,
   CalendarDays,
+  Map,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,8 +72,16 @@ import {
 } from "@/hooks/useActivities";
 import CommentsSection from "@/components/itinerary/CommentsSection";
 import { CalendarView } from "@/components/itinerary/CalendarView";
+
+const MapView = dynamic(() => import("@/components/itinerary/MapView"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-105 border-2 border-[#1A1A1A] rounded-xl bg-[#f9f9f7] animate-pulse" />
+  ),
+});
 import type { Activity } from "shared/types";
 import { activityTypes } from "shared/validations";
+import LocationAutocomplete from "@/components/itinerary/LocationAutocomplete";
 
 interface ActivityForm {
   title: string;
@@ -507,11 +517,10 @@ function ActivityDialog({
             <Label className="text-xs font-bold uppercase tracking-wide">
               Location
             </Label>
-            <Input
+            <LocationAutocomplete
               value={form.location}
-              onChange={(e) => field("location", e.target.value)}
-              className="mt-1 border-2 border-[#1A1A1A] rounded-lg"
-              placeholder="Optional"
+              onChange={(v) => field("location", v)}
+              className="mt-1"
             />
           </div>
           <div>
@@ -564,11 +573,13 @@ function ActivityDialog({
 export function ItineraryTab({
   tripId,
   canEdit,
+  tripDestination,
 }: {
   tripId: string;
   canEdit: boolean;
+  tripDestination?: string;
 }) {
-  const [view, setView] = useState<"list" | "calendar">("list");
+  const [view, setView] = useState<"list" | "calendar" | "map">("list");
   const { data: days = [], isLoading } = useDays(tripId);
   const { data: allActivities = [] } = useAllActivities(tripId);
 
@@ -610,6 +621,18 @@ export function ItineraryTab({
         <CalendarDays size={14} />
         Calendar
       </button>
+      <button
+        onClick={() => setView("map")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold transition-all",
+          view === "map"
+            ? "bg-[#111] text-white"
+            : "text-[#6B7280] hover:bg-[#f0f0ec]",
+        )}
+      >
+        <Map size={14} />
+        Map
+      </button>
     </div>
   );
 
@@ -650,7 +673,9 @@ export function ItineraryTab({
     <div className="space-y-4">
       <div className="flex justify-end">{viewToggle}</div>
 
-      {view === "calendar" ? (
+      {view === "map" ? (
+        <MapView activities={allActivities} tripDestination={tripDestination} />
+      ) : view === "calendar" ? (
         <CalendarView days={days} activitiesByDay={activitiesByDay} />
       ) : (
         days.map((day, i) => (

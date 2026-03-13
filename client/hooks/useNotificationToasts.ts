@@ -8,7 +8,7 @@ import type { PopulatedNotification } from "shared/types";
 
 export function useNotificationToasts() {
   const { isSignedIn } = useAuth();
-  const { data: notifications = [] } = useNotifications();
+  const { data: notifications = [], isSuccess } = useNotifications();
   const previousNotificationsRef = useRef<PopulatedNotification[]>([]);
   const isFirstLoadRef = useRef(true);
 
@@ -20,8 +20,10 @@ export function useNotificationToasts() {
     }
 
     if (isFirstLoadRef.current) {
-      previousNotificationsRef.current = notifications;
-      isFirstLoadRef.current = false;
+      if (isSuccess) {
+        previousNotificationsRef.current = notifications;
+        isFirstLoadRef.current = false;
+      }
       return;
     }
 
@@ -57,5 +59,5 @@ export function useNotificationToasts() {
     });
 
     previousNotificationsRef.current = notifications;
-  }, [notifications, isSignedIn]);
+  }, [notifications, isSignedIn, isSuccess]);
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { BadgeIndianRupee, Plus, Trash2 } from "lucide-react";
+import { BadgeIndianRupee, Paperclip, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
@@ -31,6 +31,7 @@ import {
   useDeleteExpense,
 } from "@/hooks/useBudget";
 import { useMembers } from "@/hooks/useMembers";
+import { useFiles } from "@/hooks/useFiles";
 import { SplitsSection } from "@/components/budget/SplitsSection";
 import type { PopulatedExpense } from "shared/types";
 import { expenseCategories } from "shared/validations";
@@ -54,6 +55,7 @@ export function BudgetTab({
   const { data: summary } = useBudgetSummary(tripId);
   const { data: rawExpenses = [] } = useExpenses(tripId);
   const { data: membersData } = useMembers(tripId);
+  const { data: files = [] } = useFiles(tripId);
   const deleteExpense = useDeleteExpense(tripId);
   const createExpense = useCreateExpense(tripId);
 
@@ -66,6 +68,7 @@ export function BudgetTab({
     category: "misc",
     paidBy: "",
     date: "",
+    fileId: "",
   });
 
   const pct = summary
@@ -83,6 +86,7 @@ export function BudgetTab({
         category: form.category as PopulatedExpense["category"],
         paidBy: form.paidBy,
         date: form.date || undefined,
+        fileId: form.fileId || undefined,
       },
       {
         onSuccess: () => {
@@ -93,6 +97,7 @@ export function BudgetTab({
             category: "misc",
             paidBy: "",
             date: "",
+            fileId: "",
           });
         },
       },
@@ -204,6 +209,13 @@ export function BudgetTab({
                   {exp.date ? ` · ${format(new Date(exp.date), "MMM d")}` : ""}
                 </p>
               </div>
+              {exp.fileId && (
+                <Paperclip
+                  size={13}
+                  className="text-[#9CA3AF] shrink-0"
+                  aria-label="Has receipt attached"
+                />
+              )}
               <p className="font-display font-bold text-sm shrink-0">
                 ₹{exp.amount.toLocaleString()}
               </p>
@@ -325,6 +337,36 @@ export function BudgetTab({
                 className="mt-1"
               />
             </div>
+            {files.length > 0 && (
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wide">
+                  Receipt (optional)
+                </Label>
+                <Select
+                  value={form.fileId}
+                  onValueChange={(v) =>
+                    setForm({ ...form, fileId: v === "__none" ? "" : v })
+                  }
+                >
+                  <SelectTrigger className="mt-1 border-2 border-[#1A1A1A] rounded-lg">
+                    <SelectValue placeholder="Attach a file" />
+                  </SelectTrigger>
+                  <SelectContent className="border-2 border-[#1A1A1A] rounded-xl shadow-[4px_4px_0px_#1A1A1A]">
+                    <SelectItem value="__none" className="text-sm text-[#9CA3AF]">
+                      None
+                    </SelectItem>
+                    {files.map((f) => (
+                      <SelectItem key={f._id} value={f._id} className="text-sm">
+                        <span className="flex items-center gap-1.5">
+                          <Paperclip size={11} />
+                          {f.originalName}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <DialogFooter className="gap-2 mt-2">
             <Button

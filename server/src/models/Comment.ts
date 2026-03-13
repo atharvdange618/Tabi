@@ -36,6 +36,20 @@ const commentSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    reactions: {
+      type: [
+        {
+          emoji: { type: String, required: true, maxlength: 10 },
+          users: [{ type: Schema.Types.ObjectId, ref: "User" }],
+        },
+      ],
+      default: [],
+      validate: {
+        validator: (arr: { emoji: string; users: unknown[] }[]) =>
+          arr.length <= 6,
+        message: "A comment can have at most 6 different reaction types",
+      },
+    },
   },
   { timestamps: true },
 );

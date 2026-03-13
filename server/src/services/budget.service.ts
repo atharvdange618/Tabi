@@ -148,7 +148,8 @@ export async function deleteExpense(tripId: string, expId: string) {
 /**
  * Compute pairwise split balances for a trip.
  * Each expense is split equally among all active members.
- * Pairwise balances are netted out and existing settlements are subtracted.
+ * Settlements are folded into the same balance matrix as ledger entries,
+ * so netting handles overpayments correctly without a separate subtraction pass.
  */
 export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
   const [expenses, activeMembers, settlements] = await Promise.all([
@@ -184,12 +185,11 @@ export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
 
   const memberIds = [...memberMap.keys()];
 
-  // balance[debtor][creditor] = total amount debtor owes creditor
+  // balance[debtor][creditor] = net amount debtor owes creditor
   const balance: Record<string, Record<string, number>> = {};
 
   for (const expense of expenses) {
     const paidById = expense.paidBy.toString();
-    // Only split among members who are still active; skip if payer not in members
     if (!memberMap.has(paidById)) {
       continue;
     }
@@ -205,6 +205,19 @@ export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
     }
   }
 
+  for (const settlement of settlements) {
+    const from = settlement.fromUserId.toString();
+    const to = settlement.toUserId.toString();
+
+    if (!memberMap.has(from) || !memberMap.has(to)) {
+      continue;
+    }
+
+    balance[from] ??= {};
+    balance[from][to] ??= 0;
+    balance[from][to] -= settlement.amount;
+  }
+
   const splits: SplitBalance[] = [];
 
   for (let i = 0; i < memberIds.length; i++) {
@@ -217,39 +230,23 @@ export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
       const net = aOwesB - bOwesA;
 
       if (net > 0.005) {
-        const alreadySettled = settlements
-          .filter(
-            (s) => s.fromUserId.toString() === a && s.toUserId.toString() === b,
-          )
-          .reduce((sum, s) => sum + s.amount, 0);
-        const remaining = Math.round((net - alreadySettled) * 100) / 100;
-        if (remaining > 0.005) {
-          splits.push({
-            fromUserId: a,
-            fromUserName: memberMap.get(a) as string,
-            toUserId: b,
-            toUserName: memberMap.get(b) as string,
-            amount: remaining,
-          });
-        }
+        splits.push({
+          fromUserId: a,
+          fromUserName: memberMap.get(a) as string,
+          toUserId: b,
+          toUserName: memberMap.get(b) as string,
+          amount: Math.round(net * 100) / 100,
+        });
       } else if (net < -0.005) {
-        const absNet = -net;
-        const alreadySettled = settlements
-          .filter(
-            (s) => s.fromUserId.toString() === b && s.toUserId.toString() === a,
-          )
-          .reduce((sum, s) => sum + s.amount, 0);
-        const remaining = Math.round((absNet - alreadySettled) * 100) / 100;
-        if (remaining > 0.005) {
-          splits.push({
-            fromUserId: b,
-            fromUserName: memberMap.get(b) as string,
-            toUserId: a,
-            toUserName: memberMap.get(a) as string,
-            amount: remaining,
-          });
-        }
+        splits.push({
+          fromUserId: b,
+          fromUserName: memberMap.get(b) as string,
+          toUserId: a,
+          toUserName: memberMap.get(a) as string,
+          amount: Math.round(-net * 100) / 100,
+        });
       }
+      // |net| ≈ 0 → fully settled, emit nothing
     }
   }
 

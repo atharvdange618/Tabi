@@ -100,3 +100,32 @@ export function useDeleteComment(
     },
   });
 }
+
+export function useToggleReaction(
+  tripId: string,
+  targetType: string,
+  targetId: string,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      commentId,
+      emoji,
+    }: {
+      commentId: string;
+      emoji: string;
+    }) => {
+      const { data } = await api.post(
+        `/api/v1/trips/${tripId}/comments/${commentId}/reactions`,
+        { emoji },
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripComments(tripId, targetType, targetId),
+      });
+    },
+  });
+}

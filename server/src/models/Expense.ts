@@ -37,6 +37,11 @@ const expenseSchema = new Schema(
       ref: "Activity",
       default: null,
     },
+    fileId: {
+      type: Schema.Types.ObjectId,
+      ref: "File",
+      default: null,
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",

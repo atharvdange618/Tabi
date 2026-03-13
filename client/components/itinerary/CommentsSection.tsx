@@ -5,11 +5,13 @@ import {
   useComments,
   useCreateComment,
   useDeleteComment,
+  useToggleReaction,
 } from "@/hooks/useComments";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import EmojiReactionPicker from "@/components/itinerary/EmojiReactionPicker";
 import {
   MessageCircle,
   Send,
@@ -17,7 +19,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
-import type { Comment } from "shared/types";
+import type { Comment, CommentReaction } from "shared/types";
 import { useUser } from "@clerk/nextjs";
 
 interface CommentsSectionProps {
@@ -48,6 +50,7 @@ function CommentCard({
   currentUserId?: string;
 }) {
   const deleteComment = useDeleteComment(tripId, targetType, targetId);
+  const toggleReaction = useToggleReaction(tripId, targetType, targetId);
   const isOwner = currentUserId === comment.authorId._id;
 
   const timeAgo = (date: string) => {
@@ -94,6 +97,14 @@ function CommentCard({
         <p className="text-sm text-foreground font-body whitespace-pre-wrap wrap-break-word">
           {comment.body}
         </p>
+        <EmojiReactionPicker
+          reactions={(comment.reactions ?? []) as CommentReaction[]}
+          currentUserId={currentUserId}
+          onToggle={(emoji) =>
+            toggleReaction.mutate({ commentId: comment._id, emoji })
+          }
+          disabled={toggleReaction.isPending}
+        />
       </div>
 
       {isOwner && (

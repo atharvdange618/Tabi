@@ -149,8 +149,15 @@ export const updateCommentSchema = z.object({
   body: z.string().min(1, "Comment cannot be empty").max(2000),
 });
 
+export const toggleCommentReactionSchema = z.object({
+  emoji: z.string().min(1).max(10),
+});
+
 export type CreateCommentPayload = z.infer<typeof createCommentSchema>;
 export type UpdateCommentPayload = z.infer<typeof updateCommentSchema>;
+export type ToggleCommentReactionPayload = z.infer<
+  typeof toggleCommentReactionSchema
+>;
 
 // --- Checklist Schemas ---
 
@@ -209,6 +216,7 @@ export const createExpenseSchema = z.object({
   paidBy: z.string().min(1),
   date: z.string().datetime().optional(),
   activityId: z.string().optional(),
+  fileId: z.string().optional(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();

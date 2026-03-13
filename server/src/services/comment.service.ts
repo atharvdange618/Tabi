@@ -110,3 +110,52 @@ export async function deleteComment(commentId: string) {
 
   await Comment.deleteMany({ parentId: commentId });
 }
+
+/**
+ * Toggle an emoji reaction on a comment.
+ * Adds the reaction if not present, removes if already reacted.
+ * Enforces max 6 distinct emoji types per comment.
+ */
+export async function toggleReaction(
+  commentId: string,
+  userId: string,
+  emoji: string,
+) {
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new NotFoundError("Comment not found");
+  }
+
+  const reactions = comment.reactions as unknown as {
+    emoji: string;
+    users: string[];
+  }[];
+  const existing = reactions.find((r) => r.emoji === emoji);
+
+  if (existing) {
+    const idx = existing.users.findIndex((u) => u.toString() === userId);
+    if (idx !== -1) {
+      existing.users.splice(idx, 1);
+      if (existing.users.length === 0) {
+        comment.set(
+          "reactions",
+          reactions.filter((r) => r.emoji !== emoji),
+        );
+      }
+    } else {
+      existing.users.push(userId as unknown as string);
+    }
+  } else {
+    if (reactions.length >= 6) {
+      throw new LimitExceededError(
+        "A comment can have at most 6 different reaction types",
+      );
+    }
+    reactions.push({ emoji, users: [userId] });
+    comment.set("reactions", reactions);
+  }
+
+  await comment.save();
+  await comment.populate("authorId", "name avatarUrl");
+  return comment;
+}

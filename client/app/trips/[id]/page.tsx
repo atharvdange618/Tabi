@@ -312,7 +312,11 @@ export default function TripPage() {
               </div>
 
               <TabsContent value="itinerary" className="mt-0">
-                <ItineraryTab tripId={tripId} canEdit={canEdit} />
+                <ItineraryTab
+                  tripId={tripId}
+                  canEdit={canEdit}
+                  tripDestination={trip.destination}
+                />
               </TabsContent>
 
               <TabsContent value="budget" className="mt-0">
