@@ -2,12 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type TabValue =
+  | "overview"
   | "itinerary"
   | "budget"
   | "files"
   | "checklists"
   | "reservations"
   | "members"
+  | "polls"
   | "settings";
 
 interface TripStore {
@@ -26,7 +28,7 @@ export const useTripStore = create<TripStore>()(
       activeTabs: {},
       setActiveTab: (tripId, tab) =>
         set((s) => ({ activeTabs: { ...s.activeTabs, [tripId]: tab } })),
-      getActiveTab: (tripId) => get().activeTabs[tripId] ?? "itinerary",
+      getActiveTab: (tripId) => get().activeTabs[tripId] ?? "overview",
     }),
     {
       name: "tabi-trip-store",
