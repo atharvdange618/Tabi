@@ -2,21 +2,24 @@
 
 ## Frontend
 
-| Technology              | Version         | Role                                             |
-| ----------------------- | --------------- | ------------------------------------------------ |
-| **Next.js**             | 16 (App Router) | Framework routing, SSR, metadata API             |
-| **React**               | 19              | UI rendering                                     |
-| **TypeScript**          | 5.x             | Type safety across the entire client codebase    |
-| **Tailwind CSS**        | 4.x             | Styling utility-first, no CSS files              |
-| **shadcn/ui**           | latest          | Component primitives (Dialog, Tabs, Badge, etc.) |
-| **TanStack Query**      | v5              | Server state management, caching, mutations      |
-| **Zustand**             | v5              | Client UI state (active tab, sidebar, palette)   |
-| **React Hook Form**     | v7              | Form state management                            |
-| **Zod**                 | v4              | Schema validation shared with server             |
-| **Axios**               | v1              | HTTP client with Clerk JWT interceptor           |
-| **Clerk (Next.js SDK)** | latest          | Authentication UI components + session           |
-| **Sonner**              | latest          | Toast notifications                              |
-| **Lucide React**        | latest          | Icon library                                     |
+| Technology                  | Version         | Role                                             |
+| --------------------------- | --------------- | ------------------------------------------------ |
+| **Next.js**                 | 16 (App Router) | Framework routing, SSR, metadata API             |
+| **React**                   | 19              | UI rendering                                     |
+| **TypeScript**              | 5.x             | Type safety across the entire client codebase    |
+| **Tailwind CSS**            | 4.x             | Styling utility-first, no CSS files              |
+| **shadcn/ui**               | latest          | Component primitives (Dialog, Tabs, Badge, etc.) |
+| **TanStack Query**          | v5              | Server state management, caching, mutations      |
+| **Zustand**                 | v5              | Client UI state (active tab, sidebar, palette)   |
+| **React Hook Form**         | v7              | Form state management                            |
+| **Zod**                     | v4              | Schema validation shared with server             |
+| **Axios**                   | v1              | HTTP client with Clerk JWT interceptor           |
+| **Clerk (Next.js SDK)**     | latest          | Authentication UI components + session           |
+| **Sonner**                  | latest          | Toast notifications                              |
+| **Lucide React**            | latest          | Icon library                                     |
+| **Leaflet + react-leaflet** | 1.9 / 2.x       | Interactive map for activity location view       |
+| **react-leaflet-cluster**   | latest          | Marker clustering for map view                   |
+| **@emoji-mart**             | latest          | Emoji picker for comment reactions               |
 
 ---
 
@@ -46,10 +49,10 @@
 
 | Technology                       | Role                                             |
 | -------------------------------- | ------------------------------------------------ |
-| **MongoDB Atlas** (M0 free tier) | Primary database 14 collections                  |
+| **MongoDB Atlas** (M0 free tier) | Primary database 16 collections                  |
 | **Mongoose**                     | Schema enforcement, query API, index definitions |
 
-**14 Collections:** `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`
+**16 Collections:** `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`, `notifications`, `polls`
 
 ---
 

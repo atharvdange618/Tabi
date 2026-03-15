@@ -26,22 +26,26 @@ Built for the ChaiCode Buildathon.
 - Auto-generate a day-wise timeline based on your trip dates
 - Add activity cards specifying type, time, location, estimated cost, and notes
 - Reorder activities within and across days using drag-and-drop
+- **Time Conflict Detection**: Server warns (non-blocking) when two activities overlap on the same day
+- **Map View**: Interactive Leaflet map geocoding all activity locations, with color-coded markers by type and marker clustering
 
 ### Collaboration
 
 - **Member Management**: Invite members via email, handling pending invites gracefully for unregistered users
 - **Role-Based Access**: Enforce permissions (Owner, Editor, Viewer) validated on the server, not just hidden in the UI
 - **Ownership Transfer**: Owners can transfer ownership to any member via an acceptance workflow - creates pending request, target receives notification to accept/decline
-- **Comments**: Comment on specific days or individual activities with threaded replies
+- **Comments**: Comment on specific days or individual activities with threaded replies and **emoji reactions**
+- **Polls**: Create multi-option group polls, vote in real-time, declare a winner and close the poll
 - **Real-Time Notifications**: Event-driven notification system with bell icon + unread badge, toast notifications, and 10-second polling
 - **Activity Tracking**: Get notified about ownership changes, new comments, expenses, member updates, and content modifications
 
 ### Organization
 
+- **Trip Overview**: Dashboard tab with stat cards, budget progress bar, upcoming reservations, checklist summary, active polls, and member roster
 - **Checklists**: Maintain multiple checklists per trip for packing, to-dos, and pre-departure tasks
 - **File Management**: Attach files like tickets and images, hosted securely via Cloudinary
 - **Reservations**: Enter manual reservations for flights, hotels, restaurants, and car rentals
-- **Budget Tracking**: Track expenses with automatic notifications to all trip members and view breakdowns by category
+- **Budget Tracking**: Track expenses (with optional file attachments) with automatic notifications to all trip members and view breakdowns by category
 - **Notification Center**: Centralized notification hub with unread badges, auto-expiring notifications (90 days), and event-driven updates
 
 ### Security
@@ -84,7 +88,7 @@ Built for the ChaiCode Buildathon.
 │                     MongoDB                         │
 │   trips · days · activities · comments              │
 │   checklists · files · reservations · expenses      │
-│   notifications · pending ownership transfers       │
+│   notifications · polls · pending ownership         │
 └─────────────────────────────────────────────────────┘
 
 External Services

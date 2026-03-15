@@ -234,8 +234,10 @@ These three state domains never overlap. This is enforced by convention, not by 
 components/
 ├── ui/              # shadcn base components (Button, Card, Input, etc.)
 ├── shared/          # App-wide reusable (Header, Sidebar, EmptyState, etc.)
-├── trips/           # Trip list, trip card, create trip form
-├── itinerary/       # Day card, activity card, drag-and-drop
+├── trips/
+│   ├── tabs/        # OverviewTab, PollsTab, and other trip tabs
+│   └── ...          # Trip list, trip card, create trip form
+├── itinerary/       # Day card, activity card, drag-and-drop, MapView, EmojiReactionPicker
 ├── members/         # Member list, invite form, role badge
 ├── budget/          # Expense table, budget chart, summary card
 ```
@@ -402,14 +404,14 @@ sequenceDiagram
 
 ### Event Types & Recipients
 
-| Event Type              | Triggered By        | Recipients                              |
-| ----------------------- | ------------------- | --------------------------------------- |
+| Event Type              | Triggered By              | Recipients                              |
+| ----------------------- | ------------------------- | --------------------------------------- |
 | `ownership_transferred` | acceptOwnershipTransfer() | Old owner, new owner, all other members |
-| `member_left`           | leaveTripSelf()     | All remaining trip members              |
-| `member_invited`        | inviteMember()      | All existing trip members               |
-| `comment_created`       | createComment()     | All trip members (configurable)         |
-| `expense_added`         | createExpense()     | All trip members except expense creator |
-| `role_changed`          | updateMemberRole()  | Target user + trip owner                |
+| `member_left`           | leaveTripSelf()           | All remaining trip members              |
+| `member_invited`        | inviteMember()            | All existing trip members               |
+| `comment_created`       | createComment()           | All trip members (configurable)         |
+| `expense_added`         | createExpense()           | All trip members except expense creator |
+| `role_changed`          | updateMemberRole()        | Target user + trip owner                |
 
 ### Design Decisions
 
@@ -427,7 +429,7 @@ The `shared/` directory contains TypeScript types and Zod schemas used by both c
 
 ```
 shared/
-├── types/index.ts        # All 13 collection interfaces + enums + API response types
+├── types/index.ts        # All 16 collection interfaces + enums + API response types
 ├── validations/index.ts  # All Zod schemas for create/update payloads
 └── index.ts              # Barrel export
 ```
@@ -438,3 +440,26 @@ shared/
 - **Client:** Direct filesystem import via TypeScript path alias configured in `tsconfig.json`.
 
 There's no npm publishing or package linking. Both the client and server reference `shared/` directly because they live in the same repository. This works because both use TypeScript and both build tools (Next.js and Bun) can resolve the imports.
+
+---
+
+## Activity Time Conflict Detection
+
+When saving an activity (create or update) that includes a `startTime`, the service layer runs a conflict check against all other activities in the same day. The algorithm:
+
+1. Parses 12-hour time strings (`h:mm AM/PM`) into total minutes from midnight
+2. Assumes a 60-minute duration if no `endTime` is provided
+3. Checks for overlap using `candStart < actEnd && actStart < candEnd`
+4. Skips the activity being updated (via `excludeId`) to avoid false self-conflict
+
+If a conflict is detected, **the activity is still saved** the operation is not blocked. The API response includes `warnings: ["time_conflict"]` instead. This non-blocking approach lets users schedule parallel activities (e.g., two people split up) while still surfacing the alert in the UI.
+
+## Map View
+
+The activity tab's map view is a client-side Leaflet map (`react-leaflet`) loaded lazily to avoid SSR hydration issues. Location strings from activities are geocoded via the Nominatim API (OpenStreetMap's free geocoding service). Results are cached in a module-level `Map` object to avoid re-fetching the same location during the same session. Markers are colored by activity type and clustered via `react-leaflet-cluster` to keep the map readable when many activities exist in one area.
+
+## Polls
+
+Polls are stored as their own collection with embedded options inside each poll document. Each option has a `votes` array of user IDs (string[]). This is an intentional embed-over-reference decision: votes are always read together with the poll and there's no need to query individual votes independently. The embedded structure means a single document read fetches everything needed to render the full poll UI, including vote percentages and the current user's vote.
+
+Poll status is either `open` or `closed`. Owners/editors can close a poll at any time, setting `status: "closed"` and `winningOptionId`. Once closed, the vote UI disables all option buttons.

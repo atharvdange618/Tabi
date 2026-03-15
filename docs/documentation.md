@@ -14,17 +14,31 @@ Tabi brings everything into one place the itinerary, the budget, the files, the 
 
 ## Core Features
 
+### Trip Overview
+
+A dashboard tab that surfaces the most important trip information in one glance. Displays stat cards for trip status (upcoming/ongoing/completed with days countdown), duration, member count, and budget usage percentage. A live budget progress bar changes color as spend approaches the limit (mint → amber → red). Below the stat cards: upcoming reservations (next 3), checklist pending item count, active poll previews, and the full member roster with role badges.
+
 ### Itinerary Planning
 
 Day-by-day planning with drag-and-drop reordering. When a trip is created with a date range, the server auto-generates Day documents for every date in the range so the skeleton exists immediately. Activities are added per day with time, duration, notes, and category.
+
+**Time Conflict Detection**: When an activity is created or updated with a `startTime`, the server checks for overlapping time ranges against other activities on the same day. If there's an overlap, the API returns the saved activity plus a `warnings: ["time_conflict"]` array so the client can surface an alert to the user without blocking the save.
+
+**Map View**: The itinerary tab includes an interactive map (Leaflet + OpenStreetMap) that geocodes activity locations via the Nominatim API and plots color-coded markers by activity type. Markers cluster at lower zoom levels. Clicking a marker opens a popup with the activity title, type, location, and start time.
 
 ### Real-time Collaboration
 
 Multiple members can plan together. Changes reflect across all connected members. Role-based access controls who can edit vs. who can only view.
 
+**Comments with Emoji Reactions**: Members can comment on specific days or individual activities. Comments support emoji reactions any member can react with an emoji, and reaction counts are shown inline.
+
+### Polls
+
+A dedicated tab for group decision-making. Editors and owners can create polls with a question and 2–10 options. Members vote by clicking an option the bar fills proportionally to show live vote percentages. Owners/editors can close a poll and declare a winner (automatically set to the leading option, which is overridable). Closed polls are preserved and displayed separately with the winning option marked by a trophy icon.
+
 ### Budget Tracking
 
-A dedicated budget tab with expense logging, per-category breakdown, and a visual spending summary. Each expense records who paid, the amount, the category, and can optionally be linked to a specific activity. The system tracks total planned budget vs. actual spend.
+A dedicated budget tab with expense logging, per-category breakdown, and a visual spending summary. Each expense records who paid, the amount, the category, and can optionally be linked to a specific activity or an uploaded file for documentation. The system tracks total planned budget vs. actual spend.
 
 ### File Management
 
@@ -100,7 +114,7 @@ The `requireMembership` middleware returns **403** when a user isn't a member of
 
 ## Database Design
 
-15 collections: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`, `notifications`.
+16 collections: `users`, `trips`, `trip_members`, `pending_invites`, `days`, `activities`, `comments`, `checklists`, `checklist_items`, `files`, `reservations`, `budget_settings`, `expenses`, `settlements`, `notifications`, `polls`.
 
 The most queried collection is `trip_members` every single authenticated request to a trip resource hits this collection first to verify membership. The compound index `{ tripId: 1, userId: 1 }` serves both the uniqueness constraint and the permission check in a single lookup.
 
