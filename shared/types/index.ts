@@ -110,6 +110,7 @@ export interface Trip {
   travelerCount?: number;
   coverImageUrl?: string;
   isPublic?: boolean;
+  tags?: string[];
   createdBy: string;
   role?: string;
   createdAt: string;
@@ -449,6 +450,7 @@ export interface PublicTrip {
   startDate: string;
   endDate: string;
   coverImageUrl?: string;
+  tags?: string[];
   members: { initials: string }[];
   days: PublicDay[];
   activities: PublicActivity[];

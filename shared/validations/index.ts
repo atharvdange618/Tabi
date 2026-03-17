@@ -49,6 +49,10 @@ export const tripBaseSchema = z.object({
   coverImageUrl: z.string().url().optional(),
   isPublic: z.boolean().optional(),
   initialBudget: z.number().nonnegative().optional(),
+  tags: z
+    .array(z.string().min(1).max(20))
+    .max(10, "Maximum 10 tags allowed")
+    .optional(),
 });
 
 export const createTripSchema = tripBaseSchema.refine(
