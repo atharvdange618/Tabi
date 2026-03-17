@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
@@ -138,5 +143,64 @@ export function useUploadTripCoverImage(id: string) {
     onError: () => {
       toast.error("Failed to upload cover image.");
     },
+  });
+}
+
+export interface DiscoverTrip {
+  _id: string;
+  title: string;
+  description?: string;
+  destination?: string;
+  startDate: string;
+  endDate: string;
+  coverImageUrl?: string;
+  tags?: string[];
+  memberCount: number;
+  createdAt: string;
+}
+
+interface DiscoverTripsResponse {
+  trips: DiscoverTrip[];
+  total: number;
+  hasMore: boolean;
+}
+
+interface DiscoverFilters {
+  search?: string;
+  destination?: string;
+  tags?: string[];
+  minDuration?: number;
+  maxDuration?: number;
+}
+
+export function useDiscoverTrips(filters: DiscoverFilters) {
+  return useInfiniteQuery({
+    queryKey: ["trips", "discover", filters],
+    queryFn: async ({ pageParam = 0 }) => {
+      const params = new URLSearchParams();
+      params.set("limit", "20");
+      params.set("skip", String(pageParam));
+
+      if (filters.search) params.set("search", filters.search);
+      if (filters.destination) params.set("destination", filters.destination);
+      if (filters.tags?.length) params.set("tags", filters.tags.join(","));
+      if (filters.minDuration !== undefined)
+        params.set("minDuration", String(filters.minDuration));
+      if (filters.maxDuration !== undefined)
+        params.set("maxDuration", String(filters.maxDuration));
+
+      const { data } = await api.get<ApiResponse<DiscoverTripsResponse>>(
+        `/api/v1/trips/discover?${params.toString()}`,
+      );
+      return data.data;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) return undefined;
+      return allPages.reduce((acc, page) => acc + page.trips.length, 0);
+    },
+    initialPageParam: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    staleTime: 5 * 60 * 1000,
   });
 }
