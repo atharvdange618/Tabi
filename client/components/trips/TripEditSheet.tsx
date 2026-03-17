@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, ImageIcon, Loader2, Pencil } from "lucide-react";
+import { CalendarIcon, ImageIcon, Loader2, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   useTrip,
@@ -90,6 +90,8 @@ function TripEditForm({
   const [endDate, setEndDate] = useState<Date | undefined>(
     trip.endDate ? new Date(trip.endDate) : undefined,
   );
+  const [tags, setTags] = useState<string[]>(trip.tags ?? []);
+  const [tagInput, setTagInput] = useState("");
 
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -109,6 +111,8 @@ function TripEditForm({
       dirty.startDate = startDate.toISOString();
     if (endDate && endDate.toISOString() !== trip.endDate)
       dirty.endDate = endDate.toISOString();
+    if (JSON.stringify(tags) !== JSON.stringify(trip.tags ?? []))
+      dirty.tags = tags;
 
     if (Object.keys(dirty).length === 0) {
       onClose();
@@ -308,6 +312,69 @@ function TripEditForm({
               />
             </PopoverContent>
           </Popover>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-sm font-bold font-display uppercase tracking-wide">
+          Tags
+        </Label>
+        <div className="space-y-2">
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {tags.map((tag, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => {
+                    setTags(tags.filter((_, i) => i !== index));
+                  }}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-brand-blue text-white border-2 border-[#1A1A1A] hover:bg-opacity-90 transition-colors"
+                >
+                  {tag}
+                  <X size={12} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={tagInput}
+              onChange={(e) =>
+                setTagInput(e.target.value.toLowerCase().slice(0, 20))
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const trimmed = tagInput.trim();
+                  if (trimmed && tags.length < 10 && !tags.includes(trimmed)) {
+                    setTags([...tags, trimmed]);
+                    setTagInput("");
+                  }
+                }
+              }}
+              placeholder="Add a tag (e.g. beach, adventure)..."
+              className="border-2 border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] rounded-lg focus-visible:ring-0 focus-visible:shadow-[3px_3px_0px_#1A1A1A] flex-1"
+            />
+            <Button
+              type="button"
+              onClick={() => {
+                const trimmed = tagInput.trim();
+                if (trimmed && tags.length < 10 && !tags.includes(trimmed)) {
+                  setTags([...tags, trimmed]);
+                  setTagInput("");
+                }
+              }}
+              className="bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-bold border-2 border-[#1A1A1A]"
+            >
+              Add
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Add up to 10 tags to help others discover your trip
+          </p>
         </div>
       </div>
 

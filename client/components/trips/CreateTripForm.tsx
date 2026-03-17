@@ -2,7 +2,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createTripSchema, tripBaseSchema, type CreateTripPayload } from "shared/validations";
+import {
+  createTripSchema,
+  tripBaseSchema,
+  type CreateTripPayload,
+} from "shared/validations";
 import { z } from "zod";
 import { useCreateTrip } from "../../hooks/useTrips";
 import { Calendar } from "@/components/ui/calendar";
@@ -24,12 +28,14 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format, startOfDay } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
+import { useState } from "react";
 
 export default function CreateTripForm({
   onSuccess,
 }: { onSuccess?: () => void } = {}) {
   const createTrip = useCreateTrip();
+  const [tagInput, setTagInput] = useState("");
 
   const form = useForm<z.infer<typeof tripBaseSchema>>({
     resolver: zodResolver(createTripSchema),
@@ -38,6 +44,7 @@ export default function CreateTripForm({
       description: "",
       destination: "",
       travelerCount: 1,
+      tags: [],
     },
   });
 
@@ -108,6 +115,88 @@ export default function CreateTripForm({
                   className="brutal-input resize-none"
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="tags"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-semibold font-display">
+                Tags
+              </FormLabel>
+              <div className="space-y-2">
+                {field.value && field.value.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {field.value.map((tag, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          const newTags = field.value?.filter(
+                            (_, i) => i !== index,
+                          );
+                          field.onChange(newTags);
+                        }}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-brand-blue text-white border-2 border-[#1A1A1A] hover:bg-opacity-90 transition-colors"
+                      >
+                        {tag}
+                        <X size={12} />
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) =>
+                      setTagInput(e.target.value.toLowerCase().slice(0, 20))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const trimmed = tagInput.trim();
+                        if (
+                          trimmed &&
+                          (!field.value || field.value.length < 10) &&
+                          !field.value?.includes(trimmed)
+                        ) {
+                          field.onChange([...(field.value || []), trimmed]);
+                          setTagInput("");
+                        }
+                      }
+                    }}
+                    placeholder="Add a tag (e.g. beach, adventure)..."
+                    className="brutal-input flex-1"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const trimmed = tagInput.trim();
+                      if (
+                        trimmed &&
+                        (!field.value || field.value.length < 10) &&
+                        !field.value?.includes(trimmed)
+                      ) {
+                        field.onChange([...(field.value || []), trimmed]);
+                        setTagInput("");
+                      }
+                    }}
+                    className="bg-[#1A1A1A] hover:bg-[#2A2A2A] text-white font-bold border-2 border-[#1A1A1A]"
+                  >
+                    Add
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Add up to 10 tags to help others discover your trip (max 20
+                  characters each)
+                </p>
+              </div>
               <FormMessage />
             </FormItem>
           )}
