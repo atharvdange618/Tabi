@@ -17,6 +17,7 @@ import {
   LogOut,
   MapPin,
   Vibrate,
+  Compass,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,7 @@ interface NormalizedTrip {
   accentColor: string;
   members: Array<{ initials: string; bg: string }>;
   isPublic: boolean;
+  tags?: string[];
 }
 
 function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
@@ -95,6 +97,7 @@ function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
       bg: MEMBER_COLORS[i % MEMBER_COLORS.length],
     })),
     isPublic: trip.isPublic ?? false,
+    tags: trip.tags,
   };
 }
 
@@ -169,18 +172,20 @@ function TripCard({
   const overflow = trip.members.length - 3;
 
   return (
-    <Link href={`/trips/${trip.id}`} className="block group">
+    <Link href={`/trips/${trip.id}`} className="block group h-full">
       <div
         className={cn(
           "bg-white rounded-xl border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A]",
-          "transition-all duration-150 ease-out",
+          "transition-all duration-150 ease-out h-full flex flex-col",
           "group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0px_#1A1A1A]",
           trip.status === "completed" && "opacity-70",
         )}
       >
-        <div className={cn("h-2 rounded-t-[10px]", trip.accentColor)} />
+        <div
+          className={cn("h-2 rounded-t-[10px] shrink-0", trip.accentColor)}
+        />
 
-        <div className="p-5">
+        <div className="p-5 flex flex-col flex-1">
           <div className="flex items-start justify-between gap-2 mb-3">
             <div className="flex-1 min-w-0">
               <h3 className="font-display font-bold text-[17px] text-[#111] leading-snug truncate">
@@ -275,6 +280,26 @@ function TripCard({
               {trip.daysCount}d
             </span>
           </div>
+
+          <div className="flex-1" />
+
+          {trip.tags && trip.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3">
+              {trip.tags.slice(0, 3).map((tag, i) => (
+                <span
+                  key={i}
+                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-100 border border-zinc-300 text-zinc-700 uppercase"
+                >
+                  {tag}
+                </span>
+              ))}
+              {trip.tags.length > 3 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-zinc-100 border border-zinc-300 text-zinc-700 uppercase">
+                  +{trip.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -423,6 +448,13 @@ export default function DashboardPage() {
         </Link>
 
         <div className="flex items-center gap-1.5">
+          <Link
+            href="/discover"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-[#6B7280] hover:text-[#111] hover:bg-zinc-100 transition-colors"
+          >
+            <Compass size={15} />
+            Discover
+          </Link>
           <NotificationCenter />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

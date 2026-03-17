@@ -14,6 +14,12 @@ export function HomeNav() {
 
       <div className="flex items-center gap-2">
         <Link
+          href="/discover"
+          className="hover:bg-[#f5f5f5] px-4 py-2 font-bold text-foreground no-underline text-sm font-display rounded-md transition-colors duration-150"
+        >
+          Discover
+        </Link>
+        <Link
           href="/sign-in"
           className="hover:bg-[#f5f5f5] px-4 py-2 font-bold text-foreground no-underline text-sm font-display rounded-md transition-colors duration-150"
         >
