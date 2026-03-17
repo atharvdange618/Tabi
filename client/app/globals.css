@@ -238,6 +238,32 @@
         opacity: 0.4;
       }
     }
+    @keyframes bell-ring {
+      0%,
+      55%,
+      100% {
+        transform: rotate(0deg);
+      }
+      5% {
+        transform: rotate(18deg);
+      }
+      15% {
+        transform: rotate(-14deg);
+      }
+      25% {
+        transform: rotate(10deg);
+      }
+      35% {
+        transform: rotate(-6deg);
+      }
+      45% {
+        transform: rotate(3deg);
+      }
+    }
+    .bell-ring {
+      animation: bell-ring 3s ease-in-out 1s infinite;
+      transform-origin: top center;
+    }
 
     .anim-1 {
       animation: fadeUp 0.5s ease-out 0.1s both;

@@ -76,10 +76,10 @@ export function NotificationCenter() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative hover:bg-gray-100 transition-colors"
+          className="relative hover:bg-brand-lemon hover:border-[#1A1A1A] border-2 border-transparent hover:shadow-[3px_3px_0px_#1A1A1A] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all duration-150"
           aria-label={`Notifications${displayCount > 0 ? ` (${displayCount} unread)` : ""}`}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className={cn("h-5 w-5", displayCount > 0 && "bell-ring")} />
           {displayCount > 0 && (
             <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center rounded-full bg-red-500 border-2 border-white text-white text-[11px] font-bold px-1.5 shadow-sm">
               {displayCount > 99 ? "99+" : displayCount}
