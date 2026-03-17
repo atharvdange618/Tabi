@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 import api from "../lib/axios";
 import { queryKeys } from "../lib/queryKeys";
 import type { PopulatedNotification, ApiResponse } from "shared/types";
@@ -13,6 +14,8 @@ interface NotificationFilters {
 }
 
 export function useNotifications(filters?: NotificationFilters) {
+  const { isSignedIn } = useAuth();
+
   return useQuery({
     queryKey: queryKeys.notifications(filters),
     queryFn: async () => {
@@ -36,10 +39,12 @@ export function useNotifications(filters?: NotificationFilters) {
       return data.data;
     },
     refetchInterval: 10_000,
+    enabled: isSignedIn === true,
   });
 }
 
 export function useUnreadCount() {
+  const { isSignedIn } = useAuth();
   const { setUnreadCount } = useNotificationStore();
 
   return useQuery({
@@ -53,6 +58,7 @@ export function useUnreadCount() {
       return count;
     },
     refetchInterval: 10_000,
+    enabled: isSignedIn === true,
   });
 }
 
