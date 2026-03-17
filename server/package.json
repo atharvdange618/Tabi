@@ -8,7 +8,8 @@
     "start": "bun run index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "logs": "bun scripts/analyze-logs.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
