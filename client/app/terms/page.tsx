@@ -11,7 +11,7 @@ import {
 import { HomeFooter } from "@/components/home/HomeFooter";
 
 export const metadata = {
-  title: "Terms of Service · Tabi",
+  title: "Terms of Service  ",
   description:
     "The rules of the road for using Tabi. Written like a human, not a legal department.",
 };

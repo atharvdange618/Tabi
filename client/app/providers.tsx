@@ -34,6 +34,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         {children}
         <Toaster
           position="top-right"
+          closeButton
           toastOptions={{
             style: {
               border: "2px solid #1A1A1A",

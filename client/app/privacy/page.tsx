@@ -11,7 +11,7 @@ import {
 import { HomeFooter } from "@/components/home/HomeFooter";
 
 export const metadata = {
-  title: "Privacy Policy · Tabi",
+  title: "Privacy Policy  ",
   description:
     "How Tabi handles your data. Short version: we collect what we need, we don't sell it, and you're in control.",
 };
