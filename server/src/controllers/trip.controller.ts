@@ -104,3 +104,40 @@ export async function uploadCoverImage(
   );
   res.json({ data: trip });
 }
+
+/**
+ * GET /api/v1/trips/discover
+ * Get public trips for discovery with filtering and pagination.
+ */
+export async function getDiscoverTrips(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { limit, skip, search, destination, tags, minDuration, maxDuration } =
+    req.query;
+
+  const parsedLimit = limit ? parseInt(limit as string, 10) : 20;
+  const parsedSkip = skip ? parseInt(skip as string, 10) : 0;
+  const parsedMinDuration = minDuration
+    ? parseInt(minDuration as string, 10)
+    : undefined;
+  const parsedMaxDuration = maxDuration
+    ? parseInt(maxDuration as string, 10)
+    : undefined;
+  const parsedTags =
+    tags && typeof tags === "string" && tags.trim()
+      ? tags.split(",").map((t) => t.trim())
+      : undefined;
+
+  const result = await tripService.getPublicTripsForDiscover({
+    limit: parsedLimit,
+    skip: parsedSkip,
+    search: search as string | undefined,
+    destination: destination as string | undefined,
+    tags: parsedTags,
+    minDuration: parsedMinDuration,
+    maxDuration: parsedMaxDuration,
+  });
+
+  res.json({ data: result });
+}

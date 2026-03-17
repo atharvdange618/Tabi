@@ -72,6 +72,7 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
             travelerCount: payload.travelerCount ?? 1,
             coverImageUrl: payload.coverImageUrl ?? "",
             isPublic: payload.isPublic ?? false,
+            tags: payload.tags ?? [],
             createdBy: new mongoose.Types.ObjectId(userId),
           },
         ],
@@ -335,6 +336,9 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
   if (payload.isPublic !== undefined) {
     updates.isPublic = payload.isPublic;
   }
+  if (payload.tags !== undefined) {
+    updates.tags = payload.tags;
+  }
 
   const oldStartDate = trip.startDate as Date;
   const oldEndDate = trip.endDate as Date;
@@ -538,4 +542,132 @@ export async function uploadCoverImage(
   trip.coverImageUrl = result.secure_url;
   await trip.save();
   return trip;
+}
+
+/**
+ * Get public trips for the discover page with filtering, search, and pagination
+ */
+export async function getPublicTripsForDiscover(options: {
+  limit?: number;
+  skip?: number;
+  search?: string;
+  destination?: string;
+  tags?: string[];
+  minDuration?: number;
+  maxDuration?: number;
+}) {
+  const {
+    limit = 20,
+    skip = 0,
+    search,
+    destination,
+    tags,
+    minDuration,
+    maxDuration,
+  } = options;
+
+  const cappedLimit = Math.min(limit, 50);
+
+  const query: Record<string, unknown> = { isPublic: true };
+
+  if (search?.trim()) {
+    const searchRegex = new RegExp(search.trim(), "i");
+    query.$or = [{ title: searchRegex }, { destination: searchRegex }];
+  }
+
+  if (destination?.trim()) {
+    const destRegex = new RegExp(destination.trim(), "i");
+    query.destination = destRegex;
+  }
+
+  if (tags && tags.length > 0) {
+    query.tags = { $in: tags };
+  }
+
+  if (minDuration !== undefined || maxDuration !== undefined) {
+    const durationConditions: unknown[] = [];
+
+    if (minDuration !== undefined && minDuration > 0) {
+      durationConditions.push({
+        $gte: [
+          {
+            $divide: [
+              { $subtract: ["$endDate", "$startDate"] },
+              1000 * 60 * 60 * 24,
+            ],
+          },
+          minDuration,
+        ],
+      });
+    }
+
+    if (maxDuration !== undefined && maxDuration > 0) {
+      durationConditions.push({
+        $lte: [
+          {
+            $divide: [
+              { $subtract: ["$endDate", "$startDate"] },
+              1000 * 60 * 60 * 24,
+            ],
+          },
+          maxDuration,
+        ],
+      });
+    }
+
+    if (durationConditions.length > 0) {
+      query.$expr = { $and: durationConditions };
+    }
+  }
+
+  const [trips, total] = await Promise.all([
+    Trip.find(query)
+      .select(
+        "title description destination startDate endDate coverImageUrl tags createdAt",
+      )
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(cappedLimit)
+      .lean(),
+    Trip.countDocuments(query),
+  ]);
+
+  const tripIds = trips.map((trip) => trip._id);
+  const memberCounts = await TripMember.aggregate([
+    {
+      $match: {
+        tripId: { $in: tripIds },
+        status: TripMemberStatus.ACTIVE,
+      },
+    },
+    {
+      $group: {
+        _id: "$tripId",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const memberCountMap = new Map(
+    memberCounts.map((mc) => [mc._id.toString(), mc.count as number]),
+  );
+
+  const formattedTrips = trips.map((trip) => ({
+    _id: trip._id.toString(),
+    title: trip.title,
+    description: trip.description,
+    destination: trip.destination,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    coverImageUrl: trip.coverImageUrl,
+    tags: trip.tags,
+    memberCount: memberCountMap.get(trip._id.toString()) ?? 0,
+    createdAt: trip.createdAt,
+  }));
+
+  return {
+    trips: formattedTrips,
+    total,
+    hasMore: skip + trips.length < total,
+  };
 }

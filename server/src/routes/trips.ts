@@ -14,6 +14,9 @@ const router = Router();
 
 const auth = [requireAuthentication, resolveDbUser] as const;
 
+// GET /api/v1/trips/discover - discover public trips with filtering
+router.get("/discover", tripController.getDiscoverTrips);
+
 // GET /api/v1/trips/public/:id - fetch a public trip
 router.get("/public/:id", tripController.getPublicTripById);
 
