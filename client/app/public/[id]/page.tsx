@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { PublicTrip } from "shared/types";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ArrowRight,
   Calendar,
   CheckCircle2,
   Clock,
@@ -25,6 +25,8 @@ import {
   MEMBER_COLORS,
 } from "@/lib/helpers";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { PublicTripNav } from "@/components/shared/PublicTripNav";
+import { PublicTripCTA } from "@/components/shared/PublicTripCTA";
 import {
   generateOGImageUrl,
   createCanonicalUrl,
@@ -245,29 +247,19 @@ export default async function PublicTripPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <nav className="sticky top-0 z-50 h-14 bg-white border-b-2 border-[#1A1A1A] flex items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 bg-brand-blue border-2 border-[#1A1A1A] shadow-[2px_2px_0px_#1A1A1A] rounded-md flex items-center justify-center font-kanji text-sm group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[4px_4px_0px_#1A1A1A] transition-all duration-150">
-            旅
-          </div>
-          <span className="font-display font-black text-base tracking-tight">
-            tabi
-          </span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 bg-brand-cream border border-[#e5e7eb] rounded-full px-3 py-1.5">
-            <Globe size={11} className="text-[#6B7280]" />
-            <span className="text-[11px] font-semibold text-[#6B7280]">
-              Public itinerary
-            </span>
-          </div>
-          <Link href="/sign-up">
-            <Button className="bg-brand-blue text-[#111] border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-brand-blue transition-all duration-150 h-8 px-4 rounded-lg text-xs">
-              Plan your own trip
-            </Button>
-          </Link>
+      <PublicTripNav />
+
+      {trip.coverImageUrl && (
+        <div className="relative w-full h-64 sm:h-87.5 border-b-2 border-[#1A1A1A]">
+          <Image
+            src={trip.coverImageUrl}
+            alt={trip.title}
+            fill
+            className="object-cover"
+            priority
+          />
         </div>
-      </nav>
+      )}
 
       <div className="bg-white border-b-2 border-[#1A1A1A]">
         <div className="max-w-4xl mx-auto px-6 py-12">
@@ -287,7 +279,7 @@ export default async function PublicTripPage({
                   {trip.description}
                 </p>
               )}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-4">
                 {trip.destination && (
                   <span className="flex items-center gap-1.5 bg-brand-cream border-2 border-[#1A1A1A] px-3 py-1.5 rounded-full text-sm font-semibold">
                     <MapPin size={13} />
@@ -303,6 +295,18 @@ export default async function PublicTripPage({
                   {trip.days.length} days
                 </span>
               </div>
+              {trip.tags && trip.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {trip.tags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-bold bg-zinc-100 border border-zinc-300 text-zinc-700 uppercase"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="bg-brand-blue border-2 border-[#1A1A1A] shadow-[6px_6px_0px_#1A1A1A] rounded-2xl p-5 min-w-50">
@@ -529,33 +533,7 @@ export default async function PublicTripPage({
         </div>
       </div>
 
-      <div className="border-t-2 border-[#1A1A1A] bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-12 text-center">
-          <div className="font-kanji text-4xl mb-4">旅</div>
-          <h2 className="font-display font-black text-3xl uppercase tracking-tight mb-3">
-            Planning a trip?
-          </h2>
-          <p className="text-[#6B7280] font-medium text-base mb-8 max-w-md mx-auto">
-            Build your own itinerary with Tabi. Invite your crew, split
-            expenses, and plan together in real time for free.
-          </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/sign-up">
-              <Button className="bg-brand-blue text-[#111] border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1A1A1A] hover:bg-brand-blue active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#1A1A1A] transition-all duration-150 h-auto px-6 py-3 rounded-lg gap-2">
-                Start planning for free <ArrowRight size={16} />
-              </Button>
-            </Link>
-            <Link href="/">
-              <Button
-                variant="outline"
-                className="border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] font-bold hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1A1A1A] transition-all duration-150 h-auto px-6 py-3 rounded-lg"
-              >
-                Learn more
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PublicTripCTA />
 
       <HomeFooter />
     </div>
