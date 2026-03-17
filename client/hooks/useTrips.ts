@@ -196,7 +196,7 @@ export function useDiscoverTrips(filters: DiscoverFilters) {
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage?.hasMore) return undefined;
-      return allPages.reduce((acc, page) => acc + page.trips.length, 0);
+      return allPages.reduce((acc, page) => acc + (page?.trips?.length ?? 0), 0);
     },
     initialPageParam: 0,
     refetchOnWindowFocus: false,

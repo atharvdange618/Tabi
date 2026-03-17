@@ -99,7 +99,7 @@ export default function DiscoverPage() {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
     useDiscoverTrips(filters);
 
-  const trips = data?.pages.flatMap((page) => page.trips) || [];
+  const trips = data?.pages.flatMap((page) => page?.trips ?? []) ?? [];
   const isEmpty = !isLoading && trips.length === 0;
 
   const { ref: inViewRef, inView } = useInView({
