@@ -223,7 +223,7 @@ export function BudgetTab({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 border border-transparent hover:border-red-300 rounded transition-all"
+                  className="size-9 -my-1.5 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 border border-transparent hover:border-red-300 rounded transition-all"
                   onClick={() => deleteExpense.mutate(exp._id)}
                   disabled={
                     deleteExpense.isPending &&

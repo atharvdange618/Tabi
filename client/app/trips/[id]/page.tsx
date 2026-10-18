@@ -309,8 +309,8 @@ export default function TripPage() {
               value={activeTab}
               onValueChange={(t) => setActiveTab(tripId, t as TabValue)}
             >
-              <div className="overflow-x-auto pb-1 mb-6">
-                <TabsList className="bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-1 h-auto gap-1 w-max">
+              <div className="md:overflow-x-auto pb-1 mb-6">
+                <TabsList className="bg-white border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-1 h-auto group-data-[orientation=horizontal]/tabs:h-auto gap-1 w-full flex-wrap md:w-max md:flex-nowrap">
                   {TAB_CONFIG.map(({ value, label, Icon }) => (
                     <TabsTrigger
                       key={value}

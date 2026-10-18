@@ -97,7 +97,7 @@ function ChecklistCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 border border-transparent hover:border-[#1A1A1A] rounded"
+                    className="size-9 -my-1.5 border border-transparent hover:border-[#1A1A1A] rounded"
                   >
                     <MoreHorizontal size={13} />
                   </Button>

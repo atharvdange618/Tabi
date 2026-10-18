@@ -74,8 +74,9 @@ function PollCard({
         {canEdit && (
           <button
             onClick={() => onDelete(poll._id)}
-            className="shrink-0 p-1.5 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors text-[#9CA3AF]"
+            className="shrink-0 size-9 -my-1.5 -mr-1.5 flex items-center justify-center rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors text-[#9CA3AF]"
             title="Delete poll"
+            aria-label="Delete poll"
           >
             <Trash2 size={14} />
           </button>
