@@ -201,6 +201,8 @@ docker compose up --watch
 
 Compose runs a local MongoDB as a single-node replica set (the server uses transactions) and points `MONGODB_URI` at it, so you don't need Atlas. Edits on your machine sync into the containers and reload. Changes to a `package.json` or `pnpm-lock.yaml` rebuild the image. To connect a GUI such as Compass, use `mongodb://localhost:27017/tabi?directConnection=true`.
 
+Compose reads `server/.env` and `client/.env.local` only when it creates a container. After you edit either file, run `docker compose up -d --force-recreate`. A plain `docker compose restart` keeps the old values.
+
 ### 4. Configure Clerk webhook
 
 To sync Clerk user data into your MongoDB `users` collection, add a webhook in your Clerk Dashboard pointing to:
