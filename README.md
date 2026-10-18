@@ -234,7 +234,7 @@ The platform assigns roles to participants to protect shared content. These limi
 | Auth     | Clerk         |
 | Media    | Cloudinary    |
 
-**Live Platform:** [tabi.atharvdangedev.in](https://tabi.atharvdangedev.in)
+**Live Platform:** [tabi.atharvdange.com](https://tabi.atharvdange.com)
 
 ---
 
