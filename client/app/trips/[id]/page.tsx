@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
@@ -70,7 +70,14 @@ export default function TripPage() {
 
   const { getActiveTab, setActiveTab } = useTripStore();
   const activeTab = getActiveTab(tripId);
-  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  // Dashboard card menu deep-links here with ?action=edit
+  const router = useRouter();
+  const action = useSearchParams().get("action");
+  const [editSheetOpen, setEditSheetOpen] = useState(action === "edit");
+
+  useEffect(() => {
+    if (action) router.replace(`/trips/${tripId}`, { scroll: false });
+  }, [action, router, tripId]);
 
   const displayRole = mapRole(trip?.role ?? "viewer");
   const canEdit = displayRole !== "viewer";
@@ -367,7 +374,7 @@ export default function TripPage() {
 
         <TripEditSheet
           tripId={tripId}
-          open={editSheetOpen}
+          open={editSheetOpen && canEdit}
           onOpenChange={setEditSheetOpen}
         />
       </div>

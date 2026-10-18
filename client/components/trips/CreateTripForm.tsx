@@ -320,9 +320,16 @@ export default function CreateTripForm({
                     min="1"
                     placeholder="e.g. 4"
                     className="brutal-input w-full"
+                    value={field.value ?? ""}
                     onChange={(e) =>
-                      field.onChange(parseInt(e.target.value) || 1)
+                      field.onChange(
+                        e.target.value ? parseInt(e.target.value) : undefined,
+                      )
                     }
+                    onBlur={() => {
+                      if (!field.value || field.value < 1) field.onChange(1);
+                      field.onBlur();
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

@@ -225,6 +225,11 @@ export function BudgetTab({
                   size="icon"
                   className="h-6 w-6 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 border border-transparent hover:border-red-300 rounded transition-all"
                   onClick={() => deleteExpense.mutate(exp._id)}
+                  disabled={
+                    deleteExpense.isPending &&
+                    deleteExpense.variables === exp._id
+                  }
+                  aria-label={`Delete ${exp.description}`}
                 >
                   <Trash2 size={11} className="text-red-500" />
                 </Button>

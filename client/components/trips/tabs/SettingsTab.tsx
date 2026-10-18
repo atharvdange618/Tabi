@@ -55,7 +55,7 @@ export function SettingsTab({
   }
 
   function handleDeleteTrip() {
-    if (deleteConfirm !== tripTitle) return;
+    if (deleteConfirm.trim() !== tripTitle.trim()) return;
     deleteTrip.mutate(tripId);
   }
 
@@ -214,7 +214,7 @@ export function SettingsTab({
               Cancel
             </Button>
             <Button
-              disabled={deleteConfirm !== tripTitle || deleteTrip.isPending}
+              disabled={deleteConfirm.trim() !== tripTitle.trim() || deleteTrip.isPending}
               onClick={handleDeleteTrip}
               className="bg-red-500 text-white border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold rounded-lg hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-red-500 transition-all duration-150"
             >

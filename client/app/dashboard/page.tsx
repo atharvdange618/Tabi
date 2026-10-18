@@ -49,6 +49,7 @@ import {
 import { HomeFooter } from "@/components/home/HomeFooter";
 import CreateTripForm from "@/components/trips/CreateTripForm";
 import { NotificationCenter } from "@/components/shared/NotificationCenter";
+import { useTripStore } from "@/store/tripStore";
 
 type TripStatus = "upcoming" | "planning" | "completed";
 
@@ -77,6 +78,7 @@ interface NormalizedTrip {
   members: Array<{ initials: string; bg: string }>;
   isPublic: boolean;
   tags?: string[];
+  role: string;
 }
 
 function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
@@ -98,6 +100,7 @@ function normalizeTrip(trip: DashboardTrip, index: number): NormalizedTrip {
     })),
     isPublic: trip.isPublic ?? false,
     tags: trip.tags,
+    role: trip.role ?? "viewer",
   };
 }
 
@@ -164,9 +167,11 @@ function TripCard({
   onDelete,
 }: {
   trip: NormalizedTrip;
-  onDelete: (id: string) => void;
+  onDelete: (trip: NormalizedTrip) => void;
 }) {
   const router = useRouter();
+  const setActiveTab = useTripStore((s) => s.setActiveTab);
+  const isOwner = trip.role === "owner";
   const status = statusConfig[trip.status];
   const visibleMembers = trip.members.slice(0, 3);
   const overflow = trip.members.length - 3;
@@ -222,24 +227,29 @@ function TripCard({
                   align="end"
                   className="w-44 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl"
                 >
-                  <DropdownMenuItem
-                    className="font-medium text-sm cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/trips/${trip.id}`);
-                    }}
-                  >
-                    Edit trip
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="font-medium text-sm cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push(`/trips/${trip.id}`);
-                    }}
-                  >
-                    Invite members
-                  </DropdownMenuItem>
+                  {trip.role !== "viewer" && (
+                    <DropdownMenuItem
+                      className="font-medium text-sm cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(`/trips/${trip.id}?action=edit`);
+                      }}
+                    >
+                      Edit trip
+                    </DropdownMenuItem>
+                  )}
+                  {isOwner && (
+                    <DropdownMenuItem
+                      className="font-medium text-sm cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveTab(trip.id, "members");
+                        router.push(`/trips/${trip.id}`);
+                      }}
+                    >
+                      Invite members
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     className="font-medium text-sm cursor-pointer"
                     onClick={(e) => {
@@ -256,16 +266,20 @@ function TripCard({
                   >
                     Share public link
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="font-medium text-sm text-red-600 cursor-pointer"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onDelete(trip.id);
-                    }}
-                  >
-                    Delete trip
-                  </DropdownMenuItem>
+                  {isOwner && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="font-medium text-sm text-red-600 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(trip);
+                        }}
+                      >
+                        Delete trip
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -408,6 +422,9 @@ function getGreeting() {
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filterOptions)[number]>("all");
+  const [deleteTarget, setDeleteTarget] = useState<NormalizedTrip | null>(
+    null,
+  );
 
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -597,12 +614,51 @@ export default function DashboardPage() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onDelete={(id) => deleteTrip.mutate(id)}
+                onDelete={setDeleteTarget}
               />
             ))
           )}
         </div>
       </div>
+
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <DialogContent className="border-2 border-[#1A1A1A] shadow-[8px_8px_0px_#1A1A1A] rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display font-black text-xl uppercase">
+              Delete {deleteTarget?.name}?
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-[#6B7280]">
+            This removes the itinerary, budget, files and polls for every
+            member. You can&apos;t undo it.
+          </p>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="outline"
+              className="flex-1 border-2 border-[#1A1A1A] rounded-lg font-bold"
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={deleteTrip.isPending}
+              className="flex-1 bg-red-500 text-white border-2 border-[#1A1A1A] shadow-[3px_3px_0px_#1A1A1A] font-bold rounded-lg hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#1A1A1A] hover:bg-red-500 transition-all duration-150"
+              onClick={() => {
+                if (deleteTarget) {
+                  deleteTrip.mutate(deleteTarget.id, {
+                    onSuccess: () => setDeleteTarget(null),
+                  });
+                }
+              }}
+            >
+              {deleteTrip.isPending ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <HomeFooter />
     </div>
