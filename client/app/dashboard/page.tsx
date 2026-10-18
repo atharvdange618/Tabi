@@ -245,7 +245,7 @@ function TripCard({
                       onClick={(e) => {
                         e.preventDefault();
                         setActiveTab(trip.id, "members");
-                        router.push(`/trips/${trip.id}`);
+                        router.push(`/trips/${trip.id}?action=invite`);
                       }}
                     >
                       Invite members

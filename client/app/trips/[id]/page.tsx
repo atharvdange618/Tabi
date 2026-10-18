@@ -70,10 +70,11 @@ export default function TripPage() {
 
   const { getActiveTab, setActiveTab } = useTripStore();
   const activeTab = getActiveTab(tripId);
-  // Dashboard card menu deep-links here with ?action=edit
+  // Dashboard card menu deep-links here with ?action=edit|invite
   const router = useRouter();
   const action = useSearchParams().get("action");
   const [editSheetOpen, setEditSheetOpen] = useState(action === "edit");
+  const [inviteOpen, setInviteOpen] = useState(action === "invite");
 
   useEffect(() => {
     if (action) router.replace(`/trips/${tripId}`, { scroll: false });
@@ -280,7 +281,10 @@ export default function TripPage() {
 
             {isOwner && (
               <button
-                onClick={() => setActiveTab(tripId, "members")}
+                onClick={() => {
+                  setActiveTab(tripId, "members");
+                  setInviteOpen(true);
+                }}
                 className={`shrink-0 flex items-center gap-1.5 h-auto px-4 py-2 text-sm font-bold border-2 border-[#1A1A1A] rounded-lg shadow-[4px_4px_0px_#1A1A1A] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#1A1A1A] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0px_#1A1A1A] transition-all duration-150 ${
                   trip.coverImageUrl
                     ? "bg-white text-[#111]"
@@ -353,7 +357,12 @@ export default function TripPage() {
               </TabsContent>
 
               <TabsContent value="members" className="mt-0">
-                <MembersTab tripId={tripId} currentUserRole={displayRole} />
+                <MembersTab
+                  tripId={tripId}
+                  currentUserRole={displayRole}
+                  inviteOpen={inviteOpen && isOwner}
+                  setInviteOpen={setInviteOpen}
+                />
               </TabsContent>
 
               <TabsContent value="polls" className="mt-0">

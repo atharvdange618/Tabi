@@ -123,12 +123,50 @@ export function useUpdateChecklistItem(tripId: string) {
       );
       return data.data;
     },
-    onSuccess: () => {
+    onMutate: async ({ clId, itemId, payload }) => {
+      const queryKey = queryKeys.tripChecklists(tripId);
+      await queryClient.cancelQueries({ queryKey });
+
+      const prev = queryClient.getQueryData<ChecklistWithItems[]>(queryKey);
+
+      if (prev) {
+        queryClient.setQueryData(
+          queryKey,
+          patchChecklistItem(prev, clId, itemId, payload),
+        );
+      }
+
+      return { prev };
+    },
+    onError: (_, __, ctx) => {
+      queryClient.setQueryData(queryKeys.tripChecklists(tripId), ctx?.prev);
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.tripChecklists(tripId),
       });
     },
   });
+}
+
+type ChecklistWithItems = Checklist & { items: ChecklistItem[] };
+
+export function patchChecklistItem(
+  lists: ChecklistWithItems[],
+  clId: string,
+  itemId: string,
+  payload: Partial<ChecklistItem>,
+): ChecklistWithItems[] {
+  return lists.map((cl) =>
+    cl._id !== clId
+      ? cl
+      : {
+          ...cl,
+          items: cl.items.map((item) =>
+            item._id === itemId ? { ...item, ...payload } : item,
+          ),
+        },
+  );
 }
 
 export function useDeleteChecklistItem(tripId: string) {

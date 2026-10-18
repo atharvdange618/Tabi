@@ -51,9 +51,13 @@ import { toInitials, memberBg, mapRole } from "@/lib/helpers";
 export function MembersTab({
   tripId,
   currentUserRole,
+  inviteOpen,
+  setInviteOpen,
 }: {
   tripId: string;
   currentUserRole: "admin" | "editor" | "viewer";
+  inviteOpen: boolean;
+  setInviteOpen: (open: boolean) => void;
 }) {
   const router = useRouter();
   const { data: membersData } = useMembers(tripId);
@@ -67,7 +71,6 @@ export function MembersTab({
   const active = membersData?.active ?? [];
   const pending = membersData?.pending ?? [];
 
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"editor" | "viewer">("editor");
   const [transferOwnershipOpen, setTransferOwnershipOpen] = useState(false);
