@@ -901,7 +901,7 @@ describe("Transfer Ownership", () => {
   // ── Service layer ────────────────────────────────────────────────────────
 
   describe("transferOwnership (service)", () => {
-    it("transfers ownership - old owner becomes editor, target becomes owner", async () => {
+    it("creates a pending transfer without changing roles", async () => {
       const owner = await createTestUser({ name: "Original Owner" });
       const editor = await createTestUser({ name: "New Owner" });
       const trip = await seedTrip(owner._id.toString());
@@ -930,11 +930,14 @@ describe("Transfer Ownership", () => {
         userId: editor._id,
       });
 
-      expect(ownerMember!.role).toBe(TripMemberRole.EDITOR);
-      expect(editorMember!.role).toBe(TripMemberRole.OWNER);
+      expect(ownerMember!.role).toBe(TripMemberRole.OWNER);
+      expect(editorMember!.role).toBe(TripMemberRole.EDITOR);
+      expect(
+        editorMember!.pendingOwnershipTransfer?.fromUserId.toString(),
+      ).toBe(owner._id.toString());
     });
 
-    it("returns updated member list after transfer", async () => {
+    it("returns member list showing the pending transfer", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({ email: "editor-t@example.com" });
       const trip = await seedTrip(owner._id.toString());
@@ -959,7 +962,10 @@ describe("Transfer Ownership", () => {
         members.some(
           (m: any) =>
             (m.userId?._id?.toString() ?? m.userId?.toString()) ===
-              editor._id.toString() && m.role === TripMemberRole.OWNER,
+              editor._id.toString() &&
+            m.role === TripMemberRole.EDITOR &&
+            m.pendingOwnershipTransfer?.fromUserId?._id?.toString() ===
+              owner._id.toString(),
         ),
       ).toBe(true);
     });
@@ -1027,7 +1033,7 @@ describe("Transfer Ownership", () => {
       ).rejects.toThrow("Target user is already the owner");
     });
 
-    it("atomically updates both members - trip has exactly one owner after transfer", async () => {
+    it("accepting atomically swaps roles - trip has exactly one owner", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({
         email: "editor-atomic@example.com",
@@ -1048,14 +1054,28 @@ describe("Transfer Ownership", () => {
         owner._id.toString(),
         editor._id.toString(),
       );
+      await memberService.acceptOwnershipTransfer(
+        trip._id.toString(),
+        editor._id.toString(),
+      );
 
       const ownerMembers = await TripMember.find({
         tripId: trip._id,
         role: TripMemberRole.OWNER,
       });
+      const oldOwner = await TripMember.findOne({
+        tripId: trip._id,
+        userId: owner._id,
+      });
+      const newOwner = await TripMember.findOne({
+        tripId: trip._id,
+        userId: editor._id,
+      });
 
       expect(ownerMembers).toHaveLength(1);
       expect(ownerMembers[0]!.userId.toString()).toBe(editor._id.toString());
+      expect(oldOwner!.role).toBe(TripMemberRole.EDITOR);
+      expect(newOwner!.pendingOwnershipTransfer).toBeUndefined();
     });
 
     it("emits ownership.transferred event after successful transfer", async () => {
@@ -1098,7 +1118,7 @@ describe("Transfer Ownership", () => {
   // ── API layer ─────────────────────────────────────────────────────────────
 
   describe("POST /trips/:id/members/transfer-ownership (API)", () => {
-    it("returns 200 and transfers ownership", async () => {
+    it("returns 200 on initiate, and accept makes the target the owner", async () => {
       const owner = await createTestUser({ clerkId: "clerk_to_1" });
       const editor = await createTestUser({
         clerkId: "clerk_to_2",
@@ -1115,10 +1135,15 @@ describe("Transfer Ownership", () => {
         joinedAt: new Date(),
       });
 
-      const res = await request(app)
+      await request(app)
         .post(`/api/v1/trips/${trip._id}/members/transfer-ownership`)
         .set("x-test-clerk-id", owner.clerkId)
         .send({ targetUserId: editor._id.toString() })
+        .expect(200);
+
+      const res = await request(app)
+        .post(`/api/v1/trips/${trip._id}/members/ownership/accept`)
+        .set("x-test-clerk-id", editor.clerkId)
         .expect(200);
 
       expect(res.body.data).toBeInstanceOf(Array);
