@@ -97,7 +97,7 @@ export function FilesTab({
                       e.stopPropagation();
                       setDeleteTarget(file._id);
                     }}
-                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center border border-red-200 hover:border-red-400 rounded bg-white"
+                    className="absolute top-3 right-3 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center border border-red-200 hover:border-red-400 rounded bg-white"
                   >
                     <Trash2 size={11} className="text-red-500" />
                   </button>

@@ -113,7 +113,7 @@ function CommentCard({
           disabled={deleteComment.isPending}
           variant="ghost"
           size="icon"
-          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-brand-coral"
+          className="h-8 w-8 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-muted-foreground hover:text-brand-coral"
           title="Delete comment"
           aria-label="Delete comment"
         >
