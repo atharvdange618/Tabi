@@ -45,7 +45,6 @@ export function PdfViewer({ url }: PdfViewerProps) {
 
   return (
     <div className="flex flex-col items-center w-full h-full">
-      {/* PDF pages */}
       <div className="flex-1 w-full overflow-y-auto flex flex-col items-center">
         {loading && (
           <div className="flex items-center justify-center h-full gap-2 text-muted-foreground">
@@ -70,7 +69,6 @@ export function PdfViewer({ url }: PdfViewerProps) {
         </Document>
       </div>
 
-      {/* Pagination */}
       {numPages > 1 && (
         <div className="flex items-center gap-3 py-3 border-t-2 border-[#1A1A1A] w-full justify-center bg-white shrink-0">
           <Button

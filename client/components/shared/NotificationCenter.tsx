@@ -123,7 +123,6 @@ export function NotificationCenter() {
               </div>
             ) : (
               <>
-                {/* Unread notifications */}
                 {unreadNotifications.length > 0 && (
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -140,7 +139,6 @@ export function NotificationCenter() {
                   </div>
                 )}
 
-                {/* Read notifications */}
                 {readNotifications.length > 0 && (
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">
@@ -190,13 +188,11 @@ function NotificationItem({
         isRead && "opacity-60",
       )}
     >
-      {/* Unread indicator */}
       {!isRead && (
         <div className="absolute top-3 right-3 h-2 w-2 rounded-full bg-brand-blue" />
       )}
 
       <div className="flex gap-3">
-        {/* Actor avatar */}
         <Avatar className="h-10 w-10 border-2 border-brutal-border shrink-0">
           <AvatarImage
             src={notification.actorId?.avatarUrl}
@@ -208,12 +204,10 @@ function NotificationItem({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          {/* Message */}
           <p className="text-sm font-medium text-gray-900 leading-snug mb-1">
             {notification.message}
           </p>
 
-          {/* Trip badge and timestamp */}
           <div className="flex items-center gap-2 flex-wrap">
             {notification.tripId && (
               <Link
@@ -226,7 +220,6 @@ function NotificationItem({
             <span className="text-xs text-gray-500">{timeAgo}</span>
           </div>
 
-          {/* Action buttons (shown on hover) */}
           <div className="flex items-center gap-2 mt-2 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
             {!isRead && (
               <Button

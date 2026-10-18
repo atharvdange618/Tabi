@@ -594,7 +594,6 @@ export function ItineraryTab({
     [allActivities],
   );
 
-  // View toggle button
   const viewToggle = (
     <div className="flex items-center gap-1 bg-white border-2 border-[#1A1A1A] rounded-lg p-0.5 shadow-[3px_3px_0px_#1A1A1A]">
       <button
