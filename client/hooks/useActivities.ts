@@ -42,7 +42,7 @@ export function useCreateActivity(tripId: string, dayId: string) {
       >(`/api/v1/trips/${tripId}/days/${dayId}/activities`, payload);
       if (data.warnings?.includes("time_conflict")) {
         toast.warning(
-          "Time conflict — this activity overlaps with another on the same day.",
+          "Time conflict: this activity overlaps with another on the same day.",
           { id: "time-conflict" },
         );
       }
@@ -73,7 +73,7 @@ export function useUpdateActivity(tripId: string, dayId: string) {
       >(`/api/v1/trips/${tripId}/days/${dayId}/activities/${actId}`, payload);
       if (data.warnings?.includes("time_conflict")) {
         toast.warning(
-          "Time conflict — this activity overlaps with another on the same day.",
+          "Time conflict: this activity overlaps with another on the same day.",
           { id: "time-conflict" },
         );
       }

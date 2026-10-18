@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Tabi - Collaborative Trip Planning",
     short_name: "Tabi",
     description:
-      "Plan trips together seamlessly. Build itineraries, track budgets, and collaborate in real-time.",
+      "Plan trips with your whole group. Build itineraries, track budgets, and collaborate in real-time.",
     start_url: "/",
     display: "standalone",
     background_color: "#FAFAF8",

@@ -31,7 +31,7 @@ export function HeroSection() {
 
           <p className="anim-3 text-lg text-gray-500 leading-relaxed max-w-[460px] mb-9 font-medium">
             Tabi brings your whole group onto one shared itinerary. Build day
-            plans, split expenses, store files all in one place, no WhatsApp
+            plans, split expenses, and store files in one place. No WhatsApp
             groups required.
           </p>
 
@@ -52,9 +52,8 @@ export function HeroSection() {
 
           <div className="anim-5 flex items-center gap-4 mt-8 flex-wrap">
             {[
-              "Free to start",
-              "No credit card",
-              "Invite unlimited friends",
+              "Free, no paid plan",
+              "Invite your whole group",
             ].map((t) => (
               <span
                 key={t}

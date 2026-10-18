@@ -12,7 +12,7 @@ const features = [
     icon: <Users size={22} className="text-[#111]" aria-hidden="true" />,
     iconBg: "bg-[#93CDFF]",
     title: "Shared Workspace",
-    desc: "Everyone on the trip sees the same itinerary, budget, and files. Invite members, assign roles, and plan together no separate tools needed.",
+    desc: "Everyone on the trip sees the same itinerary, budget, and files. Invite members, assign roles, and plan together. No separate tools needed.",
     tag: "Owner · Editor · Viewer",
     tagColor: "bg-[#93CDFF]",
   },
@@ -30,7 +30,7 @@ const features = [
     icon: <FileText size={22} className="text-[#111]" aria-hidden="true" />,
     iconBg: "bg-[#B8F0D4]",
     title: "Organized Docs",
-    desc: "Flight tickets, hotel confirmations, booking screenshots upload them once and they live inside the trip. Everyone has access, always.",
+    desc: "Flight tickets, hotel confirmations, booking screenshots: upload them once and they live inside the trip. Everyone has access, always.",
     tag: "Images · Tickets",
     tagColor: "bg-[#B8F0D4]",
   },
@@ -56,7 +56,7 @@ const features = [
     title: "Reservations Hub",
     desc: "Store confirmation numbers, reference IDs, booking links, and notes for every reservation. Your entire trip in one dashboard.",
     tag: "Confirmations & links",
-    tagColor: "bg-[#FFF3B0]",
+    tagColor: "bg-[#93CDFF]",
   },
 ];
 

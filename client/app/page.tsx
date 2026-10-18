@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { HomeNav } from "../components/home/HomeNav";
 import { HeroSection } from "../components/home/HeroSection";
-import { StatsBar } from "../components/home/StatsBar";
 import { FeaturesGrid } from "../components/home/FeaturesGrid";
 import { HowItWorks } from "../components/home/HowItWorks";
 import { CTASection } from "../components/home/CTASection";
@@ -34,7 +33,7 @@ export const metadata: Metadata = {
     images: [
       {
         url: generateOGImageUrl({
-          title: "Plan trips together, seamlessly",
+          title: "One trip plan for the whole group",
           description:
             "Build itineraries, track budgets, collaborate in real time",
           forceGenerate: true,
@@ -52,7 +51,7 @@ export const metadata: Metadata = {
       "Plan trips together with your whole group. Build itineraries, split expenses, and collaborate in real time.",
     images: [
       generateOGImageUrl({
-        title: "Plan trips together, seamlessly",
+        title: "One trip plan for the whole group",
         description:
           "Build itineraries, track budgets, collaborate in real time",
         forceGenerate: true,
@@ -69,7 +68,6 @@ export default async function HomePage() {
     <div className="min-h-screen font-body text-foreground bg-background">
       <HomeNav />
       <HeroSection />
-      <StatsBar />
       <FeaturesGrid />
       <HowItWorks />
       <CTASection />

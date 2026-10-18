@@ -12,7 +12,7 @@ export function CTASection() {
             starts here.
           </h2>
           <p className="text-base text-gray-700 font-medium m-0 max-w-[400px] leading-relaxed">
-            Free to create. Free to invite. No credit card. Just plan your trip
+            Free to create. Free to invite. Just plan your trip
             and go.
           </p>
         </div>

@@ -84,7 +84,7 @@ export const metadata: Metadata = {
         url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: `${SITE_NAME} - Plan trips together seamlessly`,
+        alt: `${SITE_NAME} - Plan trips with your whole group`,
         type: "image/png",
       },
     ],

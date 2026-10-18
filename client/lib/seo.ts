@@ -8,7 +8,7 @@ import { Metadata } from "next";
 export const SITE_NAME = "Tabi";
 export const SITE_TAGLINE = "Your journey, together.";
 export const SITE_DESCRIPTION =
-  "Plan trips together seamlessly. Build day-wise itineraries, split expenses, manage files, and collaborate in real-time with your travel group.";
+  "Plan trips with your whole group. Build day-wise itineraries, split expenses, manage files, and collaborate in real-time with your travel group.";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_APP_URL || "https://tabi.atharvdangedev.in";
