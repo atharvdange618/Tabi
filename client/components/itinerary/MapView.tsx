@@ -72,6 +72,7 @@ async function geocode(
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
     const res = await fetch(url, {
       headers: { "Accept-Language": "en", "User-Agent": "Tabi/1.0" },
+      referrerPolicy: "strict-origin-when-cross-origin",
     });
     const results: NominatimResult[] = await res.json();
     if (!results.length) return null;
@@ -180,7 +181,8 @@ export default function MapView({ activities }: MapViewProps) {
         style={{ height: 420, width: "100%" }}
       >
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          referrerPolicy="strict-origin-when-cross-origin"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           maxZoom={19}
           keepBuffer={4}

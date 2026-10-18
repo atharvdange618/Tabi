@@ -41,6 +41,7 @@ export default function LocationAutocomplete({
       const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=0`;
       const res = await fetch(url, {
         headers: { "Accept-Language": "en", "User-Agent": "Tabi/1.0" },
+        referrerPolicy: "strict-origin-when-cross-origin",
       });
       const data: NominatimResult[] = await res.json();
       setSuggestions(data);
