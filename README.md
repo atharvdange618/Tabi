@@ -1,140 +1,100 @@
-# <img src="social-avatar.png" alt="Tabi Logo" height="64" align="center" /> Tabi
+<div align="center">
+  <img src="social-avatar.png" alt="Tabi logo" height="72" />
+  <h1>Tabi</h1>
+  <p><strong>旅 · journey</strong></p>
+  <p>Plan a group trip in one place instead of a group chat.</p>
+  <p><a href="https://tabi.atharvdange.com">tabi.atharvdange.com</a></p>
+</div>
 
-> **A collaborative itinerary planning platform. Plan trips together, not in separate chat threads.**
+![Tabi dashboard](docs/screenshots/dashboard.png)
 
-Tabi (旅, Japanese for _journey_) is a full-stack collaborative trip planning web app designed for groups. Create a trip, invite members, build a day-wise itinerary, track your budget, manage files, and handle reservations in one shared workspace. Strict role-based access keeps your plans secure so nobody accidentally breaks your itinerary.
+## Why I care about this one
 
-Built for the ChaiCode Buildathon.
+Tabi is the first thing I built that real people use. My friends and I plan our trips on it now.
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?style=flat-square&logo=mongodb&logoColor=white)
-![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express)
-![Node.js](https://img.shields.io/badge/Node.js-24-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
-![Clerk](https://img.shields.io/badge/Auth-Clerk-6C47FF?style=flat-square)
-![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)
-[![React Doctor](https://www.react.doctor/share/badge?p=client&s=96&w=64&f=30)](https://www.react.doctor/share?p=client&s=96&w=64&f=30)
+It started from a problem we had ourselves, and that's what turned it from a project into a product. I wasn't building for a portfolio. I was building the thing we kept wishing we had every time a trip came up.
 
----
+I didn't worry that Tabi lacked features. What mattered to me was taking a trip out of the group chat and putting all of it on one platform. If the plan, the money and the people live in one place, the trip already feels easier, and that was enough to ship.
 
-## Features
+## The problem
 
-### Trip Planning
+Every group trip I've been on went the same way. Someone makes a WhatsApp group with too many emojis in the name. One person builds a Google Sheet with five tabs that only they update. Flight links get buried under two hundred messages of "wait, who's booking?" After the trip, nobody knows who owes what, and the "hey, about the money" message sits in drafts for a week.
 
-- Create trips with specific dates and custom descriptions
-- Auto-generate a day-wise timeline based on your trip dates
-- Add activity cards specifying type, time, location, estimated cost, and notes
-- Reorder activities within and across days using drag-and-drop
-- **Time Conflict Detection**: Server warns (non-blocking) when two activities overlap on the same day
-- **Map View**: Interactive Leaflet map geocoding all activity locations, with color-coded markers by type and marker clustering
+Tabi started at the ChaiCode Buildathon as my answer to that, and I kept building it after the event ended.
 
-### Collaboration
+## What it does
 
-- **Member Management**: Invite members via email, handling pending invites gracefully for unregistered users
-- **Role-Based Access**: Enforce permissions (Owner, Editor, Viewer) validated on the server, not just hidden in the UI
-- **Ownership Transfer**: Owners can transfer ownership to any member via an acceptance workflow - creates pending request, target receives notification to accept/decline
-- **Comments**: Comment on specific days or individual activities with threaded replies and **emoji reactions**
-- **Polls**: Create multi-option group polls, vote in real-time, declare a winner and close the poll
-- **Real-Time Notifications**: Event-driven notification system with bell icon + unread badge, toast notifications, and 10-second polling
-- **Activity Tracking**: Get notified about ownership changes, new comments, expenses, member updates, and content modifications
+### One plan everyone can see
 
-### Organization
+Each trip gets a day for every date, and each day holds activities with a time, place, cost and notes. You can drag to reorder them, comment on them, and react with emoji. The server warns you when two activities overlap.
 
-- **Trip Overview**: Dashboard tab with stat cards, budget progress bar, upcoming reservations, checklist summary, active polls, and member roster
-- **Checklists**: Maintain multiple checklists per trip for packing, to-dos, and pre-departure tasks
-- **File Management**: Attach files like tickets and images, hosted securely via Cloudinary
-- **Reservations**: Enter manual reservations for flights, hotels, restaurants, and car rentals
-- **Budget Tracking**: Track expenses (with optional file attachments) with automatic notifications to all trip members and view breakdowns by category
-- **Notification Center**: Centralized notification hub with unread badges, auto-expiring notifications (90 days), and event-driven updates
+![Trip overview](docs/screenshots/overview.png)
 
-### Security
+The itinerary was the hardest part to get right. It has three views: a list, a calendar and a map. Three views is easy to build and easy to get wrong, so I kept changing them until each one answered a question the others couldn't. The list is for editing. The calendar shows how full each day is. The map shows whether a day makes sense on foot.
 
-- Verify JWT tokens via Clerk on every protected route
-- Use Helmet and HPP to secure headers and prevent HTTP parameter pollution
-- Validate request bodies on both client and server using Zod
-- Block non-member access immediately keeping trip existence private
+![Itinerary list view](docs/screenshots/itinerary.png)
 
----
+### Money that settles itself
 
-## Architecture
+Log an expense and say who paid. Tabi tracks spending against the budget, breaks it down by category, and works out who owes whom. Then you mark a debt as settled when it's paid back, with no awkward voice note needed.
+
+![Budget and split balances](docs/screenshots/budget.png)
+
+### Everything else a trip needs
+
+- **Checklists** for packing and pre-trip tasks, with progress per list
+- **Reservations** for flights, hotels and restaurants, with their reference numbers
+- **Files** like tickets and booking screenshots, stored on Cloudinary
+- **Polls** for the decisions a group can't make in chat
+- **Notifications** when someone adds an expense, comments or changes the plan
+- **Public trips** you can share as a read-only page, and a **Discover** page to browse other people's public trips
+
+It works on a phone too, which matters when you're the one standing at the airport.
+
+<p align="center">
+  <img src="docs/screenshots/mobile-checklists.png" alt="Tabi checklists on a phone" width="300" />
+</p>
+
+### The right people can change the right things
+
+Every trip member is an owner, an editor or a viewer. The server checks the role on every request, so hiding a button in the UI is never the only thing standing between a viewer and your itinerary.
+
+| Action                                                     | Owner | Editor | Viewer |
+| ---------------------------------------------------------- | :---: | :----: | :----: |
+| View the trip and comment                                  |  ✅   |   ✅   |   ✅   |
+| Edit activities, checklists, reservations, files, expenses |  ✅   |   ✅   |   ❌   |
+| Edit trip details                                          |  ✅   |   ❌   |   ❌   |
+| Invite members                                             |  ✅   |   ❌   |   ❌   |
+| Transfer ownership                                         |  ✅   |   ❌   |   ❌   |
+| Delete the trip                                            |  ✅   |   ❌   |   ❌   |
+
+Ownership transfer is a request, not a switch. The person receiving it has to accept.
+
+## How it's built
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                     Client                          │
-│   Next.js 16 (App Router) + TypeScript              │
-│                                                     │
-│   TanStack Query ──── server state / caching (10s)  │
-│   Zustand ─────────── UI state (sidebar, active day)│
-│   Axios ───────────── API client + Clerk token      │
-│   React Hook Form + Zod ── form validation          │
-│   NotificationCenter ─ real-time notifications      │
-└────────────────────┬────────────────────────────────┘
-                     │ REST (Bearer JWT)
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│                     Server                          │
-│   Express + TypeScript (Node.js runtime)            │
-│                                                     │
-│   @clerk/express ─── JWT verification middleware    │
-│   permissions.ts ─── role-based route guards        │
-│   Zod middleware  ─── request body validation       │
-│   Helmet + HPP    ─── security headers              │
-│   EventEmitter    ─── notification events           │
-└────────────────────┬────────────────────────────────┘
-                     │ Mongoose ODM
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│                     MongoDB                         │
-│   trips · days · activities · comments              │
-│   checklists · files · reservations · expenses      │
-│   notifications · polls · pending ownership         │
-└─────────────────────────────────────────────────────┘
-
-External Services
-  Clerk      ── auth, session management, user sync
-  Cloudinary ── file and image storage
+Next.js 16 client  ──REST + Clerk JWT──▶  Express 5 API  ──Mongoose──▶  MongoDB
+  TanStack Query                            Clerk middleware
+  Zustand                                   role guards
+  React Hook Form                           Zod validation
+         └──────────── shared/ Zod schemas ────────────┘
 ```
 
----
+The client and the API are separate apps in one pnpm workspace, with a `shared/` package between them. In production both run on one Hostinger machine under one domain. The browser only ever calls `/api` on that domain, and a Next.js rewrite forwards it to the server on the same machine. Clerk handles sign-in, Cloudinary stores files, and Resend sends invite emails.
 
-## Tech Stack
+The two hardest problems in the codebase:
 
-| Layer        | Technology               |
-| ------------ | ------------------------ |
-| Framework    | Next.js 16 (App Router)  |
-| Language     | TypeScript (strict)      |
-| Runtime      | Node.js                  |
-| Styling      | Tailwind CSS + shadcn/ui |
-| Server state | TanStack Query v5        |
-| Client state | Zustand                  |
-| API client   | Axios                    |
-| Auth         | Clerk                    |
-| Forms        | React Hook Form + Zod    |
-| Database     | MongoDB Atlas            |
-| ODM          | Mongoose                 |
-| Security     | Helmet, HPP              |
-| Media        | Cloudinary               |
-| Charts       | Recharts                 |
-| Toasts       | Sonner                   |
-| Date picker  | react-day-picker         |
-| Icons        | Lucide React             |
+**Permissions.** I built the middleware chain before I built any feature: `requireAuth` → `resolveDbUser` → `requireMembership` → `requireRole`. It felt slow at the time. It paid off, because every feature after that got access control in two lines.
 
----
+**Invites.** Inviting someone who already has an account is easy. Inviting someone who doesn't is not. Existing users get a pending membership. New emails get a separate pending invite with a token that expires in seven days, so the users collection never fills up with placeholder accounts for people who never sign up. It took two attempts to land on that split.
 
-## Getting Started
+One rule held across the whole project: the client and server validate with the same Zod schemas from `shared/`, so changing a schema changes both sides at once.
 
-### Prerequisites
+More detail lives in [`docs/`](docs/).
 
-You need the following installed or set up to run this project:
+## Run it locally
 
-- Node.js >= 24
-- pnpm >= 12 (`corepack enable` picks up the pinned version)
-- MongoDB Atlas account (free M0 works)
-- Clerk account (free tier)
-- Cloudinary account (free tier)
-
-### 1. Clone the repository
+You need Node.js 24, pnpm (`corepack enable` picks up the pinned version), Docker, and free accounts on [Clerk](https://clerk.com) and [Cloudinary](https://cloudinary.com).
 
 ```bash
 git clone https://github.com/atharvdange618/Tabi.git
@@ -142,36 +102,9 @@ cd Tabi
 pnpm install
 ```
 
-`pnpm install` at the root installs the client, server, and shared workspaces in one pass.
+Create `server/.env` from `server/.env.example`. `RESEND_API_KEY` is optional. Without it, the server logs invite emails instead of sending them.
 
-### 2. Set up the server
-
-Create a `server/.env` file and fill in your keys:
-
-```env
-PORT=8000
-MONGODB_URI=your_mongodb_connection_string
-CLERK_SECRET_KEY=your_clerk_secret_key
-CLERK_WEBHOOK_SECRET=your_clerk_webhook_secret
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-CLIENT_URL=http://localhost:3000
-```
-
-Start the development server from `server/`:
-
-```bash
-pnpm dev
-```
-
-This compiles to `dist/` and restarts on change. For production, run `pnpm build` then `pnpm start`.
-
-The Express server will start on `http://localhost:8000`.
-
-### 3. Set up the client
-
-Create a `client/.env.local` file and fill in your keys:
+Create `client/.env.local`:
 
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
@@ -180,94 +113,48 @@ NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
 NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+API_URL=http://localhost:8000
 ```
 
-In a new terminal, start the Next.js development server from `client/`:
-
-```bash
-pnpm dev
-```
-
-The client will start on `http://localhost:3000`.
-
-### Or run everything with Docker
-
-With `server/.env` and `client/.env.local` in place, start Mongo, the server, and the client from the repo root:
+Then start MongoDB, the API and the client together:
 
 ```bash
 docker compose up --watch
 ```
 
-Compose runs a local MongoDB as a single-node replica set (the server uses transactions) and points `MONGODB_URI` at it, so you don't need Atlas. Edits on your machine sync into the containers and reload. Changes to a `package.json` or `pnpm-lock.yaml` rebuild the image. To connect a GUI such as Compass, use `mongodb://localhost:27017/tabi?directConnection=true`.
+The app runs at `http://localhost:3000` and the API at `http://localhost:8000`. Compose runs MongoDB as a single-node replica set, because the server uses transactions, so you don't need Atlas. Edits sync into the containers. Compose reads the env files only when it creates a container, so after changing one, run `docker compose up -d --force-recreate`.
 
-Compose reads `server/.env` and `client/.env.local` only when it creates a container. After you edit either file, run `docker compose up -d --force-recreate`. A plain `docker compose restart` keeps the old values.
+### Sync users from Clerk
 
-### 4. Configure Clerk webhook
+In the Clerk dashboard, add a webhook pointing at `/api/v1/webhooks/clerk` on your API, subscribed to `user.created` and `user.updated`. Put its signing secret in `server/.env` as `CLERK_WEBHOOK_SECRET`. Trips and invites need these user records. For local development, expose port 8000 with a tunnel such as ngrok so Clerk can reach it.
 
-To sync Clerk user data into your MongoDB `users` collection, add a webhook in your Clerk Dashboard pointing to:
+### Fill it with sample trips
 
-```text
-http://localhost:8000/api/v1/webhooks/clerk
+Sign in once so your user exists, then seed three trips with members, expenses and checklists:
+
+```bash
+MONGODB_URI="mongodb://127.0.0.1:27017/tabi?directConnection=true" pnpm --filter server seed you@example.com
 ```
 
-Make sure to subscribe to the `user.created` and `user.updated` events. Grab the Webhook Secret provided by Clerk and add it to your `server/.env` file as `CLERK_WEBHOOK_SECRET`. This step is necessary to ensure user references work correctly for trips and invites.
+Running it again replaces the seeded trips and leaves everything else alone.
 
----
+### Without Docker
 
-## Role-Based Access
+Point `MONGODB_URI` in `server/.env` at an Atlas replica set, then run `pnpm dev` in `server/` and in `client/`.
 
-The platform assigns roles to participants to protect shared content. These limits are validated during server requests.
+### Checks
 
-| Action                | Owner | Editor | Viewer |
-| --------------------- | :---: | :----: | :----: |
-| Edit trip metadata    |  ✅   |   ❌   |   ❌   |
-| Add / edit activities |  ✅   |   ✅   |   ❌   |
-| Manage checklists     |  ✅   |   ✅   |   ❌   |
-| Upload / delete files |  ✅   |   ✅   |   ❌   |
-| Add reservations      |  ✅   |   ✅   |   ❌   |
-| Track expenses        |  ✅   |   ✅   |   ❌   |
-| Post comments         |  ✅   |   ✅   |   ✅   |
-| View all content      |  ✅   |   ✅   |   ✅   |
-| Invite members        |  ✅   |   ❌   |   ❌   |
-| Transfer ownership    |  ✅   |   ❌   |   ❌   |
-| Accept ownership      |  ✅   |   ✅   |   ✅   |
-| Delete trip           |  ✅   |   ❌   |   ❌   |
-
----
-
-## Deployment
-
-| Service  | Platform      |
-| -------- | ------------- |
-| Frontend | Vercel        |
-| Backend  | Hostinger     |
-| Database | MongoDB Atlas |
-| Auth     | Clerk         |
-| Media    | Cloudinary    |
-
-**Live Platform:** [tabi.atharvdange.com](https://tabi.atharvdange.com)
-
----
-
-## Design
-
-Tabi utilizes a **neobrutalism + pastel** design system to stand out:
-
-- Distinctive `2px` dark borders (`#1A1A1A`) on interactive elements
-- Offset drop shadows (`4px 4px 0px #1A1A1A`) with zero blur
-- Soft pastel fills like blue (`#93CDFF`), peach (`#FFD6C0`), and mint (`#B8F0D4`)
-- Clean typography hierarchy balancing **Space Grotesk** (headings), **DM Sans** (body), and **JetBrains Mono** (mono/IDs)
-
----
+```bash
+pnpm --filter server test    # needs MONGOMS_VERSION=8.2.6 on Windows
+pnpm --filter client test
+pnpm --filter client lint
+```
 
 ## License
 
-MIT - see [LICENSE](LICENSE) for details.
-
----
+MIT. See [LICENSE](LICENSE).
 
 <div align="center">
-  <p>Built by <a href="https://github.com/atharvdange618">Atharv Dange</a></p>
-  <p><em>旅   journey</em></p>
+  <p>Built by <a href="https://x.com/atharvdangedev">Atharv Dange</a>, for the trips my friends and I keep planning.</p>
 </div>
