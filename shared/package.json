@@ -9,9 +9,6 @@
     "./types": "./types/index.ts",
     "./validations": "./validations/index.ts"
   },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
   "peerDependencies": {
     "typescript": "^5"
   },

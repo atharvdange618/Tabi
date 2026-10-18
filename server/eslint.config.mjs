@@ -6,7 +6,7 @@ export default tseslint.config(
     ignores: [
       "node_modules/**",
       "logs/**",
-      "bun.lock",
+      "pnpm-lock.yaml",
       "dist/**",
       "eslint.config.mjs",
     ],

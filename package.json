@@ -1,9 +1,5 @@
 {
   "name": "tabi",
   "private": true,
-  "workspaces": [
-    "shared",
-    "client",
-    "server"
-  ]
+  "packageManager": "pnpm@12.10.1"
 }

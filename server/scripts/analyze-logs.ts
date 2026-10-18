@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /* eslint-disable no-console */
 /**
  * Tabi Server Log Analyzer
  *
  * Usage:
- *   bun scripts/analyze-logs.ts [options]
+ *   node scripts/analyze-logs.ts [options]
  *
  * Options:
  *   --date YYYY-MM-DD   Analyze only this specific date's logs

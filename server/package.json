@@ -4,20 +4,23 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --watch index.ts",
-    "start": "bun run index.ts",
+    "dev": "pnpm build && pnpm run \"/^dev:/\"",
+    "dev:tsc": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "dev:node": "node --watch --env-file-if-exists=.env dist/server/index.js",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node --env-file-if-exists=.env dist/server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "logs": "bun scripts/analyze-logs.ts"
+    "logs": "node scripts/analyze-logs.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/bun": "latest",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/hpp": "^0.2.7",
     "@types/multer": "^2.0.0",
+    "@types/node": "^24.19.2",
     "@types/streamifier": "^0.1.2",
     "@types/supertest": "^7.2.0",
     "eslint": "^10.0.2",

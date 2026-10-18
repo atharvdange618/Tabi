@@ -1,0 +1,25 @@
+packages:
+  - shared
+  - client
+  - server
+
+allowBuilds:
+  '@clerk/shared': false
+  esbuild: true
+  mongodb-memory-server: false
+  msw: false
+  sharp: true
+  unrs-resolver: true
+
+blockExoticSubdeps: true
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+# Older releases published without provenance after the package adopted it.
+# Same versions bun.lock installed; pinned exactly so new versions are still checked.
+trustPolicyExclude:
+  - eslint-import-resolver-typescript@3.10.1
+  - express-rate-limit@8.3.0
+  - react-redux@9.2.0
+  - reselect@5.1.1
+  - semver@6.3.1
+  - undici-types@6.21.0
