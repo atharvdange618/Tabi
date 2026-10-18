@@ -13,6 +13,7 @@ export async function generateMetadata({
     const token = await getToken();
     if (token) {
       const baseUrl =
+        process.env.API_URL ||
         process.env.NEXT_PUBLIC_API_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
         "http://localhost:3000";
