@@ -11,7 +11,7 @@ export const SITE_DESCRIPTION =
   "Plan trips with your whole group. Build day-wise itineraries, split expenses, manage files, and collaborate in real-time with your travel group.";
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://tabi.atharvdangedev.in";
+  process.env.NEXT_PUBLIC_APP_URL || "https://tabi.atharvdange.com";
 
 export const PRIMARY_KEYWORDS = [
   "trip planning",

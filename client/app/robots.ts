@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard", "/trips/", "/invites/"],
       },
     ],
-    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || "https://tabi.atharvdangedev.in"}/sitemap.xml`,
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || "https://tabi.atharvdange.com"}/sitemap.xml`,
   };
 }
