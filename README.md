@@ -191,6 +191,16 @@ pnpm dev
 
 The client will start on `http://localhost:3000`.
 
+### Or run everything with Docker
+
+With `server/.env` and `client/.env.local` in place, start Mongo, the server, and the client from the repo root:
+
+```bash
+docker compose up --watch
+```
+
+Compose runs a local MongoDB as a single-node replica set (the server uses transactions) and points `MONGODB_URI` at it, so you don't need Atlas. Edits on your machine sync into the containers and reload. Changes to a `package.json` or `pnpm-lock.yaml` rebuild the image. To connect a GUI such as Compass, use `mongodb://localhost:27017/tabi?directConnection=true`.
+
 ### 4. Configure Clerk webhook
 
 To sync Clerk user data into your MongoDB `users` collection, add a webhook in your Clerk Dashboard pointing to:

@@ -1,0 +1,76 @@
+# Local dev stack. Run with: docker compose up --watch
+services:
+  mongo:
+    image: mongo:8
+    # Single-node replica set: the server uses transactions, which standalone mongod rejects.
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status() } catch (e) { rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }) }; quit(db.hello().isWritablePrimary ? 0 : 1)"
+      interval: 5s
+      start_period: 10s
+
+  server:
+    build: .
+    command: pnpm --filter server dev
+    env_file: server/.env
+    environment:
+      PORT: 8000
+      MONGODB_URI: mongodb://mongo:27017/tabi?replicaSet=rs0
+      CLIENT_URL: http://localhost:3000
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./server
+          target: /app/server
+          ignore: [node_modules/, dist/, logs/]
+        - action: sync
+          path: ./shared
+          target: /app/shared
+          ignore: [node_modules/]
+        - action: rebuild
+          path: ./server/package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+
+  client:
+    build: .
+    command: pnpm --filter client dev
+    env_file: client/.env.local
+    environment:
+      # Server-side fetches run inside the container, where localhost is not the API.
+      API_URL: http://server:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    develop:
+      watch:
+        - action: sync
+          path: ./client
+          target: /app/client
+          ignore: [node_modules/, .next/]
+        - action: sync
+          path: ./shared
+          target: /app/shared
+          ignore: [node_modules/]
+        - action: rebuild
+          path: ./client/package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+
+volumes:
+  mongo-data:
