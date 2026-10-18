@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -394,6 +394,17 @@ function TripCardSkeleton() {
   );
 }
 
+const noopSubscribe = () => () => {};
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  return hour < 12
+    ? "Good morning"
+    : hour < 17
+      ? "Good afternoon"
+      : "Good evening";
+}
+
 export default function DashboardPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [filter, setFilter] = useState<(typeof filterOptions)[number]>("all");
@@ -414,9 +425,12 @@ export default function DashboardPage() {
   const userEmail = user?.emailAddresses[0]?.emailAddress ?? "";
   const userInitials = getInitials(userName);
 
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  // The server's time zone differs from the viewer's, so the server renders a neutral greeting.
+  const greeting = useSyncExternalStore(
+    noopSubscribe,
+    getGreeting,
+    () => "Hello",
+  );
 
   useEffect(() => {
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
