@@ -228,7 +228,7 @@ function TripCard({
                   align="end"
                   className="w-44 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl"
                 >
-                  {trip.role !== "viewer" && (
+                  {isOwner && (
                     <DropdownMenuItem
                       className="font-medium text-sm cursor-pointer"
                       onClick={(e) => {

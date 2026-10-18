@@ -194,7 +194,7 @@ export default function TripPage() {
               </Link>
             )}
 
-            {canEdit && (
+            {isOwner && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -383,7 +383,7 @@ export default function TripPage() {
 
         <TripEditSheet
           tripId={tripId}
-          open={editSheetOpen && canEdit}
+          open={editSheetOpen && isOwner}
           onOpenChange={setEditSheetOpen}
         />
       </div>
