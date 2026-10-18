@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const envSchema = z.object({
+export const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
@@ -9,7 +9,9 @@ const envSchema = z.object({
   CLIENT_URL: z.url().default("http://localhost:3000"),
 
   CLERK_SECRET_KEY: z.string().min(1, "CLERK_SECRET_KEY is required"),
-  CLERK_PUBLISHABLE_KEY: z.string().optional(),
+  CLERK_PUBLISHABLE_KEY: z
+    .string()
+    .min(1, "CLERK_PUBLISHABLE_KEY is required"),
   CLERK_WEBHOOK_SECRET: z.string().min(1, "CLERK_WEBHOOK_SECRET is required"),
 
   CLOUDINARY_CLOUD_NAME: z
