@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "logs": "node scripts/analyze-logs.ts"
+    "logs": "node scripts/analyze-logs.ts",
+    "seed": "node --env-file-if-exists=.env scripts/seed-dev.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
