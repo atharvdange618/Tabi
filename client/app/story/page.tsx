@@ -396,7 +396,7 @@ export default function StoryPage() {
             Described honestly, without the startup landing page energy.
           </p>
 
-          <div className="grid sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {features.map((f) => (
               <div
                 key={f.title}
@@ -433,7 +433,7 @@ export default function StoryPage() {
             <p className="text-brand-blue text-xs font-bold uppercase tracking-[0.2em] mb-8">
               By the numbers (loosely)
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {facts.map((f) => (
                 <div
                   key={f.label}
@@ -512,7 +512,7 @@ export default function StoryPage() {
             That&apos;s friendship.
           </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
               {
                 name: "Dipali Sharma",

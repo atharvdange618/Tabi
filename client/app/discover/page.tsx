@@ -173,7 +173,7 @@ export default function DiscoverPage() {
 
             {!isLoading && !isEmpty && (
               <>
-                <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3 items-stretch">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 items-stretch">
                   {trips.map((trip, index) => (
                     <DiscoverTripCard
                       key={trip._id}

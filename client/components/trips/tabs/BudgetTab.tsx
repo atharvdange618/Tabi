@@ -105,7 +105,7 @@ export function BudgetTab({
   }
 
   return (
-    <div className="grid lg:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
       <div className="space-y-4">
         <div className="bg-brand-blue border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider mb-3">

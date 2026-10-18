@@ -316,7 +316,7 @@ export function ChecklistsTab({
       </div>
 
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {[1, 2].map((i) => (
             <div
               key={i}
@@ -340,7 +340,7 @@ export function ChecklistsTab({
           )}
         </div>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {(checklists as ChecklistWithItems[]).map((cl) => (
             <ChecklistCard
               key={cl._id}
