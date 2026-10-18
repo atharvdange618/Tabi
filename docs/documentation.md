@@ -88,7 +88,7 @@ Tabi consists of three deployable units:
 
 **Client** Next.js 16 (App Router) on Hostinger KVM2. Handles rendering, routing, and client-side state. Uses TanStack Query for server state, Zustand for UI state, React Hook Form + Zod for form management.
 
-**Server** Express.js on Hostinger KVM2, running on Bun runtime. Handles all business logic, data access, and file uploads. Uses a layered architecture: Routes → Controllers → Services → Models.
+**Server** Express.js on Hostinger KVM2, running on Node.js (compiled from TypeScript with `tsc`). Handles all business logic, data access, and file uploads. Uses a layered architecture: Routes → Controllers → Services → Models.
 
 **Database** MongoDB Atlas (M0 free cluster) via Mongoose 9.x.
 

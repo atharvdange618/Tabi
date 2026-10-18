@@ -27,7 +27,8 @@
 
 | Technology                | Version | Role                                          |
 | ------------------------- | ------- | --------------------------------------------- |
-| **Bun**                   | latest  | JavaScript runtime (replaces Node.js)         |
+| **Node.js**               | v24     | JavaScript runtime, runs compiled `dist/`     |
+| **pnpm**                  | v12     | Package manager and workspaces                |
 | **Express.js**            | v5      | HTTP server and routing                       |
 | **TypeScript**            | 5.x     | Type safety across the entire server codebase |
 | **Mongoose**              | 9.x     | MongoDB ODM schemas, models, query layer      |
@@ -61,7 +62,7 @@
 | Service           | Platform       | Purpose                                              |
 | ----------------- | -------------- | ---------------------------------------------------- |
 | **Client**        | Hostinger KVM2 | Next.js frontend hosting, co-located with API server |
-| **API Server**    | Hostinger KVM2 | Persistent Express/Bun process                       |
+| **API Server**    | Hostinger KVM2 | Persistent Express/Node.js process                   |
 | **Database**      | MongoDB Atlas  | Managed MongoDB, M0 free cluster                     |
 | **Auth**          | Clerk          | Authentication, session management, user webhooks    |
 | **Media Storage** | Cloudinary     | File uploads and CDN delivery                        |

@@ -10,7 +10,7 @@ Built for the ChaiCode Buildathon.
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-8-47A248?style=flat-square&logo=mongodb&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?style=flat-square&logo=express)
-![Bun](https://img.shields.io/badge/Bun-1-FBF0DF?style=flat-square&logo=bun)
+![Node.js](https://img.shields.io/badge/Node.js-24-5FA04E?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Clerk](https://img.shields.io/badge/Auth-Clerk-6C47FF?style=flat-square)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-5-FF4154?style=flat-square)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white)
@@ -74,7 +74,7 @@ Built for the ChaiCode Buildathon.
                      ▼
 ┌─────────────────────────────────────────────────────┐
 │                     Server                          │
-│   Express + TypeScript (Bun runtime)                │
+│   Express + TypeScript (Node.js runtime)            │
 │                                                     │
 │   @clerk/express ─── JWT verification middleware    │
 │   permissions.ts ─── role-based route guards        │
@@ -104,7 +104,7 @@ External Services
 | ------------ | ------------------------ |
 | Framework    | Next.js 16 (App Router)  |
 | Language     | TypeScript (strict)      |
-| Runtime      | Bun                      |
+| Runtime      | Node.js                  |
 | Styling      | Tailwind CSS + shadcn/ui |
 | Server state | TanStack Query v5        |
 | Client state | Zustand                  |
@@ -128,8 +128,8 @@ External Services
 
 You need the following installed or set up to run this project:
 
-- Node.js >= 20
-- Bun >= 1.0
+- Node.js >= 24
+- pnpm >= 12 (`corepack enable` picks up the pinned version)
 - MongoDB Atlas account (free M0 works)
 - Clerk account (free tier)
 - Cloudinary account (free tier)
@@ -139,16 +139,12 @@ You need the following installed or set up to run this project:
 ```bash
 git clone https://github.com/atharvdange618/Tabi.git
 cd Tabi
+pnpm install
 ```
+
+`pnpm install` at the root installs the client, server, and shared workspaces in one pass.
 
 ### 2. Set up the server
-
-Start by installing backend dependencies:
-
-```bash
-cd server
-bun install
-```
 
 Create a `server/.env` file and fill in your keys:
 
@@ -163,22 +159,17 @@ CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 CLIENT_URL=http://localhost:3000
 ```
 
-Start the development server:
+Start the development server from `server/`:
 
 ```bash
-bun run dev
+pnpm dev
 ```
+
+This compiles to `dist/` and restarts on change. For production, run `pnpm build` then `pnpm start`.
 
 The Express server will start on `http://localhost:8000`.
 
 ### 3. Set up the client
-
-Open a new terminal window and navigate to the client workspace:
-
-```bash
-cd client
-bun install
-```
 
 Create a `client/.env.local` file and fill in your keys:
 
@@ -192,10 +183,10 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-Start the Next.js development server:
+In a new terminal, start the Next.js development server from `client/`:
 
 ```bash
-bun run dev
+pnpm dev
 ```
 
 The client will start on `http://localhost:3000`.

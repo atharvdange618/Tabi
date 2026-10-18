@@ -18,7 +18,7 @@ graph LR
     end
 
     subgraph Server
-        D[Express API<br/>Bun Runtime]
+        D[Express API<br/>Node.js Runtime]
     end
 
     subgraph Database
@@ -36,7 +36,7 @@ graph LR
 **Three deployable units:**
 
 1. **Client** (Next.js on Hostinger KVM2) handles rendering, routing, and client-side state.
-2. **Server** (Express on Hostinger KVM2 with Bun runtime) handles business logic, data access, and file uploads.
+2. **Server** (Express on Hostinger KVM2 with Node.js runtime) handles business logic, data access, and file uploads.
 3. **Database** (MongoDB Atlas M0) stores all application data.
 
 Two external services are integrated:
@@ -61,14 +61,13 @@ The App Router is the right choice here because trip detail pages benefit from s
 
 **Trade-off accepted:** App Router has a steeper learning curve and some libraries (Recharts, react-day-picker) need `'use client'` wrappers since they rely on browser APIs.
 
-### Why Express + Bun (not Next.js API Routes)
+### Why Express (not Next.js API Routes)
 
 Keeping the API separate from the Next.js app is a deliberate choice:
 
 1. **Independent scaling.** Both the API and frontend are deployed on Hostinger KVM2, keeping everything on one server and simplifying infrastructure management.
 2. **Middleware control.** Express middleware ordering (Helmet → HPP → CORS → JSON → Auth → Route) is explicit and testable. Next.js API routes don't give this level of control.
-3. **Bun performance.** Bun as the runtime gives faster cold starts and lower memory usage compared to Node.js on the same hardware.
-4. **Testability.** Supertest can bind directly to the Express `app` object without starting a server, making integration tests fast and deterministic.
+3. **Testability.** Supertest can bind directly to the Express `app` object without starting a server, making integration tests fast and deterministic.
 
 **Trade-off accepted:** Two separately deployed services means CORS configuration and managing two deployment pipelines. But for this project size, the operational overhead is minimal.
 
@@ -299,7 +298,7 @@ Both layers use the same Zod schemas from `shared/validations/`.
 graph LR
     subgraph Hostinger KVM2
         A[Next.js Client]
-        B[Express API<br/>Bun runtime]
+        B[Express API<br/>Node.js runtime]
     end
 
     subgraph MongoDB Atlas
@@ -324,7 +323,7 @@ graph LR
 | Service  | Platform       | Why this platform                                |
 | -------- | -------------- | ------------------------------------------------ |
 | Client   | Hostinger KVM2 | Next.js frontend, co-located with API server     |
-| Server   | Hostinger KVM2 | Bun support, persistent process, low cost        |
+| Server   | Hostinger KVM2 | Persistent Node.js process, low cost             |
 | Database | MongoDB Atlas  | Free M0 cluster, managed backups, Atlas UI       |
 | Auth     | Clerk          | Managed auth with generous free tier (10k MAU)   |
 | Media    | Cloudinary     | Free tier (25GB), built-in image transformations |
@@ -439,7 +438,7 @@ shared/
 - **Server:** Direct filesystem import (`import { CreateTripSchema } from '../../shared/index.ts'`).
 - **Client:** Direct filesystem import via TypeScript path alias configured in `tsconfig.json`.
 
-There's no npm publishing or package linking. Both the client and server reference `shared/` directly because they live in the same repository. This works because both use TypeScript and both build tools (Next.js and Bun) can resolve the imports.
+There's no npm publishing or package linking. Both the client and server reference `shared/` directly because they live in the same repository. This works because both use TypeScript and both build tools (Next.js and `tsc`) can resolve the imports.
 
 ---
 
