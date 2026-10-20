@@ -53,8 +53,18 @@ vi.mock("@clerk/express", async () => {
   };
 });
 
+vi.mock("../lib/cloudinary.ts", () => ({
+  default: {
+    uploader: { destroy: vi.fn().mockResolvedValue({ result: "ok" }) },
+  },
+}));
+
 import app from "../app.ts";
+import cloudinary from "../lib/cloudinary.ts";
 import {
+  Settlement,
+  Poll,
+  Notification,
   User,
   Trip,
   TripMember,
@@ -330,6 +340,24 @@ describe("Trip Service", () => {
       expect(byDestination.trips).toHaveLength(2);
     });
 
+    it("filters duration by calendar days, counting both ends", async () => {
+      const user = await createTestUser();
+      // Sep 1 to Sep 3 is a 3-day trip
+      const trip = await seedTrip(user._id.toString(), { title: "Three days" });
+      await Trip.updateOne({ _id: trip._id }, { isPublic: true });
+
+      const exact = await tripService.getPublicTripsForDiscover({
+        minDuration: 3,
+        maxDuration: 3,
+      });
+      expect(exact.trips.map((t) => t.title)).toEqual(["Three days"]);
+
+      const weekend = await tripService.getPublicTripsForDiscover({
+        minDuration: 4,
+      });
+      expect(weekend.trips).toHaveLength(0);
+    });
+
     it("does not throw on input that is invalid as a regex", async () => {
       await expect(
         tripService.getPublicTripsForDiscover({ search: "(" }),
@@ -382,6 +410,66 @@ describe("Trip Service", () => {
 
   // ── updateTrip ───────────────────────────────────────────────────────────────
   describe("updateTrip", () => {
+    it("cleans up comments and expense links on removed days", async () => {
+      const user = await createTestUser();
+      const trip = await seedTrip(user._id.toString());
+      const tripId = trip._id;
+      const days = await Day.find({ tripId }).sort({ date: 1 });
+      const keptDay = days[0]!;
+      const removedDay = days[2]!;
+
+      const activity = await Activity.create({
+        dayId: removedDay._id,
+        tripId,
+        title: "Last day tour",
+        type: ActivityType.ACTIVITY,
+        position: 1024,
+        createdBy: user._id,
+      });
+      await Comment.create([
+        {
+          tripId,
+          targetType: "day",
+          targetId: removedDay._id,
+          body: "On removed day",
+          authorId: user._id,
+        },
+        {
+          tripId,
+          targetType: "activity",
+          targetId: activity._id,
+          body: "On removed activity",
+          authorId: user._id,
+        },
+        {
+          tripId,
+          targetType: "day",
+          targetId: keptDay._id,
+          body: "On kept day",
+          authorId: user._id,
+        },
+      ]);
+      const expense = await Expense.create({
+        tripId,
+        description: "Tour tickets",
+        amount: 500,
+        category: "activities",
+        paidBy: user._id,
+        activityId: activity._id,
+        createdBy: user._id,
+      });
+
+      await tripService.updateTrip(tripId.toString(), {
+        endDate: "2025-09-02T00:00:00.000Z",
+      });
+
+      const comments = await Comment.find({ tripId }).lean();
+      expect(comments.map((c) => c.body)).toEqual(["On kept day"]);
+      const after = await Expense.findById(expense._id).lean();
+      expect(after).not.toBeNull();
+      expect(after?.activityId).toBeNull();
+    });
+
     it("updates scalar fields (title, description, travelerCount)", async () => {
       const user = await createTestUser();
       const trip = await seedTrip(user._id.toString());
@@ -395,17 +483,6 @@ describe("Trip Service", () => {
       expect(updated!.title).toBe("Updated Title");
       expect(updated!.description).toBe("Fresh description");
       expect(updated!.travelerCount).toBe(5);
-    });
-
-    it("updates coverImageUrl", async () => {
-      const user = await createTestUser();
-      const trip = await seedTrip(user._id.toString());
-
-      const updated = await tripService.updateTrip(trip._id.toString(), {
-        coverImageUrl: "https://example.com/cover.jpg",
-      });
-
-      expect(updated!.coverImageUrl).toBe("https://example.com/cover.jpg");
     });
 
     it("persists changes to the database", async () => {
@@ -757,6 +834,71 @@ describe("Trip Service", () => {
       expect(await PendingInvite.countDocuments({ tripId: trip._id })).toBe(0);
     });
 
+    it("deletes Settlement, Poll and Notification records for the trip", async () => {
+      const user = await createTestUser();
+      const other = await createTestUser();
+      const trip = await seedTrip(user._id.toString());
+      const tripId = trip._id;
+
+      await Settlement.create({
+        tripId,
+        fromUserId: other._id,
+        toUserId: user._id,
+        amount: 100,
+      });
+      await Poll.create({
+        tripId,
+        question: "Beach?",
+        options: [{ text: "Yes" }, { text: "No" }],
+        createdBy: user._id,
+      });
+      await Notification.create({
+        userId: user._id,
+        tripId,
+        type: "trip_updated",
+        actorId: other._id,
+        message: "Updated",
+      });
+
+      await tripService.deleteTripCascade(tripId.toString());
+
+      expect(await Settlement.countDocuments({ tripId })).toBe(0);
+      expect(await Poll.countDocuments({ tripId })).toBe(0);
+      expect(await Notification.countDocuments({ tripId })).toBe(0);
+    });
+
+    it("destroys the trip's Cloudinary files and cover", async () => {
+      const user = await createTestUser();
+      const trip = await seedTrip(user._id.toString());
+      await Trip.updateOne(
+        { _id: trip._id },
+        {
+          coverImageUrl:
+            "https://res.cloudinary.com/demo/image/upload/v1/tabi/covers/abc.jpg",
+        },
+      );
+      await File.create({
+        tripId: trip._id,
+        filename: "ticket",
+        originalName: "ticket.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 10,
+        cloudinaryId: "tabi/trip/ticket_1",
+        cloudinaryUrl: "https://res.cloudinary.com/demo/raw/upload/ticket_1",
+        resourceType: "raw",
+        uploadedBy: user._id,
+      });
+      const destroy = vi.mocked(cloudinary.uploader.destroy);
+      destroy.mockClear();
+
+      await tripService.deleteTripCascade(trip._id.toString());
+
+      expect(destroy).toHaveBeenCalledWith("tabi/trip/ticket_1", {
+        resource_type: "raw",
+      });
+      expect(destroy).toHaveBeenCalledWith("tabi/covers/abc");
+    });
+
     it("cascades all child collections in a single call (full scenario)", async () => {
       const user = await createTestUser();
       const trip = await seedTrip(user._id.toString());
@@ -1029,6 +1171,24 @@ describe("Trip API", () => {
   });
 
   // ── GET /api/v1/trips ────────────────────────────────────────────────────────
+  describe("GET /api/v1/trips/discover", () => {
+    it.each([
+      ["limit=abc"],
+      ["limit=-5"],
+      ["skip=-1"],
+      ["skip=1.5"],
+      ["minDuration=abc"],
+    ])("returns 400 for invalid query %s", async (query) => {
+      await request(app).get(`/api/v1/trips/discover?${query}`).expect(400);
+    });
+
+    it("returns 200 for valid pagination", async () => {
+      await request(app)
+        .get("/api/v1/trips/discover?limit=10&skip=0&minDuration=2")
+        .expect(200);
+    });
+  });
+
   describe("GET /api/v1/trips", () => {
     it("returns 401 when no auth header is provided", async () => {
       const res = await request(app).get("/api/v1/trips");

@@ -38,7 +38,13 @@ vi.mock("@clerk/express", () => ({
 }));
 
 import app from "../app.ts";
-import { User, Activity, TripMember } from "../models/index.ts";
+import {
+  User,
+  Activity,
+  TripMember,
+  Comment,
+  Expense,
+} from "../models/index.ts";
 import * as tripService from "../services/trip.service.ts";
 import * as dayService from "../services/day.service.ts";
 import * as activityService from "../services/activity.service.ts";
@@ -351,5 +357,46 @@ describe("Activities API", () => {
       .set("x-test-clerk-id", owner.clerkId)
       .send({ activities: [] })
       .expect(200);
+  });
+});
+
+describe("deleteActivity cleanup", () => {
+  it("removes the activity's comments and unlinks its expenses", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    const [day] = await dayService.getTripDays(trip._id.toString());
+    const { activity } = await activityService.createActivity(
+      trip._id.toString(),
+      day!._id.toString(),
+      owner._id.toString(),
+      { title: "Museum", type: "sightseeing" },
+    );
+    await Comment.create({
+      tripId: trip._id,
+      targetType: "activity",
+      targetId: activity._id,
+      body: "Book ahead",
+      authorId: owner._id,
+    });
+    const expense = await Expense.create({
+      tripId: trip._id,
+      description: "Museum tickets",
+      amount: 300,
+      category: "activities",
+      paidBy: owner._id,
+      activityId: activity._id,
+      createdBy: owner._id,
+    });
+
+    await activityService.deleteActivity(
+      trip._id.toString(),
+      day!._id.toString(),
+      activity._id.toString(),
+      owner._id.toString(),
+    );
+
+    expect(await Comment.countDocuments({ targetId: activity._id })).toBe(0);
+    const after = await Expense.findById(expense._id).lean();
+    expect(after?.activityId).toBeNull();
   });
 });

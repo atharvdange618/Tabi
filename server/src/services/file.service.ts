@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { File } from "../models/index.ts";
 import {
@@ -61,8 +62,11 @@ export async function uploadFile(
 
   const resourceType = getResourceType(file.mimetype);
 
+  // Suffix keeps same-named raw files from overwriting each other in Cloudinary.
   const publicId =
-    resourceType === "raw" ? sanitizePublicId(file.originalname) : undefined;
+    resourceType === "raw"
+      ? `${sanitizePublicId(file.originalname)}_${crypto.randomUUID().slice(0, 8)}`
+      : undefined;
 
   const dataURI = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 

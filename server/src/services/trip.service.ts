@@ -13,6 +13,9 @@ import {
   BudgetSettings,
   Expense,
   PendingInvite,
+  Settlement,
+  Poll,
+  Notification,
 } from "../models/index.ts";
 import {
   ForbiddenError,
@@ -31,6 +34,7 @@ import type {
 } from "../../../shared/validations/index.ts";
 import { dateKey, getDatesInRange } from "../lib/helpers.ts";
 import cloudinary from "../lib/cloudinary.ts";
+import logger from "../lib/logger.ts";
 
 type TripDoc = HydratedDocument<
   typeof Trip extends mongoose.Model<infer T> ? T : never
@@ -44,8 +48,10 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
   const startDate = new Date(payload.startDate);
   const endDate = new Date(payload.endDate);
 
-  const ownedTrips = await Trip.countDocuments({
-    createdBy: new mongoose.Types.ObjectId(userId),
+  // Count by owner role, not createdBy, so the quota follows ownership transfers.
+  const ownedTrips = await TripMember.countDocuments({
+    userId: new mongoose.Types.ObjectId(userId),
+    role: TripMemberRole.OWNER,
   });
   if (ownedTrips >= LIMITS.TRIPS_PER_USER) {
     throw new LimitExceededError(
@@ -70,7 +76,6 @@ export async function createTrip(userId: string, payload: CreateTripPayload) {
             startDate,
             endDate,
             travelerCount: payload.travelerCount ?? 1,
-            coverImageUrl: payload.coverImageUrl ?? "",
             isPublic: payload.isPublic ?? false,
             tags: payload.tags ?? [],
             createdBy: new mongoose.Types.ObjectId(userId),
@@ -330,9 +335,6 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
   if (payload.travelerCount !== undefined) {
     updates.travelerCount = payload.travelerCount;
   }
-  if (payload.coverImageUrl !== undefined) {
-    updates.coverImageUrl = payload.coverImageUrl;
-  }
   if (payload.isPublic !== undefined) {
     updates.isPublic = payload.isPublic;
   }
@@ -395,14 +397,23 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
             .lean();
 
           const dayIds = daysToRemove.map((d) => d._id);
+          const activityIds = await Activity.find({ dayId: { $in: dayIds } })
+            .distinct("_id")
+            .session(session);
 
           await Promise.all([
             Day.deleteMany({ tripId, date: { $in: removedDates } }).session(
               session,
             ),
-            dayIds.length > 0
-              ? Activity.deleteMany({ dayId: { $in: dayIds } }).session(session)
-              : Promise.resolve(),
+            Activity.deleteMany({ _id: { $in: activityIds } }).session(session),
+            Comment.deleteMany({
+              tripId,
+              targetId: { $in: [...dayIds, ...activityIds] },
+            }).session(session),
+            Expense.updateMany(
+              { tripId, activityId: { $in: activityIds } },
+              { $set: { activityId: null } },
+            ).session(session),
           ]);
         }
 
@@ -431,14 +442,20 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
 }
 
 /**
- * Hard-delete a trip and every document across all 12 child collections.
+ * Hard-delete a trip and every document across all child collections.
  * ChecklistItems are handled separately because they reference Checklist, not Trip.
+ * Cloudinary assets are destroyed after the transaction commits; failures are
+ * logged, not thrown, because the database is already the source of truth.
  */
 export async function deleteTripCascade(tripId: string) {
   const trip = await Trip.findById(tripId);
   if (!trip) {
     throw new NotFoundError("Trip not found");
   }
+
+  const files = await File.find({ tripId })
+    .select("cloudinaryId resourceType")
+    .lean();
 
   const session = await mongoose.startSession();
   try {
@@ -458,6 +475,9 @@ export async function deleteTripCascade(tripId: string) {
         Reservation.deleteMany({ tripId }).session(session),
         BudgetSettings.deleteMany({ tripId }).session(session),
         Expense.deleteMany({ tripId }).session(session),
+        Settlement.deleteMany({ tripId }).session(session),
+        Poll.deleteMany({ tripId }).session(session),
+        Notification.deleteMany({ tripId }).session(session),
         checklistIds.length > 0
           ? ChecklistItem.deleteMany({
               checklistId: { $in: checklistIds },
@@ -470,7 +490,26 @@ export async function deleteTripCascade(tripId: string) {
   } finally {
     void session.endSession();
   }
+
+  const results = await Promise.allSettled([
+    ...files.map((f) =>
+      cloudinary.uploader.destroy(f.cloudinaryId, {
+        resource_type: f.resourceType,
+      }),
+    ),
+    destroyCover(trip.coverImageUrl),
+  ]);
+  for (const r of results) {
+    if (r.status === "rejected") {
+      logger.error("Failed to delete Cloudinary asset for deleted trip", {
+        tripId,
+        err: r.reason as unknown,
+      });
+    }
+  }
 }
+
+const COVER_FOLDER = "tabi/covers/";
 
 /**
  * Extract the Cloudinary public ID from a secure URL.
@@ -478,6 +517,16 @@ export async function deleteTripCascade(tripId: string) {
 function extractCloudinaryPublicId(url: string): string | null {
   const match = /\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/.exec(url);
   return match?.[1] ?? null;
+}
+
+/**
+ * Destroy a cover image, but only if this app uploaded it to the covers folder.
+ */
+async function destroyCover(url: string | null | undefined): Promise<void> {
+  const publicId = url ? extractCloudinaryPublicId(url) : null;
+  if (publicId?.startsWith(COVER_FOLDER)) {
+    await cloudinary.uploader.destroy(publicId);
+  }
 }
 
 /**
@@ -529,15 +578,10 @@ export async function uploadCoverImage(
     },
   );
 
-  if (oldCoverImageUrl) {
-    const publicId = extractCloudinaryPublicId(oldCoverImageUrl);
-    if (publicId) {
-      await cloudinary.uploader.destroy(publicId).catch((err: unknown) => {
-        // eslint-disable-next-line no-console
-        console.error("Failed to delete old cover image from Cloudinary:", err);
-      });
-    }
-  }
+  await destroyCover(oldCoverImageUrl).catch((err: unknown) => {
+    // eslint-disable-next-line no-console
+    console.error("Failed to delete old cover image from Cloudinary:", err);
+  });
 
   trip.coverImageUrl = result.secure_url;
   await trip.save();
@@ -586,33 +630,25 @@ export async function getPublicTripsForDiscover(options: {
 
   if (minDuration !== undefined || maxDuration !== undefined) {
     const durationConditions: unknown[] = [];
+    // Calendar days, counting both ends: Sep 1 to Sep 3 is 3 days.
+    const durationDays = {
+      $add: [
+        {
+          $divide: [
+            { $subtract: ["$endDate", "$startDate"] },
+            1000 * 60 * 60 * 24,
+          ],
+        },
+        1,
+      ],
+    };
 
     if (minDuration !== undefined && minDuration > 0) {
-      durationConditions.push({
-        $gte: [
-          {
-            $divide: [
-              { $subtract: ["$endDate", "$startDate"] },
-              1000 * 60 * 60 * 24,
-            ],
-          },
-          minDuration,
-        ],
-      });
+      durationConditions.push({ $gte: [durationDays, minDuration] });
     }
 
     if (maxDuration !== undefined && maxDuration > 0) {
-      durationConditions.push({
-        $lte: [
-          {
-            $divide: [
-              { $subtract: ["$endDate", "$startDate"] },
-              1000 * 60 * 60 * 24,
-            ],
-          },
-          maxDuration,
-        ],
-      });
+      durationConditions.push({ $lte: [durationDays, maxDuration] });
     }
 
     if (durationConditions.length > 0) {

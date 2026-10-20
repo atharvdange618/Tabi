@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Activity, Day, Trip } from "../models/index.ts";
+import { Activity, Comment, Day, Expense, Trip } from "../models/index.ts";
 import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
 import {
@@ -249,6 +249,15 @@ export async function deleteActivity(
   if (result.deletedCount === 0) {
     throw new NotFoundError("Activity not found");
   }
+
+  await Promise.all([
+    Comment.deleteMany({
+      tripId,
+      targetType: "activity",
+      targetId: activityId,
+    }),
+    Expense.updateMany({ tripId, activityId }, { $set: { activityId: null } }),
+  ]);
 
   try {
     const trip = await Trip.findById(tripId).lean();

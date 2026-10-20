@@ -46,7 +46,6 @@ export const tripBaseSchema = z.object({
   startDate: z.string().datetime({ message: "Invalid start date" }),
   endDate: z.string().datetime({ message: "Invalid end date" }),
   travelerCount: z.number().int().positive().optional(),
-  coverImageUrl: z.string().url().optional(),
   isPublic: z.boolean().optional(),
   initialBudget: z.number().nonnegative().optional(),
   tags: z
@@ -261,6 +260,23 @@ export const notificationQuerySchema = z.object({
     .optional()
     .transform((val) => (val ? parseInt(val, 10) : 0))
     .pipe(z.number().int().nonnegative()),
+});
+
+// --- Discover Schemas ---
+
+const nonNegativeIntString = z
+  .string()
+  .regex(/^\d+$/, "Must be a non-negative whole number")
+  .transform(Number);
+
+export const discoverQuerySchema = z.object({
+  limit: nonNegativeIntString.pipe(z.number().min(1)).optional(),
+  skip: nonNegativeIntString.optional(),
+  search: z.string().optional(),
+  destination: z.string().optional(),
+  tags: z.string().optional(),
+  minDuration: nonNegativeIntString.optional(),
+  maxDuration: nonNegativeIntString.optional(),
 });
 
 // --- Poll Schemas ---

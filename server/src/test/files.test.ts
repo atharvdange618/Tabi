@@ -60,7 +60,8 @@ vi.mock("../lib/cloudinary.ts", () => {
 });
 
 import app from "../app.ts";
-import { User, TripMember, File } from "../models/index.ts";
+import { User, TripMember, File, Trip } from "../models/index.ts";
+import cloudinary from "../lib/cloudinary.ts";
 import * as tripService from "../services/trip.service.ts";
 import {
   TripMemberRole,
@@ -189,5 +190,103 @@ describe("Files API", () => {
     expect(urlRes.body.data.url).toBe(
       "https://fake-cloudinary.com/fake_id.png",
     );
+  });
+});
+
+describe("Trip cover image", () => {
+  it("should ignore coverImageUrl sent through PATCH /trips/:id", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+
+    await request(app)
+      .patch(`/api/v1/trips/${trip._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({
+        title: "Renamed",
+        coverImageUrl:
+          "https://res.cloudinary.com/demo/image/upload/v1/tabi/covers/other.jpg",
+      })
+      .expect(200);
+
+    const after = await Trip.findById(trip._id).lean();
+    expect(after?.title).toBe("Renamed");
+    expect(after?.coverImageUrl).toBe("");
+  });
+
+  it("should not destroy an old cover that lives outside tabi/covers", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    await Trip.updateOne(
+      { _id: trip._id },
+      {
+        coverImageUrl:
+          "https://res.cloudinary.com/demo/image/upload/v1/tabi/someTrip/passport.png",
+      },
+    );
+    const destroy = vi.mocked(cloudinary.uploader.destroy);
+    destroy.mockClear();
+
+    await request(app)
+      .post(`/api/v1/trips/${trip._id}/cover`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .attach("cover", Buffer.from("fake image"), {
+        filename: "cover.png",
+        contentType: "image/png",
+      })
+      .expect(200);
+
+    expect(destroy).not.toHaveBeenCalled();
+  });
+
+  it("should destroy the previous cover when it lives under tabi/covers", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    await Trip.updateOne(
+      { _id: trip._id },
+      {
+        coverImageUrl:
+          "https://res.cloudinary.com/demo/image/upload/v1/tabi/covers/old.png",
+      },
+    );
+    const destroy = vi.mocked(cloudinary.uploader.destroy);
+    destroy.mockClear();
+
+    await request(app)
+      .post(`/api/v1/trips/${trip._id}/cover`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .attach("cover", Buffer.from("fake image"), {
+        filename: "cover.png",
+        contentType: "image/png",
+      })
+      .expect(200);
+
+    expect(destroy).toHaveBeenCalledWith("tabi/covers/old");
+  });
+});
+
+describe("Raw file public IDs", () => {
+  it("should give two same-named raw uploads different public IDs", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    const upload = vi.mocked(cloudinary.uploader.upload);
+    upload.mockClear();
+
+    for (let i = 0; i < 2; i++) {
+      await request(app)
+        .post(`/api/v1/trips/${trip._id}/files`)
+        .set("x-test-clerk-id", owner.clerkId)
+        .attach("file", Buffer.from(`ticket ${i}`), {
+          filename: "ticket.pdf",
+          contentType: "application/pdf",
+        })
+        .expect(201);
+    }
+
+    const ids = upload.mock.calls.map(
+      (call) => (call[1] as { public_id?: string }).public_id,
+    );
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).toMatch(/^ticket_/);
+    expect(ids[0]).not.toBe(ids[1]);
   });
 });

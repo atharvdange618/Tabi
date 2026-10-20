@@ -1,9 +1,30 @@
 import type { Request, Response } from "express";
 import * as tripService from "../services/trip.service.ts";
-import type {
-  CreateTripPayload,
-  UpdateTripPayload,
+import {
+  discoverQuerySchema,
+  type CreateTripPayload,
+  type UpdateTripPayload,
 } from "../../../shared/validations/index.ts";
+import { ValidationError } from "../lib/errors.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
+
+/**
+ * Human-readable names for edited trip fields, used in notifications.
+ * initialBudget is left out because updateTrip ignores it.
+ */
+const TRIP_CHANGE_LABELS: Partial<Record<keyof UpdateTripPayload, string>> = {
+  title: "title",
+  description: "description",
+  destination: "destination",
+  startDate: "dates",
+  endDate: "dates",
+  travelerCount: "traveler count",
+  isPublic: "visibility",
+  tags: "tags",
+};
 
 /**
  * POST /api/v1/trips
@@ -67,10 +88,25 @@ export async function getTripById(req: Request, res: Response): Promise<void> {
  * Update mutable trip fields. Requires owner role.
  */
 export async function updateTrip(req: Request, res: Response): Promise<void> {
-  const trip = await tripService.updateTrip(
-    req.params.id as string,
-    req.body as UpdateTripPayload,
-  );
+  const payload = req.body as UpdateTripPayload;
+  const trip = await tripService.updateTrip(req.params.id as string, payload);
+
+  const changes = [
+    ...new Set(
+      Object.keys(payload).flatMap(
+        (key) => TRIP_CHANGE_LABELS[key as keyof UpdateTripPayload] ?? [],
+      ),
+    ),
+  ];
+  if (trip && req.dbUserId && changes.length > 0) {
+    notificationEvents.emit(NotificationEvents.TRIP_UPDATED, {
+      tripId: trip._id.toString(),
+      tripTitle: trip.title,
+      updatedByUserId: req.dbUserId,
+      changes,
+    });
+  }
+
   res.json({ data: trip });
 }
 
@@ -113,30 +149,18 @@ export async function getDiscoverTrips(
   req: Request,
   res: Response,
 ): Promise<void> {
-  const { limit, skip, search, destination, tags, minDuration, maxDuration } =
-    req.query;
-
-  const parsedLimit = limit ? parseInt(limit as string, 10) : 20;
-  const parsedSkip = skip ? parseInt(skip as string, 10) : 0;
-  const parsedMinDuration = minDuration
-    ? parseInt(minDuration as string, 10)
-    : undefined;
-  const parsedMaxDuration = maxDuration
-    ? parseInt(maxDuration as string, 10)
-    : undefined;
-  const parsedTags =
-    tags && typeof tags === "string" && tags.trim()
-      ? tags.split(",").map((t) => t.trim())
-      : undefined;
+  const parsed = discoverQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    throw new ValidationError(
+      issue ? `${issue.path.join(".")}: ${issue.message}` : "Invalid query",
+    );
+  }
+  const { tags, ...filters } = parsed.data;
 
   const result = await tripService.getPublicTripsForDiscover({
-    limit: parsedLimit,
-    skip: parsedSkip,
-    search: search as string | undefined,
-    destination: destination as string | undefined,
-    tags: parsedTags,
-    minDuration: parsedMinDuration,
-    maxDuration: parsedMaxDuration,
+    ...filters,
+    tags: tags?.trim() ? tags.split(",").map((t) => t.trim()) : undefined,
   });
 
   res.json({ data: result });
