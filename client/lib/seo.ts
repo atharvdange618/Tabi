@@ -27,7 +27,7 @@ export const PRIMARY_KEYWORDS = [
 ];
 
 export const SOCIAL_LINKS = {
-  twitter: "",
+  twitter: "https://x.com/atharvdangedev",
   github: "https://github.com/atharvdange618",
 };
 
@@ -65,14 +65,6 @@ export function generateWebSiteSchema() {
     name: SITE_NAME,
     url: SITE_URL,
     description: SITE_DESCRIPTION,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
-      },
-      "query-input": "required name=search_term_string",
-    },
   };
 }
 
@@ -108,11 +100,6 @@ export function generateSoftwareApplicationSchema() {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "5",
-      ratingCount: "1",
     },
     description: SITE_DESCRIPTION,
     url: SITE_URL,
