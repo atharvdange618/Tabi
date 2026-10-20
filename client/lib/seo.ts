@@ -3,8 +3,6 @@
  * Centralized SEO constants and JSON-LD schema generators
  */
 
-import { Metadata } from "next";
-
 export const SITE_NAME = "Tabi";
 export const SITE_TAGLINE = "Your journey, together.";
 export const SITE_DESCRIPTION =
@@ -69,24 +67,6 @@ export function generateWebSiteSchema() {
 }
 
 /**
- * BreadcrumbList Schema
- */
-export function generateBreadcrumbSchema(
-  items: { name: string; url: string }[],
-) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.name,
-      item: `${SITE_URL}${item.url}`,
-    })),
-  };
-}
-
-/**
  * SoftwareApplication Schema
  */
 export function generateSoftwareApplicationSchema() {
@@ -137,26 +117,6 @@ export function generateTripSchema(tripData: {
 }
 
 /**
- * FAQ Schema
- */
-export function generateFAQSchema(
-  faqs: { question: string; answer: string }[],
-) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  };
-}
-
-/**
  * Generate OpenGraph image URL using the dynamic OG route
  */
 export function generateOGImageUrl(params: {
@@ -186,37 +146,4 @@ export function generateOGImageUrl(params: {
 export function createCanonicalUrl(path: string): string {
   const cleanPath = path === "/" ? "" : path.replace(/\/$/, "");
   return `${SITE_URL}${cleanPath}`;
-}
-
-/**
- * Base metadata configuration
- */
-export function getBaseMetadata(): Partial<Metadata> {
-  return {
-    metadataBase: new URL(SITE_URL),
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-video-preview": -1,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-      },
-    },
-  };
-}
-
-/**
- * Merge metadata with base configuration
- */
-export function mergeMetadata(
-  custom: Metadata,
-  base: Partial<Metadata> = getBaseMetadata(),
-): Metadata {
-  return {
-    ...base,
-    ...custom,
-  } as Metadata;
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     canonical: createCanonicalUrl("/sign-up"),
   },
   robots: {
-    index: true,
+    index: false,
     follow: true,
   },
 };
