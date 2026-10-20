@@ -623,7 +623,7 @@ export async function getPublicTripsForDiscover(options: {
   const [trips, total] = await Promise.all([
     Trip.find(query)
       .select(
-        "title description destination startDate endDate coverImageUrl tags createdAt",
+        "title description destination startDate endDate coverImageUrl tags createdAt updatedAt",
       )
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -663,6 +663,7 @@ export async function getPublicTripsForDiscover(options: {
     tags: trip.tags,
     memberCount: memberCountMap.get(trip._id.toString()) ?? 0,
     createdAt: trip.createdAt,
+    updatedAt: trip.updatedAt,
   }));
 
   return {

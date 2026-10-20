@@ -157,9 +157,10 @@ export interface DiscoverTrip {
   tags?: string[];
   memberCount: number;
   createdAt: string;
+  updatedAt: string;
 }
 
-interface DiscoverTripsResponse {
+export interface DiscoverTripsResponse {
   trips: DiscoverTrip[];
   total: number;
   hasMore: boolean;

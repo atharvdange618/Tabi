@@ -295,6 +295,21 @@ describe("Trip Service", () => {
     });
   });
 
+  // ── getPublicTripsForDiscover ───────────────────────────────────────────────
+  describe("getPublicTripsForDiscover", () => {
+    it("returns updatedAt so the sitemap can report real change dates", async () => {
+      const user = await createTestUser();
+      const trip = await seedTrip(user._id.toString());
+      await Trip.updateOne({ _id: trip._id }, { isPublic: true });
+
+      const { trips } = await tripService.getPublicTripsForDiscover({});
+      const saved = await Trip.findById(trip._id);
+
+      expect(trips).toHaveLength(1);
+      expect(trips[0]?.updatedAt).toEqual(saved?.updatedAt);
+    });
+  });
+
   // ── getTripById ──────────────────────────────────────────────────────────────
   describe("getTripById", () => {
     it("returns the trip document", async () => {
