@@ -403,7 +403,7 @@ export async function revokeInvite(
     status: TripMemberStatus.ACTIVE,
   });
 
-  if (!requestingMember || requestingMember.role !== TripMemberRole.OWNER) {
+  if (requestingMember?.role !== TripMemberRole.OWNER) {
     throw new ForbiddenError("Only the trip owner can revoke invitations");
   }
 
@@ -420,7 +420,7 @@ export async function revokeInvite(
       throw new NotFoundError("Invite not found");
     }
 
-    const email = (pendingMember.userId as { email?: string }).email;
+    const email = pendingMember.userId.email;
     if (email) {
       invite = await PendingInvite.findOne({ tripId, email });
     }
@@ -457,7 +457,7 @@ export async function transferOwnership(
     status: TripMemberStatus.ACTIVE,
   });
 
-  if (!currentOwner || currentOwner.role !== TripMemberRole.OWNER) {
+  if (currentOwner?.role !== TripMemberRole.OWNER) {
     throw new ForbiddenError("Only the trip owner can transfer ownership");
   }
 
@@ -559,7 +559,7 @@ export async function acceptOwnershipTransfer(
     status: TripMemberStatus.ACTIVE,
   });
 
-  if (!currentOwner || currentOwner.role !== TripMemberRole.OWNER) {
+  if (currentOwner?.role !== TripMemberRole.OWNER) {
     throw new ValidationError("Original owner is no longer the owner");
   }
 

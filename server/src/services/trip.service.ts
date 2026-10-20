@@ -340,8 +340,8 @@ export async function updateTrip(tripId: string, payload: UpdateTripPayload) {
     updates.tags = payload.tags;
   }
 
-  const oldStartDate = trip.startDate as Date;
-  const oldEndDate = trip.endDate as Date;
+  const oldStartDate = trip.startDate;
+  const oldEndDate = trip.endDate;
 
   const newStartDate =
     payload.startDate !== undefined

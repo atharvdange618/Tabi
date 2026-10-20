@@ -15,7 +15,7 @@ import {
   type TripUpdatedPayload,
   type PollCreatedPayload,
 } from "../lib/notificationEmitter.ts";
-import type { NotificationType } from "../../../shared/types/index.ts";
+import { NotificationType } from "../../../shared/types/index.ts";
 import logger from "../lib/logger.ts";
 
 /**
@@ -282,7 +282,7 @@ async function handleMemberLeft(payload: MemberLeftPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "member_left" as NotificationType,
+      type: NotificationType.MEMBER_LEFT,
       actorId: userId,
       message: `${userName} left "${tripTitle}"`,
       metadata: { leftUserId: userId, userName },
@@ -344,7 +344,7 @@ async function handleCommentCreated(payload: CommentCreatedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "comment_created" as NotificationType,
+      type: NotificationType.COMMENT_CREATED,
       actorId: authorId,
       message: `New comment added to ${targetType} in "${tripTitle}"`,
       metadata: { commentId, targetType, targetId },
@@ -380,7 +380,7 @@ async function handleExpenseAdded(payload: ExpenseAddedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "expense_added" as NotificationType,
+      type: NotificationType.EXPENSE_ADDED,
       actorId: addedByUserId,
       message: `New expense "${description}" ($${amount}) added to "${tripTitle}"`,
       metadata: { expenseId, amount, description },
@@ -444,7 +444,7 @@ async function handleActivityUpdated(payload: ActivityUpdatedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "activity_updated" as NotificationType,
+      type: NotificationType.ACTIVITY_UPDATED,
       actorId: updatedByUserId,
       message: `An activity was updated in "${tripTitle}"`,
       metadata: { activityId },
@@ -479,7 +479,7 @@ async function handleReservationAdded(payload: ReservationAddedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "reservation_added" as NotificationType,
+      type: NotificationType.RESERVATION_ADDED,
       actorId: addedByUserId,
       message: `A new reservation was added to "${tripTitle}"`,
       metadata: { reservationId },
@@ -518,7 +518,7 @@ async function handleTripUpdated(payload: TripUpdatedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "trip_updated" as NotificationType,
+      type: NotificationType.TRIP_UPDATED,
       actorId: updatedByUserId,
       message: `"${tripTitle}" was updated (${changesText})`,
       metadata: { changes },
@@ -555,7 +555,7 @@ async function handlePollCreated(payload: PollCreatedPayload) {
     const notifications = members.map((member) => ({
       userId: member.userId.toString(),
       tripId,
-      type: "poll_created" as NotificationType,
+      type: NotificationType.POLL_CREATED,
       actorId: createdByUserId,
       message: `New poll in "${tripTitle}": "${preview}"`,
       metadata: { pollId, question },

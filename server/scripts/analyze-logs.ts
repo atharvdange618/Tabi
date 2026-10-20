@@ -106,7 +106,7 @@ function parseArgs(argv: string[]): CliArgs {
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--date" && argv[i + 1]) {
-      args.date = argv[++i] as string;
+      args.date = argv[++i];
     } else if (arg === "--days" && argv[i + 1]) {
       const n = parseInt(argv[++i] as string, 10);
       if (!isNaN(n) && n > 0) {

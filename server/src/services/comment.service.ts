@@ -143,7 +143,7 @@ export async function toggleReaction(
         );
       }
     } else {
-      existing.users.push(userId as unknown as string);
+      existing.users.push(userId);
     }
   } else {
     if (reactions.length >= 6) {

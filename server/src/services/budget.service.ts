@@ -175,11 +175,7 @@ export async function computeSplits(tripId: string): Promise<SplitBalance[]> {
 
   const memberMap = new Map<string, string>();
   for (const m of activeMembers) {
-    const uid = m.userId as {
-      _id: mongoose.Types.ObjectId;
-      name: string;
-      email: string;
-    };
+    const uid = m.userId;
     memberMap.set(uid._id.toString(), uid.name || uid.email);
   }
 
@@ -292,7 +288,7 @@ export async function getBudgetSummary(tripId: string): Promise<BudgetSummary> {
 
   const byCategory = expenses.reduce(
     (acc, expense) => {
-      const cat = expense.category as ExpenseCategory;
+      const cat = expense.category;
       const current = acc[cat] as number | undefined;
       acc[cat] = (current ?? 0) + expense.amount;
       return acc;
