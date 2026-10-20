@@ -146,7 +146,23 @@ export async function createSettlement(
   }
   const settlement = await budgetService.createSettlement(
     req.params.id as string,
+    req.dbUserId,
     req.body as CreateSettlementPayload,
   );
   res.status(201).json({ data: settlement });
+}
+
+/**
+ * DELETE /api/v1/trips/:id/budget/settlements/:settlementId
+ * Delete a settlement recorded by mistake.
+ */
+export async function deleteSettlement(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  await budgetService.deleteSettlement(
+    req.params.id as string,
+    req.params.settlementId as string,
+  );
+  res.status(204).send();
 }

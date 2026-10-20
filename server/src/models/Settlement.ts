@@ -22,6 +22,11 @@ const settlementSchema = new Schema(
       required: true,
       min: 0,
     },
+    // Not required: settlements recorded before this field existed lack it.
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true },
 );

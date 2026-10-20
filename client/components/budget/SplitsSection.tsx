@@ -60,6 +60,12 @@ export function SplitsSection({
                 <div className="flex-1 flex items-center gap-2 min-w-0">
                   <span className="text-sm font-medium font-body truncate">
                     {split.fromUserName}
+                    {split.fromIsFormerMember && (
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        (former member)
+                      </span>
+                    )}
                   </span>
                   <ArrowRight
                     size={14}
@@ -67,6 +73,12 @@ export function SplitsSection({
                   />
                   <span className="text-sm font-medium font-body truncate">
                     {split.toUserName}
+                    {split.toIsFormerMember && (
+                      <span className="text-muted-foreground font-normal">
+                        {" "}
+                        (former member)
+                      </span>
+                    )}
                   </span>
                 </div>
                 <span className="text-sm font-bold font-mono shrink-0">

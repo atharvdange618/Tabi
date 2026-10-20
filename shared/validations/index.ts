@@ -212,23 +212,30 @@ export const updateBudgetSettingsSchema = z.object({
   totalBudget: z.number().nonnegative(),
 });
 
+const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ID");
+
 export const createExpenseSchema = z.object({
-  description: z.string().min(1, "Description is required").max(300),
+  description: z.string().min(1, "Description is required").max(200),
   amount: z.number().positive("Amount must be positive"),
   category: z.enum(expenseCategories),
-  paidBy: z.string().min(1),
+  paidBy: objectIdSchema,
   date: z.string().datetime().optional(),
-  activityId: z.string().optional(),
-  fileId: z.string().optional(),
+  activityId: objectIdSchema.optional(),
+  fileId: objectIdSchema.optional(),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial();
 
-export const createSettlementSchema = z.object({
-  fromUserId: z.string().min(1),
-  toUserId: z.string().min(1),
-  amount: z.number().positive(),
-});
+export const createSettlementSchema = z
+  .object({
+    fromUserId: objectIdSchema,
+    toUserId: objectIdSchema,
+    amount: z.number().positive(),
+  })
+  .refine((data) => data.fromUserId !== data.toUserId, {
+    message: "A settlement needs two different people",
+    path: ["toUserId"],
+  });
 
 export type UpdateBudgetSettingsPayload = z.infer<
   typeof updateBudgetSettingsSchema

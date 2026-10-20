@@ -36,8 +36,16 @@ vi.mock("@clerk/express", () => ({
 }));
 
 import app from "../app.ts";
-import { User, TripMember, BudgetSettings, Expense } from "../models/index.ts";
+import {
+  User,
+  TripMember,
+  BudgetSettings,
+  Expense,
+  Activity,
+  File,
+} from "../models/index.ts";
 import * as tripService from "../services/trip.service.ts";
+import * as budgetService from "../services/budget.service.ts";
 import {
   TripMemberRole,
   TripMemberStatus,
@@ -758,5 +766,293 @@ describe("Budget API", () => {
         .set("x-test-clerk-id", stranger.clerkId)
         .expect(403);
     });
+  });
+});
+
+describe("computeSplits ledger", () => {
+  async function addMember(
+    tripId: mongoose.Types.ObjectId,
+    userId: mongoose.Types.ObjectId,
+    joinedAt = new Date(),
+  ) {
+    await TripMember.create({
+      tripId,
+      userId,
+      role: TripMemberRole.EDITOR,
+      status: TripMemberStatus.ACTIVE,
+      invitedBy: userId,
+      joinedAt,
+    });
+  }
+
+  it("does not charge a late joiner for expenses made before they joined", async () => {
+    const owner = await createTestUser({ name: "Owner" });
+    const alice = await createTestUser({ name: "Alice" });
+    const bob = await createTestUser({ name: "Bob" });
+    const trip = await seedTrip(owner._id.toString());
+    const tripId = trip._id.toString();
+    await addMember(trip._id, alice._id);
+
+    await budgetService.createExpense(tripId, owner._id.toString(), {
+      description: "Hotel",
+      amount: 300,
+      category: "accommodation",
+      paidBy: owner._id.toString(),
+    });
+    await addMember(trip._id, bob._id);
+
+    const splits = await budgetService.computeSplits(tripId);
+    expect(splits).toEqual([
+      expect.objectContaining({
+        fromUserId: alice._id.toString(),
+        toUserId: owner._id.toString(),
+        amount: 150,
+      }),
+    ]);
+  });
+
+  it("keeps a departed payer in the ledger as a former member", async () => {
+    const owner = await createTestUser({ name: "Owner" });
+    const alice = await createTestUser({ name: "Alice" });
+    const trip = await seedTrip(owner._id.toString());
+    const tripId = trip._id.toString();
+    await addMember(trip._id, alice._id);
+
+    await budgetService.createExpense(tripId, alice._id.toString(), {
+      description: "Dinner",
+      amount: 200,
+      category: "food",
+      paidBy: alice._id.toString(),
+    });
+    await TripMember.deleteOne({ tripId: trip._id, userId: alice._id });
+
+    const splits = await budgetService.computeSplits(tripId);
+    expect(splits).toEqual([
+      {
+        fromUserId: owner._id.toString(),
+        fromUserName: "Owner",
+        fromIsFormerMember: false,
+        toUserId: alice._id.toString(),
+        toUserName: "Alice",
+        toIsFormerMember: true,
+        amount: 100,
+      },
+    ]);
+  });
+
+  it("nets settlements against what is owed", async () => {
+    const owner = await createTestUser();
+    const alice = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    const tripId = trip._id.toString();
+    await addMember(trip._id, alice._id);
+
+    await budgetService.createExpense(tripId, owner._id.toString(), {
+      description: "Taxi",
+      amount: 100,
+      category: "transport",
+      paidBy: owner._id.toString(),
+    });
+    await budgetService.createSettlement(tripId, owner._id.toString(), {
+      fromUserId: alice._id.toString(),
+      toUserId: owner._id.toString(),
+      amount: 50,
+    });
+
+    expect(await budgetService.computeSplits(tripId)).toEqual([]);
+  });
+
+  it("backfills splitAmong on legacy expenses from members who had joined by then", async () => {
+    const owner = await createTestUser();
+    const alice = await createTestUser();
+    const bob = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    await addMember(trip._id, alice._id, new Date("2024-01-01"));
+    await addMember(trip._id, bob._id, new Date("2030-01-01"));
+
+    const legacy = await Expense.collection.insertOne({
+      tripId: trip._id,
+      description: "Old expense",
+      amount: 90,
+      category: "misc",
+      paidBy: owner._id,
+      createdBy: owner._id,
+      createdAt: new Date("2029-01-01"),
+    });
+
+    const updated = await budgetService.backfillSplitAmong();
+    expect(updated).toBe(1);
+
+    const after = await Expense.findById(legacy.insertedId).lean();
+    expect(after?.splitAmong?.map(String).sort()).toEqual(
+      [owner._id.toString(), alice._id.toString()].sort(),
+    );
+  });
+});
+
+describe("Budget reference validation", () => {
+  async function setup() {
+    const owner = await createTestUser();
+    const alice = await createTestUser();
+    const outsider = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    await TripMember.create({
+      tripId: trip._id,
+      userId: alice._id,
+      role: TripMemberRole.EDITOR,
+      status: TripMemberStatus.ACTIVE,
+      invitedBy: owner._id,
+      joinedAt: new Date(),
+    });
+    const base = `/api/v1/trips/${trip._id}/budget`;
+    return { owner, alice, outsider, trip, base };
+  }
+
+  it("rejects an expense paid by someone outside the trip", async () => {
+    const { owner, outsider, base } = await setup();
+    await request(app)
+      .post(`${base}/expenses`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({
+        description: "Fake",
+        amount: 10,
+        category: "misc",
+        paidBy: outsider._id.toString(),
+      })
+      .expect(400);
+  });
+
+  it("rejects changing paidBy to someone outside the trip", async () => {
+    const { owner, outsider, trip, base } = await setup();
+    const expense = await budgetService.createExpense(
+      trip._id.toString(),
+      owner._id.toString(),
+      {
+        description: "Lunch",
+        amount: 10,
+        category: "food",
+        paidBy: owner._id.toString(),
+      },
+    );
+    await request(app)
+      .patch(`${base}/expenses/${expense._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ paidBy: outsider._id.toString() })
+      .expect(400);
+  });
+
+  it("rejects an expense linked to another trip's activity or file", async () => {
+    const { owner, base } = await setup();
+    const otherOwner = await createTestUser();
+    const otherTrip = await seedTrip(otherOwner._id.toString());
+    const otherActivity = await Activity.create({
+      dayId: new mongoose.Types.ObjectId(),
+      tripId: otherTrip._id,
+      title: "Elsewhere",
+      type: "other",
+      position: 1024,
+      createdBy: otherOwner._id,
+    });
+    const otherFile = await File.create({
+      tripId: otherTrip._id,
+      filename: "f",
+      originalName: "f.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1,
+      cloudinaryId: "x",
+      cloudinaryUrl: "https://example.com/f",
+      uploadedBy: otherOwner._id,
+    });
+    const payload = {
+      description: "Linked",
+      amount: 10,
+      category: "misc",
+      paidBy: owner._id.toString(),
+    };
+
+    await request(app)
+      .post(`${base}/expenses`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ ...payload, activityId: otherActivity._id.toString() })
+      .expect(404);
+    await request(app)
+      .post(`${base}/expenses`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ ...payload, fileId: otherFile._id.toString() })
+      .expect(404);
+  });
+
+  it("rejects a settlement from a user to themselves", async () => {
+    const { owner, base } = await setup();
+    await request(app)
+      .post(`${base}/settlements`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({
+        fromUserId: owner._id.toString(),
+        toUserId: owner._id.toString(),
+        amount: 10,
+      })
+      .expect(400);
+  });
+
+  it("rejects a settlement involving someone outside the ledger", async () => {
+    const { owner, outsider, base } = await setup();
+    await request(app)
+      .post(`${base}/settlements`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({
+        fromUserId: outsider._id.toString(),
+        toUserId: owner._id.toString(),
+        amount: 10,
+      })
+      .expect(400);
+  });
+
+  it("allows a settlement with a former member who is still in the ledger", async () => {
+    const { owner, alice, trip, base } = await setup();
+    await budgetService.createExpense(
+      trip._id.toString(),
+      alice._id.toString(),
+      {
+        description: "Dinner",
+        amount: 100,
+        category: "food",
+        paidBy: alice._id.toString(),
+      },
+    );
+    await TripMember.deleteOne({ tripId: trip._id, userId: alice._id });
+
+    const res = await request(app)
+      .post(`${base}/settlements`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({
+        fromUserId: owner._id.toString(),
+        toUserId: alice._id.toString(),
+        amount: 50,
+      })
+      .expect(201);
+    expect(res.body.data.createdBy).toBe(owner._id.toString());
+  });
+
+  it("deletes a settlement", async () => {
+    const { owner, alice, trip, base } = await setup();
+    const settlement = await budgetService.createSettlement(
+      trip._id.toString(),
+      owner._id.toString(),
+      {
+        fromUserId: alice._id.toString(),
+        toUserId: owner._id.toString(),
+        amount: 5,
+      },
+    );
+
+    await request(app)
+      .delete(`${base}/settlements/${settlement._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .expect(204);
+    await request(app)
+      .delete(`${base}/settlements/${settlement._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .expect(404);
   });
 });

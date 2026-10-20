@@ -93,4 +93,12 @@ router.post(
   budgetController.createSettlement,
 );
 
+// DELETE /api/v1/trips/:id/budget/settlements/:settlementId
+router.delete(
+  "/settlements/:settlementId",
+  ...auth,
+  requireRole(["owner", "editor"]),
+  budgetController.deleteSettlement,
+);
+
 export default router;

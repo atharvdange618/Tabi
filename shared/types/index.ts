@@ -304,6 +304,8 @@ export interface Expense {
   amount: number;
   category: ExpenseCategory;
   paidBy: string;
+  /** User IDs sharing the expense; missing on expenses created before it existed. */
+  splitAmong?: string[];
   date?: string;
   activityId?: string;
   fileId?: string;
@@ -480,8 +482,11 @@ export interface PaginatedResponse<T> {
 export interface SplitBalance {
   fromUserId: string;
   fromUserName: string;
+  /** True when the user has left or been removed from the trip. */
+  fromIsFormerMember: boolean;
   toUserId: string;
   toUserName: string;
+  toIsFormerMember: boolean;
   amount: number;
 }
 
@@ -491,6 +496,7 @@ export interface Settlement {
   fromUserId: string;
   toUserId: string;
   amount: number;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
 }

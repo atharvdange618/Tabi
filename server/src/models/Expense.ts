@@ -29,6 +29,12 @@ const expenseSchema = new Schema(
       ref: "User",
       required: true,
     },
+    // Members who share this expense, fixed when it is created so later joins
+    // and departures don't change who owes what.
+    splitAmong: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: undefined,
+    },
     date: {
       type: Date,
     },
