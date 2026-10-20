@@ -229,6 +229,15 @@ const TRIPS: SeedTrip[] = [
   },
 ];
 
+// Seed data is static, so a missing index means the fixtures are wrong.
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) {
+    throw new Error(`Seed data has no item at index ${index}`);
+  }
+  return item;
+}
+
 await mongoose.connect(uri);
 
 const target = await User.findOne({ email: email.toLowerCase() });
@@ -261,7 +270,7 @@ if (staleIds.length > 0) {
 }
 
 for (const t of TRIPS) {
-  const owner = people[t.owner]!;
+  const owner = at(people, t.owner);
   const trip = await Trip.create({
     title: t.title,
     description: t.description,
@@ -279,7 +288,7 @@ for (const t of TRIPS) {
     { tripId, userId: owner, role: "owner", status: "active", invitedBy: owner, joinedAt: new Date() },
     ...t.members.map((m) => ({
       tripId,
-      userId: people[m.person]!,
+      userId: at(people, m.person),
       role: m.role,
       status: "active",
       invitedBy: owner,
@@ -297,25 +306,25 @@ for (const t of TRIPS) {
   );
 
   for (const [i, seedDay] of t.days.entries()) {
-    const day = days[i]!;
+    const day = at(days, i);
     const activities = await Activity.insertMany(
       seedDay.activities.map((a, position) => ({ ...a, dayId: day._id, tripId, position, createdBy: owner })),
     );
     const first = activities[0];
     if (i === 0 && first) {
-      const friend = people[t.members[0]!.person]!;
-      const [question] = await Comment.insertMany([
+      const friend = at(people, at(t.members, 0).person);
+      const questions = await Comment.insertMany([
         { tripId, targetType: "activity", targetId: first._id, authorId: friend, body: "Should we book this in advance?", reactions: [{ emoji: "👍", users: [owner] }] },
       ]);
       await Comment.insertMany([
-        { tripId, targetType: "activity", targetId: first._id, authorId: people[0]!, parentId: question!._id, body: "Yes, I'll grab it this week." },
-        { tripId, targetType: "day", targetId: day._id, authorId: people[0]!, body: "Let's keep the first evening light." },
+        { tripId, targetType: "activity", targetId: first._id, authorId: at(people, 0), parentId: at(questions, 0)._id, body: "Yes, I'll grab it this week." },
+        { tripId, targetType: "day", targetId: day._id, authorId: at(people, 0), body: "Let's keep the first evening light." },
       ]);
     }
   }
 
   await Expense.insertMany(
-    t.expenses.map((e) => ({ ...e, tripId, paidBy: people[e.paidBy]!, date: trip.startDate, createdBy: people[e.paidBy]! })),
+    t.expenses.map((e) => ({ ...e, tripId, paidBy: at(people, e.paidBy), date: trip.startDate, createdBy: at(people, e.paidBy) })),
   );
 
   for (const [position, c] of t.checklists.entries()) {
@@ -336,10 +345,10 @@ for (const t of TRIPS) {
     t.reservations.map((r) => ({ ...r, tripId, datetime: new Date(r.datetime), createdBy: owner })),
   );
 
-  const actor = people[t.members[0]!.person === 0 ? t.owner : t.members[0]!.person]!;
+  const actor = at(people, at(t.members, 0).person === 0 ? t.owner : at(t.members, 0).person);
   await Notification.insertMany([
-    { userId: people[0]!, tripId, type: "expense_added", actorId: actor, message: `New expense "${t.expenses[0]!.description}" added to "${t.title}"`, isRead: false },
-    { userId: people[0]!, tripId, type: "comment_created", actorId: actor, message: `New comment added to activity in "${t.title}"`, isRead: true },
+    { userId: at(people, 0), tripId, type: "expense_added", actorId: actor, message: `New expense "${at(t.expenses, 0).description}" added to "${t.title}"`, isRead: false },
+    { userId: at(people, 0), tripId, type: "comment_created", actorId: actor, message: `New comment added to activity in "${t.title}"`, isRead: true },
   ]);
 
   console.log(`Seeded "${t.title}"`);

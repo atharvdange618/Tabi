@@ -111,7 +111,7 @@ export default function DiscoverPage() {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="min-h-screen bg-zinc-50">
