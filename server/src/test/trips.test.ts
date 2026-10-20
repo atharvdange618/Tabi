@@ -308,6 +308,36 @@ describe("Trip Service", () => {
       expect(trips).toHaveLength(1);
       expect(trips[0]?.updatedAt).toEqual(saved?.updatedAt);
     });
+
+    it("treats search and destination as plain text, not regex", async () => {
+      const user = await createTestUser();
+      for (const title of ["Kyoto.Trip", "KyotoXTrip"]) {
+        const trip = await seedTrip(user._id.toString(), {
+          title,
+          destination: "Japan (Kansai)",
+        });
+        await Trip.updateOne({ _id: trip._id }, { isPublic: true });
+      }
+
+      const bySearch = await tripService.getPublicTripsForDiscover({
+        search: "kyoto.trip",
+      });
+      expect(bySearch.trips.map((t) => t.title)).toEqual(["Kyoto.Trip"]);
+
+      const byDestination = await tripService.getPublicTripsForDiscover({
+        destination: "(kansai)",
+      });
+      expect(byDestination.trips).toHaveLength(2);
+    });
+
+    it("does not throw on input that is invalid as a regex", async () => {
+      await expect(
+        tripService.getPublicTripsForDiscover({ search: "(" }),
+      ).resolves.toMatchObject({ trips: [] });
+      await expect(
+        tripService.getPublicTripsForDiscover({ destination: "[" }),
+      ).resolves.toMatchObject({ trips: [] });
+    });
   });
 
   // ── getTripById ──────────────────────────────────────────────────────────────

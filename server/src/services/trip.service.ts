@@ -571,12 +571,12 @@ export async function getPublicTripsForDiscover(options: {
   const query: Record<string, unknown> = { isPublic: true };
 
   if (search?.trim()) {
-    const searchRegex = new RegExp(search.trim(), "i");
+    const searchRegex = new RegExp(RegExp.escape(search.trim()), "i");
     query.$or = [{ title: searchRegex }, { destination: searchRegex }];
   }
 
   if (destination?.trim()) {
-    const destRegex = new RegExp(destination.trim(), "i");
+    const destRegex = new RegExp(RegExp.escape(destination.trim()), "i");
     query.destination = destRegex;
   }
 
