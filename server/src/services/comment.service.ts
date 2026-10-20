@@ -1,4 +1,5 @@
-import { Comment, Trip } from "../models/index.ts";
+import { Types } from "mongoose";
+import { Activity, Comment, Day, Trip } from "../models/index.ts";
 import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
 import {
@@ -33,6 +34,27 @@ export async function createComment(
   authorId: string,
   data: CreateCommentPayload,
 ) {
+  const targetFilter = { _id: data.targetId, tripId };
+  const target =
+    data.targetType === "day"
+      ? await Day.exists(targetFilter)
+      : await Activity.exists(targetFilter);
+  if (!target) {
+    throw new NotFoundError(`${data.targetType} not found in this trip`);
+  }
+
+  if (data.parentId) {
+    const parent = await Comment.exists({
+      _id: data.parentId,
+      tripId,
+      targetType: data.targetType,
+      targetId: data.targetId,
+    });
+    if (!parent) {
+      throw new NotFoundError("Parent comment not found");
+    }
+  }
+
   const commentCount = await Comment.countDocuments({
     tripId,
     targetId: data.targetId,
@@ -81,12 +103,13 @@ export async function createComment(
  * Update a comment by its ID. Only the author can update.
  */
 export async function updateComment(
+  tripId: string,
   commentId: string,
   authorId: string,
   data: UpdateCommentPayload,
 ) {
   const comment = await Comment.findOneAndUpdate(
-    { _id: commentId, authorId },
+    { _id: commentId, tripId, authorId },
     { $set: { body: data.body, isEdited: true } },
     { new: true },
   ).populate("authorId", "name avatarUrl");
@@ -102,8 +125,8 @@ export async function updateComment(
  * Delete a comment by its ID.
  * Permission checks (author vs owner/editor) are handled in the controller.
  */
-export async function deleteComment(commentId: string) {
-  const result = await Comment.deleteOne({ _id: commentId });
+export async function deleteComment(tripId: string, commentId: string) {
+  const result = await Comment.deleteOne({ _id: commentId, tripId });
   if (result.deletedCount === 0) {
     throw new NotFoundError("Comment not found");
   }
@@ -117,23 +140,24 @@ export async function deleteComment(commentId: string) {
  * Enforces max 6 distinct emoji types per comment.
  */
 export async function toggleReaction(
+  tripId: string,
   commentId: string,
   userId: string,
   emoji: string,
 ) {
-  const comment = await Comment.findById(commentId);
+  const comment = await Comment.findOne({ _id: commentId, tripId });
   if (!comment) {
     throw new NotFoundError("Comment not found");
   }
 
   const reactions = comment.reactions as unknown as {
     emoji: string;
-    users: string[];
+    users: Types.ObjectId[];
   }[];
   const existing = reactions.find((r) => r.emoji === emoji);
 
   if (existing) {
-    const idx = existing.users.findIndex((u) => u === userId);
+    const idx = existing.users.findIndex((u) => u.toString() === userId);
     if (idx !== -1) {
       existing.users.splice(idx, 1);
       if (existing.users.length === 0) {
@@ -143,7 +167,7 @@ export async function toggleReaction(
         );
       }
     } else {
-      existing.users.push(userId);
+      existing.users.push(new Types.ObjectId(userId));
     }
   } else {
     if (reactions.length >= 6) {
@@ -151,7 +175,7 @@ export async function toggleReaction(
         "A comment can have at most 6 different reaction types",
       );
     }
-    reactions.push({ emoji, users: [userId] });
+    reactions.push({ emoji, users: [new Types.ObjectId(userId)] });
     comment.set("reactions", reactions);
   }
 

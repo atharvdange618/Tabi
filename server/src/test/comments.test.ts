@@ -403,3 +403,130 @@ describe("Comments API", () => {
     expect(getRes.body.data[0].body).toBe("Don't forget to bring the camera");
   });
 });
+
+describe("Comments trip scoping", () => {
+  async function seedCommentInOtherTrip() {
+    const victim = await createTestUser();
+    const victimTrip = await seedTrip(victim._id.toString());
+    const [victimDay] = await dayService.getTripDays(victimTrip._id.toString());
+    const comment = await Comment.create({
+      tripId: victimTrip._id,
+      targetType: "day",
+      targetId: victimDay!._id,
+      body: "Private to the victim trip",
+      authorId: victim._id,
+    });
+
+    const attacker = await createTestUser();
+    const attackerTrip = await seedTrip(attacker._id.toString());
+    return { comment, victimDay: victimDay!, attacker, attackerTrip };
+  }
+
+  it("should not delete a comment that belongs to another trip", async () => {
+    const { comment, attacker, attackerTrip } = await seedCommentInOtherTrip();
+
+    await request(app)
+      .delete(`/api/v1/trips/${attackerTrip._id}/comments/${comment._id}`)
+      .set("x-test-clerk-id", attacker.clerkId)
+      .expect(404);
+
+    expect(await Comment.findById(comment._id)).not.toBeNull();
+  });
+
+  it("should not react to a comment that belongs to another trip", async () => {
+    const { comment, attacker, attackerTrip } = await seedCommentInOtherTrip();
+
+    await request(app)
+      .post(
+        `/api/v1/trips/${attackerTrip._id}/comments/${comment._id}/reactions`,
+      )
+      .set("x-test-clerk-id", attacker.clerkId)
+      .send({ emoji: "👍" })
+      .expect(404);
+
+    const after = await Comment.findById(comment._id).lean();
+    expect(after?.reactions).toHaveLength(0);
+  });
+
+  it("should not edit an own comment through another trip's URL", async () => {
+    const owner = await createTestUser();
+    const tripA = await seedTrip(owner._id.toString());
+    const tripB = await seedTrip(owner._id.toString());
+    const [dayA] = await dayService.getTripDays(tripA._id.toString());
+    const comment = await Comment.create({
+      tripId: tripA._id,
+      targetType: "day",
+      targetId: dayA!._id,
+      body: "Original",
+      authorId: owner._id,
+    });
+
+    await request(app)
+      .patch(`/api/v1/trips/${tripB._id}/comments/${comment._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ body: "Edited" })
+      .expect(404);
+  });
+
+  it("should reject a comment whose target day is in another trip", async () => {
+    const { victimDay, attacker, attackerTrip } =
+      await seedCommentInOtherTrip();
+
+    await request(app)
+      .post(`/api/v1/trips/${attackerTrip._id}/comments`)
+      .set("x-test-clerk-id", attacker.clerkId)
+      .send({
+        targetType: "day",
+        targetId: victimDay._id.toString(),
+        body: "Hello",
+      })
+      .expect(404);
+  });
+
+  it("should reject a reply whose parent is on a different target", async () => {
+    const { comment, attacker, attackerTrip } = await seedCommentInOtherTrip();
+    const [day] = await dayService.getTripDays(attackerTrip._id.toString());
+
+    await request(app)
+      .post(`/api/v1/trips/${attackerTrip._id}/comments`)
+      .set("x-test-clerk-id", attacker.clerkId)
+      .send({
+        targetType: "day",
+        targetId: day!._id.toString(),
+        body: "Reply",
+        parentId: comment._id.toString(),
+      })
+      .expect(404);
+  });
+});
+
+describe("Comment reactions", () => {
+  it("should remove a reaction when the same user toggles it twice", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    const [day] = await dayService.getTripDays(trip._id.toString());
+    const comment = await Comment.create({
+      tripId: trip._id,
+      targetType: "day",
+      targetId: day!._id,
+      body: "React to me",
+      authorId: owner._id,
+    });
+    const url = `/api/v1/trips/${trip._id}/comments/${comment._id}/reactions`;
+
+    const first = await request(app)
+      .post(url)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ emoji: "👍" })
+      .expect(200);
+    expect(first.body.data.reactions).toHaveLength(1);
+    expect(first.body.data.reactions[0].users).toHaveLength(1);
+
+    const second = await request(app)
+      .post(url)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ emoji: "👍" })
+      .expect(200);
+    expect(second.body.data.reactions).toHaveLength(0);
+  });
+});

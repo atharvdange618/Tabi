@@ -72,6 +72,7 @@ export async function updateComment(
   }
 
   const comment = await commentService.updateComment(
+    req.params.id as string,
     req.params.commentId as string,
     authorId,
     req.body as UpdateCommentPayload,
@@ -97,7 +98,10 @@ export async function deleteComment(
 
   const { commentId } = req.params;
 
-  const comment = await Comment.findById(commentId);
+  const comment = await Comment.findOne({
+    _id: commentId,
+    tripId: req.params.id,
+  });
   if (!comment) {
     res.status(404).json({ error: "Comment not found" });
     return;
@@ -114,7 +118,10 @@ export async function deleteComment(
     return;
   }
 
-  await commentService.deleteComment(commentId as string);
+  await commentService.deleteComment(
+    req.params.id as string,
+    commentId as string,
+  );
   res.json({ message: "Comment deleted successfully" });
 }
 
@@ -139,6 +146,11 @@ export async function toggleReaction(
   }
   const { emoji } = req.body as ToggleCommentReactionPayload;
 
-  const comment = await commentService.toggleReaction(commentId, userId, emoji);
+  const comment = await commentService.toggleReaction(
+    req.params.id as string,
+    commentId,
+    userId,
+    emoji,
+  );
   res.json({ data: comment });
 }
