@@ -56,6 +56,15 @@ const tripMemberSchema = new Schema(
 
 tripMemberSchema.index({ tripId: 1, userId: 1 }, { unique: true });
 tripMemberSchema.index({ userId: 1, status: 1 });
+// At most one pending ownership transfer per trip, enforced by the database
+// so concurrent transfer requests can't both succeed.
+tripMemberSchema.index(
+  { tripId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { pendingOwnershipTransfer: { $exists: true } },
+  },
+);
 
 export type TripMemberDocument = InferSchemaType<typeof tripMemberSchema> & {
   _id: mongoose.Types.ObjectId;

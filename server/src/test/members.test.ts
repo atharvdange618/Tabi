@@ -1550,6 +1550,28 @@ describe("Ownership transfer lifecycle", () => {
     ).rejects.toThrow("already pending");
   });
 
+  it("allows only one pending transfer when two requests race", async () => {
+    const { tripId, ownerId, aliceId, bobId, trip } = await setup();
+    await TripMember.init();
+
+    const results = await Promise.allSettled([
+      memberService.transferOwnership(tripId, ownerId, aliceId),
+      memberService.transferOwnership(tripId, ownerId, bobId),
+    ]);
+
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find((r) => r.status === "rejected");
+    expect((rejected as PromiseRejectedResult).reason.message).toMatch(
+      "already pending",
+    );
+    expect(
+      await TripMember.countDocuments({
+        tripId: trip._id,
+        pendingOwnershipTransfer: { $exists: true },
+      }),
+    ).toBe(1);
+  });
+
   it("lets the owner cancel a pending transfer and start another", async () => {
     const { tripId, ownerId, aliceId, bobId, owner, trip, alice } =
       await setup();

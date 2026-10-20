@@ -469,6 +469,9 @@ export async function revokeInvite(
   }
 }
 
+const TRANSFER_PENDING_MESSAGE =
+  "An ownership transfer is already pending. Cancel it before starting another.";
+
 /**
  * Transfer trip ownership from current owner to another active member.
  * Creates a pending ownership transfer that requires acceptance.
@@ -508,9 +511,7 @@ export async function transferOwnership(
     pendingOwnershipTransfer: { $exists: true },
   });
   if (pending) {
-    throw new ConflictError(
-      "An ownership transfer is already pending. Cancel it before starting another.",
-    );
+    throw new ConflictError(TRANSFER_PENDING_MESSAGE);
   }
 
   const trip = await Trip.findById(tripId).select("title").lean();
@@ -550,6 +551,10 @@ export async function transferOwnership(
 
     return await getMembers(tripId);
   } catch (error) {
+    // Lost a race with another request: the partial unique index rejected it.
+    if ((error as { code?: number }).code === 11000) {
+      throw new ConflictError(TRANSFER_PENDING_MESSAGE);
+    }
     logger.error("Failed to initiate ownership transfer", { error, tripId });
     throw error;
   } finally {
@@ -701,7 +706,7 @@ export async function declineOwnershipTransfer(
  * Cancel the trip's pending ownership transfer. Owner-only operation.
  */
 export async function cancelOwnershipTransfer(tripId: string) {
-  const result = await TripMember.updateOne(
+  const result = await TripMember.updateMany(
     {
       tripId: new mongoose.Types.ObjectId(tripId),
       pendingOwnershipTransfer: { $exists: true },
