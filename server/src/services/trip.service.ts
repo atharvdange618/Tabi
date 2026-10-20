@@ -633,7 +633,10 @@ export async function getPublicTripsForDiscover(options: {
   ]);
 
   const tripIds = trips.map((trip) => trip._id);
-  const memberCounts = await TripMember.aggregate([
+  const memberCounts = await TripMember.aggregate<{
+    _id: mongoose.Types.ObjectId;
+    count: number;
+  }>([
     {
       $match: {
         tripId: { $in: tripIds },
@@ -649,7 +652,7 @@ export async function getPublicTripsForDiscover(options: {
   ]);
 
   const memberCountMap = new Map(
-    memberCounts.map((mc) => [mc._id.toString(), mc.count as number]),
+    memberCounts.map((mc) => [mc._id.toString(), mc.count]),
   );
 
   const formattedTrips = trips.map((trip) => ({
