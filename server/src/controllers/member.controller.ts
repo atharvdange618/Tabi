@@ -193,6 +193,20 @@ export async function acceptOwnershipTransfer(
 }
 
 /**
+ * POST /api/v1/trips/:id/members/ownership/cancel
+ * Cancel the trip's pending ownership transfer (owner only).
+ */
+export async function cancelOwnershipTransfer(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const members = await memberService.cancelOwnershipTransfer(
+    req.params.id as string,
+  );
+  res.json({ data: members, message: "Ownership transfer cancelled" });
+}
+
+/**
  * POST /api/v1/trips/:id/members/ownership/decline
  * Decline a pending ownership transfer.
  */

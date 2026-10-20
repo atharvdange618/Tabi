@@ -55,6 +55,14 @@ router.post(
   memberController.declineOwnershipTransfer,
 );
 
+// POST /api/v1/trips/:id/members/ownership/cancel - cancel the pending transfer (owner only)
+router.post(
+  "/:id/members/ownership/cancel",
+  ...auth,
+  requireRole(["owner"]),
+  memberController.cancelOwnershipTransfer,
+);
+
 // DELETE /api/v1/trips/:id/members/me - leave trip (self-removal)
 router.delete(
   "/:id/members/me",

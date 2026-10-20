@@ -44,6 +44,7 @@ import {
   useRemoveMember,
   useRevokeInvite,
   useTransferOwnership,
+  useCancelOwnershipTransfer,
   useLeaveTripSelf,
 } from "@/hooks/useMembers";
 import { toInitials, memberBg, mapRole } from "@/lib/helpers";
@@ -66,9 +67,11 @@ export function MembersTab({
   const removeMember = useRemoveMember(tripId);
   const revokeInvite = useRevokeInvite(tripId);
   const transferOwnership = useTransferOwnership(tripId);
+  const cancelTransfer = useCancelOwnershipTransfer(tripId);
   const leaveTripSelf = useLeaveTripSelf(tripId);
 
   const active = membersData?.active ?? [];
+  const hasPendingTransfer = active.some((m) => m.pendingOwnershipTransfer);
   const pending = membersData?.pending ?? [];
 
   const [inviteEmail, setInviteEmail] = useState("");
@@ -164,6 +167,12 @@ export function MembersTab({
               </div>
 
               <div className="flex items-center gap-2">
+                {member.pendingOwnershipTransfer && (
+                  <Badge className="border text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 bg-amber-50 text-amber-700 border-amber-300">
+                    <Crown size={9} />
+                    Transfer pending
+                  </Badge>
+                )}
                 <Badge
                   className={cn(
                     "border text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
@@ -189,24 +198,38 @@ export function MembersTab({
                       align="end"
                       className="w-40 border-2 border-[#1A1A1A] shadow-[4px_4px_0px_#1A1A1A] rounded-xl"
                     >
-                      {isOwner && member.status === "active" && (
+                      {isOwner && member.pendingOwnershipTransfer && (
                         <>
                           <DropdownMenuItem
                             className="text-xs font-medium cursor-pointer"
-                            onSelect={() => {
-                              setTransferTarget({
-                                userId: member.userId?._id ?? "",
-                                name: member.userId?.name ?? "this member",
-                              });
-                              setTransferOwnershipOpen(true);
-                            }}
+                            onSelect={() => cancelTransfer.mutate()}
                           >
                             <Crown size={12} className="mr-1.5" />
-                            Transfer ownership
+                            Cancel transfer
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>
                       )}
+                      {isOwner &&
+                        member.status === "active" &&
+                        !hasPendingTransfer && (
+                          <>
+                            <DropdownMenuItem
+                              className="text-xs font-medium cursor-pointer"
+                              onSelect={() => {
+                                setTransferTarget({
+                                  userId: member.userId?._id ?? "",
+                                  name: member.userId?.name ?? "this member",
+                                });
+                                setTransferOwnershipOpen(true);
+                              }}
+                            >
+                              <Crown size={12} className="mr-1.5" />
+                              Transfer ownership
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
                       <DropdownMenuItem
                         className="text-xs font-medium cursor-pointer"
                         onSelect={() =>

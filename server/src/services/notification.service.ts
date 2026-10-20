@@ -4,6 +4,8 @@ import { NotFoundError } from "../lib/errors.ts";
 import {
   notificationEvents,
   NotificationEvents,
+  type OwnershipTransferRequestedPayload,
+  type OwnershipTransferDeclinedPayload,
   type OwnershipTransferredPayload,
   type MemberLeftPayload,
   type MemberInvitedPayload,
@@ -202,6 +204,56 @@ export async function deleteNotification(
 }
 
 /**
+ * Event handler: Ownership transfer requested
+ * Tells the target member they have a transfer to accept or decline.
+ */
+async function handleOwnershipTransferRequested(
+  payload: OwnershipTransferRequestedPayload,
+) {
+  try {
+    const { tripId, tripTitle, ownerId, targetUserId } = payload;
+    await createNotification(
+      targetUserId,
+      tripId,
+      NotificationType.OWNERSHIP_TRANSFER_REQUESTED,
+      ownerId,
+      `You've been asked to take over ownership of "${tripTitle}"`,
+      { ownerId, targetUserId },
+    );
+  } catch (error) {
+    logger.error("Failed to handle ownership transfer requested event", {
+      error,
+      payload,
+    });
+  }
+}
+
+/**
+ * Event handler: Ownership transfer declined
+ * Tells the owner their transfer was declined.
+ */
+async function handleOwnershipTransferDeclined(
+  payload: OwnershipTransferDeclinedPayload,
+) {
+  try {
+    const { tripId, tripTitle, ownerId, declinedByUserId } = payload;
+    await createNotification(
+      ownerId,
+      tripId,
+      NotificationType.OWNERSHIP_TRANSFER_DECLINED,
+      declinedByUserId,
+      `Your ownership transfer for "${tripTitle}" was declined`,
+      { declinedByUserId },
+    );
+  } catch (error) {
+    logger.error("Failed to handle ownership transfer declined event", {
+      error,
+      payload,
+    });
+  }
+}
+
+/**
  * Event handler: Ownership transferred
  * Creates notifications for old owner, new owner, and all other trip members
  */
@@ -382,7 +434,7 @@ async function handleExpenseAdded(payload: ExpenseAddedPayload) {
       tripId,
       type: NotificationType.EXPENSE_ADDED,
       actorId: addedByUserId,
-      message: `New expense "${description}" ($${amount}) added to "${tripTitle}"`,
+      message: `New expense "${description}" (₹${amount.toLocaleString("en-IN")}) added to "${tripTitle}"`,
       metadata: { expenseId, amount, description },
     }));
 
@@ -577,6 +629,16 @@ async function handlePollCreated(payload: PollCreatedPayload) {
  * Register all event listeners.
  */
 export function registerNotificationEventListeners() {
+  notificationEvents.on(
+    NotificationEvents.OWNERSHIP_TRANSFER_REQUESTED,
+    handleOwnershipTransferRequested,
+  );
+
+  notificationEvents.on(
+    NotificationEvents.OWNERSHIP_TRANSFER_DECLINED,
+    handleOwnershipTransferDeclined,
+  );
+
   notificationEvents.on(
     NotificationEvents.OWNERSHIP_TRANSFERRED,
     handleOwnershipTransferred,

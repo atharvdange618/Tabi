@@ -210,6 +210,28 @@ export function useDeclineOwnershipTransfer(tripId: string) {
   });
 }
 
+export function useCancelOwnershipTransfer(tripId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post<ApiResponse<PopulatedTripMember[]>>(
+        `/api/v1/trips/${tripId}/members/ownership/cancel`,
+      );
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.tripMembers(tripId),
+      });
+      toast.success("Ownership transfer cancelled");
+    },
+    onError: () => {
+      toast.error("Failed to cancel ownership transfer");
+    },
+  });
+}
+
 export function useLeaveTripSelf(tripId: string) {
   const queryClient = useQueryClient();
 

@@ -77,11 +77,9 @@ export async function inviteMember(
   const email = payload.email.toLowerCase();
   const role = payload.role;
 
-  const [memberCount, pendingInviteCount] = await Promise.all([
-    TripMember.countDocuments({ tripId }),
-    PendingInvite.countDocuments({ tripId }),
-  ]);
-  const totalOccupied = memberCount + pendingInviteCount;
+  // getMembers merges an existing user's pending TripMember with their
+  // PendingInvite, so its length counts each person once.
+  const totalOccupied = (await getMembers(tripId)).length;
   if (totalOccupied >= LIMITS.MEMBERS_PER_TRIP) {
     throw new LimitExceededError(
       `A trip can have at most ${LIMITS.MEMBERS_PER_TRIP} members (${totalOccupied}/${LIMITS.MEMBERS_PER_TRIP})`,
@@ -152,6 +150,14 @@ export async function inviteMember(
     const trip = await Trip.findById(tripId).lean();
     const inviterName = inviter?.name ?? "Someone";
     const tripTitle = trip?.title ?? "a trip";
+    if (existingUser) {
+      notificationEvents.emit(NotificationEvents.MEMBER_INVITED, {
+        tripId,
+        tripTitle,
+        invitedUserId: existingUser._id.toString(),
+        invitedByUserId: inviterUserId,
+      });
+    }
     void sendInviteEmail(email, inviterName, tripTitle, token).catch(
       (err: unknown) => {
         logger.error("Invite email failed", {
@@ -341,8 +347,24 @@ export async function updateMemberRole(
     throw new NotFoundError("Member not found");
   }
 
+  const oldRole = member.role;
   member.role = payload.role;
   await member.save();
+
+  if (oldRole !== payload.role) {
+    const trip = await Trip.findById(tripId).select("title").lean();
+    if (trip) {
+      notificationEvents.emit(NotificationEvents.ROLE_CHANGED, {
+        tripId,
+        tripTitle: trip.title,
+        userId: targetUserId,
+        oldRole,
+        newRole: payload.role,
+        changedByUserId: requestingUserId,
+      });
+    }
+  }
+
   return member;
 }
 
@@ -387,6 +409,12 @@ export async function removeMember(
   }
 
   await TripMember.deleteOne({ _id: member._id });
+
+  // A pending member still holds an invite token; revoke it so they can't rejoin.
+  const user = await User.findById(targetUserId).select("email").lean();
+  if (user) {
+    await PendingInvite.deleteOne({ tripId, email: user.email });
+  }
 }
 
 /**
@@ -471,16 +499,18 @@ export async function transferOwnership(
     throw new NotFoundError("Target user is not an active member of this trip");
   }
 
-  if (targetMember.status === TripMemberStatus.PENDING) {
-    throw new ValidationError("Cannot transfer ownership to a pending member");
-  }
-
   if (targetMember.role === TripMemberRole.OWNER) {
     throw new ValidationError("Target user is already the owner");
   }
 
-  if (targetMember.pendingOwnershipTransfer) {
-    throw new ValidationError("User already has a pending ownership transfer");
+  const pending = await TripMember.exists({
+    tripId: new mongoose.Types.ObjectId(tripId),
+    pendingOwnershipTransfer: { $exists: true },
+  });
+  if (pending) {
+    throw new ConflictError(
+      "An ownership transfer is already pending. Cancel it before starting another.",
+    );
   }
 
   const trip = await Trip.findById(tripId).select("title").lean();
@@ -505,12 +535,11 @@ export async function transferOwnership(
       );
     });
 
-    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFERRED, {
+    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFER_REQUESTED, {
       tripId,
       tripTitle: trip.title,
-      oldOwnerId: currentOwnerId,
-      newOwnerId: targetUserId,
-      actorId: currentOwnerId,
+      ownerId: currentOwnerId,
+      targetUserId,
     });
 
     logger.info("Ownership transfer initiated", {
@@ -587,6 +616,14 @@ export async function acceptOwnershipTransfer(
       );
     });
 
+    notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFERRED, {
+      tripId,
+      tripTitle: trip.title,
+      oldOwnerId: fromUserId,
+      newOwnerId: acceptingUserId,
+      actorId: acceptingUserId,
+    });
+
     logger.info("Ownership transfer accepted", {
       tripId,
       oldOwnerId: fromUserId,
@@ -624,6 +661,9 @@ export async function declineOwnershipTransfer(
     throw new ValidationError("No pending ownership transfer found");
   }
 
+  const ownerId = targetMember.pendingOwnershipTransfer.fromUserId.toString();
+  const trip = await Trip.findById(tripId).select("title").lean();
+
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
@@ -633,6 +673,15 @@ export async function declineOwnershipTransfer(
         { session },
       );
     });
+
+    if (trip) {
+      notificationEvents.emit(NotificationEvents.OWNERSHIP_TRANSFER_DECLINED, {
+        tripId,
+        tripTitle: trip.title,
+        ownerId,
+        declinedByUserId: decliningUserId,
+      });
+    }
 
     logger.info("Ownership transfer declined", {
       tripId,
@@ -646,6 +695,25 @@ export async function declineOwnershipTransfer(
   } finally {
     await session.endSession();
   }
+}
+
+/**
+ * Cancel the trip's pending ownership transfer. Owner-only operation.
+ */
+export async function cancelOwnershipTransfer(tripId: string) {
+  const result = await TripMember.updateOne(
+    {
+      tripId: new mongoose.Types.ObjectId(tripId),
+      pendingOwnershipTransfer: { $exists: true },
+    },
+    { $unset: { pendingOwnershipTransfer: 1 } },
+  );
+  if (result.modifiedCount === 0) {
+    throw new NotFoundError("No pending ownership transfer found");
+  }
+
+  logger.info("Ownership transfer cancelled", { tripId });
+  return getMembers(tripId);
 }
 
 /**

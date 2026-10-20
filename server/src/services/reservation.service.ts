@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import { Reservation } from "../models/index.ts";
+import { Reservation, Trip } from "../models/index.ts";
+import {
+  notificationEvents,
+  NotificationEvents,
+} from "../lib/notificationEmitter.ts";
 import { LimitExceededError, NotFoundError } from "../lib/errors.ts";
 import { LIMITS } from "../../../shared/constants.ts";
 import type {
@@ -29,11 +33,23 @@ export async function createReservation(
     );
   }
 
-  return Reservation.create({
+  const reservation = await Reservation.create({
     ...payload,
     tripId: new mongoose.Types.ObjectId(tripId),
     createdBy: new mongoose.Types.ObjectId(userId),
   });
+
+  const trip = await Trip.findById(tripId).select("title").lean();
+  if (trip) {
+    notificationEvents.emit(NotificationEvents.RESERVATION_ADDED, {
+      tripId,
+      tripTitle: trip.title,
+      reservationId: reservation._id.toString(),
+      addedByUserId: userId,
+    });
+  }
+
+  return reservation;
 }
 
 /**

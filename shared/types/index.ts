@@ -68,6 +68,8 @@ export type ExpenseCategory =
   (typeof ExpenseCategory)[keyof typeof ExpenseCategory];
 
 export const NotificationType = {
+  OWNERSHIP_TRANSFER_REQUESTED: "ownership_transfer_requested",
+  OWNERSHIP_TRANSFER_DECLINED: "ownership_transfer_declined",
   OWNERSHIP_TRANSFERRED: "ownership_transferred",
   MEMBER_LEFT: "member_left",
   MEMBER_INVITED: "member_invited",

@@ -49,6 +49,8 @@ import app from "../app.ts";
 import { User, TripMember, Notification } from "../models/index.ts";
 import * as notificationService from "../services/notification.service.ts";
 import * as tripService from "../services/trip.service.ts";
+import * as budgetService from "../services/budget.service.ts";
+import * as memberService from "../services/member.service.ts";
 import {
   notificationEvents,
   NotificationEvents,
@@ -1183,6 +1185,129 @@ describe("Notification API", () => {
     it("returns 401 without authentication", async () => {
       const fakeId = new mongoose.Types.ObjectId().toString();
       await request(app).delete(`/api/v1/notifications/${fakeId}`).expect(401);
+    });
+  });
+});
+
+describe("Expense added notification", () => {
+  it("formats the amount in rupees", async () => {
+    const owner = await createTestUser();
+    const friend = await createTestUser();
+    const trip = await seedTrip(owner._id.toString(), { title: "Goa" });
+    await TripMember.create({
+      tripId: trip._id,
+      userId: friend._id,
+      role: TripMemberRole.EDITOR,
+      status: TripMemberStatus.ACTIVE,
+      invitedBy: owner._id,
+      joinedAt: new Date(),
+    });
+
+    await budgetService.createExpense(
+      trip._id.toString(),
+      owner._id.toString(),
+      {
+        description: "Villa",
+        amount: 12500,
+        category: "accommodation",
+        paidBy: owner._id.toString(),
+      },
+    );
+
+    await vi.waitFor(async () => {
+      const notif = await Notification.findOne({ userId: friend._id }).lean();
+      expect(notif?.message).toBe(
+        'New expense "Villa" (₹12,500) added to "Goa"',
+      );
+    });
+  });
+});
+
+describe("Notifications for invites, roles, reservations and trip edits", () => {
+  async function setup() {
+    const owner = await createTestUser({ name: "Owner" });
+    const friend = await createTestUser({ name: "Friend" });
+    const trip = await seedTrip(owner._id.toString(), { title: "Kyoto" });
+    await TripMember.create({
+      tripId: trip._id,
+      userId: friend._id,
+      role: TripMemberRole.EDITOR,
+      status: TripMemberStatus.ACTIVE,
+      invitedBy: owner._id,
+      joinedAt: new Date(),
+    });
+    return { owner, friend, trip };
+  }
+
+  async function latestFor(userId: mongoose.Types.ObjectId) {
+    return Notification.findOne({ userId }).sort({ createdAt: -1 }).lean();
+  }
+
+  it("notifies an existing user when they are invited", async () => {
+    const { owner, trip } = await setup();
+    const invitee = await createTestUser({ name: "Invitee" });
+
+    await memberService.inviteMember(
+      trip._id.toString(),
+      owner._id.toString(),
+      { email: invitee.email, role: TripMemberRole.VIEWER },
+    );
+
+    await vi.waitFor(async () => {
+      const notif = await latestFor(invitee._id);
+      expect(notif?.type).toBe("member_invited");
+      expect(notif?.message).toBe('You were invited to join "Kyoto"');
+    });
+  });
+
+  it("notifies a member when their role changes", async () => {
+    const { owner, friend, trip } = await setup();
+
+    await memberService.updateMemberRole(
+      trip._id.toString(),
+      friend._id.toString(),
+      { role: TripMemberRole.VIEWER },
+      owner._id.toString(),
+    );
+
+    await vi.waitFor(async () => {
+      const notif = await latestFor(friend._id);
+      expect(notif?.type).toBe("role_changed");
+      expect(notif?.message).toBe(
+        'Your role in "Kyoto" was changed from editor to viewer',
+      );
+    });
+  });
+
+  it("notifies other members when a reservation is added", async () => {
+    const { owner, friend, trip } = await setup();
+
+    await request(app)
+      .post(`/api/v1/trips/${trip._id}/reservations`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ type: "hotel", title: "Ryokan" })
+      .expect(201);
+
+    await vi.waitFor(async () => {
+      const notif = await latestFor(friend._id);
+      expect(notif?.type).toBe("reservation_added");
+    });
+    expect(await latestFor(owner._id)).toBeNull();
+  });
+
+  it("notifies other members when the trip is edited", async () => {
+    const { owner, friend, trip } = await setup();
+
+    await request(app)
+      .patch(`/api/v1/trips/${trip._id}`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .send({ title: "Kyoto & Osaka", endDate: "2025-09-05T00:00:00.000Z" })
+      .expect(200);
+
+    await vi.waitFor(async () => {
+      const notif = await latestFor(friend._id);
+      expect(notif?.type).toBe("trip_updated");
+      expect(notif?.message).toBe('"Kyoto & Osaka" was updated (title, dates)');
     });
   });
 });

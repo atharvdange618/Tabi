@@ -4,6 +4,8 @@ import { EventEmitter } from "events";
  * Event type constants for the notification system.
  */
 export const NotificationEvents = {
+  OWNERSHIP_TRANSFER_REQUESTED: "ownership.transfer_requested",
+  OWNERSHIP_TRANSFER_DECLINED: "ownership.transfer_declined",
   OWNERSHIP_TRANSFERRED: "ownership.transferred",
   MEMBER_LEFT: "member.left",
   MEMBER_INVITED: "member.invited",
@@ -15,6 +17,20 @@ export const NotificationEvents = {
   TRIP_UPDATED: "trip.updated",
   POLL_CREATED: "poll.created",
 } as const;
+
+export interface OwnershipTransferRequestedPayload {
+  tripId: string;
+  tripTitle: string;
+  ownerId: string;
+  targetUserId: string;
+}
+
+export interface OwnershipTransferDeclinedPayload {
+  tripId: string;
+  tripTitle: string;
+  ownerId: string;
+  declinedByUserId: string;
+}
 
 export interface OwnershipTransferredPayload {
   tripId: string;
@@ -98,6 +114,8 @@ export interface PollCreatedPayload {
  * Type map for event names to their payloads.
  */
 export interface NotificationEventMap {
+  [NotificationEvents.OWNERSHIP_TRANSFER_REQUESTED]: OwnershipTransferRequestedPayload;
+  [NotificationEvents.OWNERSHIP_TRANSFER_DECLINED]: OwnershipTransferDeclinedPayload;
   [NotificationEvents.OWNERSHIP_TRANSFERRED]: OwnershipTransferredPayload;
   [NotificationEvents.MEMBER_LEFT]: MemberLeftPayload;
   [NotificationEvents.MEMBER_INVITED]: MemberInvitedPayload;

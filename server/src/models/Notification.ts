@@ -1,4 +1,5 @@
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import { NotificationType } from "../../../shared/types/index.ts";
 
 const notificationSchema = new Schema(
   {
@@ -17,18 +18,7 @@ const notificationSchema = new Schema(
     type: {
       type: String,
       required: true,
-      enum: [
-        "ownership_transferred",
-        "member_left",
-        "member_invited",
-        "comment_created",
-        "expense_added",
-        "role_changed",
-        "activity_updated",
-        "reservation_added",
-        "trip_updated",
-        "poll_created",
-      ],
+      enum: Object.values(NotificationType),
     },
     actorId: {
       type: Schema.Types.ObjectId,

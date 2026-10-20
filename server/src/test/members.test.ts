@@ -58,7 +58,13 @@ vi.mock("../lib/email.ts", () => ({
 }));
 
 import app from "../app.ts";
-import { User, TripMember, PendingInvite } from "../models/index.ts";
+import {
+  User,
+  TripMember,
+  PendingInvite,
+  Notification,
+} from "../models/index.ts";
+import { LIMITS } from "../../../shared/constants.ts";
 import * as tripService from "../services/trip.service.ts";
 import * as memberService from "../services/member.service.ts";
 import {
@@ -611,6 +617,29 @@ describe("Member Service", () => {
         ),
       ).rejects.toThrow("Member not found");
     });
+
+    it("invalidates the invite token when removing a pending member", async () => {
+      const owner = await createTestUser();
+      const invitee = await createTestUser({ email: "pending@example.com" });
+      const trip = await seedTrip(owner._id.toString());
+
+      const invite = await memberService.inviteMember(
+        trip._id.toString(),
+        owner._id.toString(),
+        { email: "pending@example.com", role: TripMemberRole.EDITOR },
+      );
+
+      await memberService.removeMember(
+        trip._id.toString(),
+        invitee._id.toString(),
+        owner._id.toString(),
+      );
+
+      expect(await PendingInvite.findById(invite!._id)).toBeNull();
+      await expect(
+        memberService.acceptInvite(invite!.token, invitee._id.toString()),
+      ).rejects.toThrow("Invite not found or has expired");
+    });
   });
 });
 
@@ -1078,7 +1107,7 @@ describe("Transfer Ownership", () => {
       expect(newOwner!.pendingOwnershipTransfer).toBeUndefined();
     });
 
-    it("emits ownership.transferred event after successful transfer", async () => {
+    it("emits ownership.transferred only once the transfer is accepted", async () => {
       const owner = await createTestUser();
       const editor = await createTestUser({ email: "editor-emit@example.com" });
       const trip = await seedTrip(owner._id.toString());
@@ -1093,15 +1122,22 @@ describe("Transfer Ownership", () => {
       });
 
       const eventSpy = vi.fn();
-      notificationEvents.once(
-        NotificationEvents.OWNERSHIP_TRANSFERRED,
-        eventSpy,
-      );
+      notificationEvents.on(NotificationEvents.OWNERSHIP_TRANSFERRED, eventSpy);
 
       await memberService.transferOwnership(
         trip._id.toString(),
         owner._id.toString(),
         editor._id.toString(),
+      );
+      expect(eventSpy).not.toHaveBeenCalled();
+
+      await memberService.acceptOwnershipTransfer(
+        trip._id.toString(),
+        editor._id.toString(),
+      );
+      notificationEvents.off(
+        NotificationEvents.OWNERSHIP_TRANSFERRED,
+        eventSpy,
       );
 
       expect(eventSpy).toHaveBeenCalledOnce();
@@ -1110,6 +1146,7 @@ describe("Transfer Ownership", () => {
           tripId: trip._id.toString(),
           oldOwnerId: owner._id.toString(),
           newOwnerId: editor._id.toString(),
+          actorId: editor._id.toString(),
         }),
       );
     });
@@ -1449,5 +1486,136 @@ describe("Leave Trip (leaveTripSelf)", () => {
         .delete(`/api/v1/trips/${trip._id}/members/me`)
         .expect(401);
     });
+  });
+});
+
+describe("Ownership transfer lifecycle", () => {
+  async function setup() {
+    const owner = await createTestUser({ name: "Owner" });
+    const alice = await createTestUser({ name: "Alice" });
+    const bob = await createTestUser({ name: "Bob" });
+    const trip = await seedTrip(owner._id.toString(), { title: "Lisbon" });
+    await TripMember.insertMany(
+      [alice, bob].map((u) => ({
+        tripId: trip._id,
+        userId: u._id,
+        role: TripMemberRole.EDITOR,
+        status: TripMemberStatus.ACTIVE,
+        invitedBy: owner._id,
+        joinedAt: new Date(),
+      })),
+    );
+    return {
+      owner,
+      alice,
+      bob,
+      trip,
+      tripId: trip._id.toString(),
+      ownerId: owner._id.toString(),
+      aliceId: alice._id.toString(),
+      bobId: bob._id.toString(),
+    };
+  }
+
+  it("notifies only the target when a transfer is requested", async () => {
+    const { tripId, ownerId, aliceId, alice, owner } = await setup();
+
+    await memberService.transferOwnership(tripId, ownerId, aliceId);
+
+    await vi.waitFor(async () => {
+      const notif = await Notification.findOne({ userId: alice._id }).lean();
+      expect(notif?.type).toBe("ownership_transfer_requested");
+    });
+    expect(await Notification.countDocuments({ userId: owner._id })).toBe(0);
+  });
+
+  it("notifies the owner when the target declines", async () => {
+    const { tripId, ownerId, aliceId, owner } = await setup();
+    await memberService.transferOwnership(tripId, ownerId, aliceId);
+
+    await memberService.declineOwnershipTransfer(tripId, aliceId);
+
+    await vi.waitFor(async () => {
+      const notif = await Notification.findOne({ userId: owner._id }).lean();
+      expect(notif?.type).toBe("ownership_transfer_declined");
+    });
+  });
+
+  it("allows only one pending transfer per trip", async () => {
+    const { tripId, ownerId, aliceId, bobId } = await setup();
+    await memberService.transferOwnership(tripId, ownerId, aliceId);
+
+    await expect(
+      memberService.transferOwnership(tripId, ownerId, bobId),
+    ).rejects.toThrow("already pending");
+  });
+
+  it("lets the owner cancel a pending transfer and start another", async () => {
+    const { tripId, ownerId, aliceId, bobId, owner, trip, alice } =
+      await setup();
+    await memberService.transferOwnership(tripId, ownerId, aliceId);
+
+    await request(app)
+      .post(`/api/v1/trips/${trip._id}/members/ownership/cancel`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .expect(200);
+
+    const aliceMember = await TripMember.findOne({
+      tripId: trip._id,
+      userId: alice._id,
+    }).lean();
+    expect(aliceMember?.pendingOwnershipTransfer).toBeUndefined();
+
+    await memberService.transferOwnership(tripId, ownerId, bobId);
+  });
+
+  it("returns 404 when cancelling with no pending transfer", async () => {
+    const { owner, trip } = await setup();
+    await request(app)
+      .post(`/api/v1/trips/${trip._id}/members/ownership/cancel`)
+      .set("x-test-clerk-id", owner.clerkId)
+      .expect(404);
+  });
+
+  it("moves the trip quota to the new owner on accept", async () => {
+    const { tripId, ownerId, aliceId } = await setup();
+    await Promise.all(
+      Array.from({ length: LIMITS.TRIPS_PER_USER - 1 }, () =>
+        seedTrip(ownerId),
+      ),
+    );
+    await expect(seedTrip(ownerId)).rejects.toThrow("You can own at most");
+
+    await memberService.transferOwnership(tripId, ownerId, aliceId);
+    await memberService.acceptOwnershipTransfer(tripId, aliceId);
+
+    await expect(seedTrip(ownerId)).resolves.toBeDefined();
+  });
+});
+
+describe("Member limit", () => {
+  it("counts an invited existing user once, not twice", async () => {
+    const owner = await createTestUser();
+    const trip = await seedTrip(owner._id.toString());
+    const invitees = await Promise.all(
+      Array.from({ length: LIMITS.MEMBERS_PER_TRIP - 1 }, () =>
+        createTestUser(),
+      ),
+    );
+
+    for (const invitee of invitees) {
+      await memberService.inviteMember(
+        trip._id.toString(),
+        owner._id.toString(),
+        { email: invitee.email, role: TripMemberRole.VIEWER },
+      );
+    }
+
+    await expect(
+      memberService.inviteMember(trip._id.toString(), owner._id.toString(), {
+        email: "one-too-many@example.com",
+        role: TripMemberRole.VIEWER,
+      }),
+    ).rejects.toThrow("at most");
   });
 });
