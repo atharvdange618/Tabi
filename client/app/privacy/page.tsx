@@ -9,11 +9,15 @@ import {
   Globe,
 } from "lucide-react";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { createCanonicalUrl } from "@/lib/seo";
 
 export const metadata = {
   title: "Privacy Policy",
   description:
     "How Tabi handles your data. Short version: we collect what we need, we don't sell it, and you're in control.",
+  alternates: {
+    canonical: createCanonicalUrl("/privacy"),
+  },
 };
 
 const sections = [

@@ -9,11 +9,15 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { createCanonicalUrl } from "@/lib/seo";
 
 export const metadata = {
   title: "Terms of Service",
   description:
     "The rules of the road for using Tabi. Written like a human, not a legal department.",
+  alternates: {
+    canonical: createCanonicalUrl("/terms"),
+  },
 };
 
 const sections = [
