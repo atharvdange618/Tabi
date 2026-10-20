@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import { AppError } from "../lib/errors.ts";
 import logger from "../lib/logger.ts";
 import { env } from "../lib/env.ts";
@@ -23,7 +24,17 @@ export const errorHandler = (
     return;
   }
 
-  if (err.name === "CastError") {
+  if (err instanceof mongoose.Error.ValidationError) {
+    const message =
+      Object.values(err.errors)[0]?.message ?? "Validation failed";
+    logger.warn(message, { context: "errorHandler", name: err.name });
+
+    res.status(400).json({ error: message });
+    return;
+  }
+
+  // BSONError: `new ObjectId(...)` was given a malformed ID string.
+  if (err.name === "CastError" || err.name === "BSONError") {
     logger.warn("Invalid ID format", {
       context: "errorHandler",
       originalMessage: err.message,
@@ -39,8 +50,9 @@ export const errorHandler = (
     stack: err.stack,
   });
 
+  const isDev = env.NODE_ENV === "development";
   res.status(500).json({
-    error: err.message || "Internal server error",
-    ...(env.NODE_ENV === "development" && { stack: err.stack }),
+    error: isDev && err.message ? err.message : "Internal server error",
+    ...(isDev && { stack: err.stack }),
   });
 };
