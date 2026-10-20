@@ -274,11 +274,11 @@ export const createPollSchema = z.object({
 });
 
 export const votePollSchema = z.object({
-  optionId: z.string().min(1, "Option ID is required"),
+  optionId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid option ID"),
 });
 
 export const closePollSchema = z.object({
-  winningOptionId: z.string().min(1, "Winning option is required"),
+  winningOptionId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid option ID"),
 });
 
 export type CreatePollPayload = z.infer<typeof createPollSchema>;

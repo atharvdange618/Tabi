@@ -69,55 +69,92 @@ export async function votePoll(
   userId: string,
   payload: VotePollPayload,
 ) {
-  const poll = await Poll.findOne({
-    _id: new mongoose.Types.ObjectId(pollId),
-    tripId: new mongoose.Types.ObjectId(tripId),
-  }).lean();
-
-  if (!poll) { throw new NotFoundError("Poll not found"); }
-  if (poll.status === "closed") {
-    throw new ValidationError("Cannot vote on a closed poll");
-  }
-
-  interface OptionLean {
-    _id: mongoose.Types.ObjectId;
-    text: string;
-    votes: mongoose.Types.ObjectId[];
-  }
-
-  const options = poll.options as OptionLean[];
-  const targetIdx = options.findIndex(
-    (o) => o._id.toString() === payload.optionId,
-  );
-  if (targetIdx === -1) { throw new NotFoundError("Option not found"); }
-
-  const wasVotingForThis = options[targetIdx]?.votes.some(
-    (v) => v.toString() === userId,
-  ) ?? false;
-
+  const tripObjectId = new mongoose.Types.ObjectId(tripId);
+  const pollObjectId = new mongoose.Types.ObjectId(pollId);
+  const optionObjectId = new mongoose.Types.ObjectId(payload.optionId);
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
-  // Build new options: strip user's vote from all, then conditionally add to target
-  const newOptions = options.map((o) => ({
-    _id: o._id,
-    text: o.text,
-    votes: o.votes.filter((v) => v.toString() !== userId),
-  }));
+  const votesWithoutUser = {
+    $filter: {
+      input: "$$o.votes",
+      as: "v",
+      cond: { $ne: ["$$v", userObjectId] },
+    },
+  };
 
-  if (!wasVotingForThis) {
-    newOptions[targetIdx]?.votes.push(userObjectId);
-  }
-
+  // One pipeline update so concurrent voters can't overwrite each other:
+  // strip the user's vote from every option, then add it to the target
+  // unless they were already voting for it (toggle off).
   const updated = await Poll.findOneAndUpdate(
     {
-      _id: new mongoose.Types.ObjectId(pollId),
-      tripId: new mongoose.Types.ObjectId(tripId),
+      _id: pollObjectId,
+      tripId: tripObjectId,
+      status: "open",
+      "options._id": optionObjectId,
     },
-    { $set: { options: newOptions } },
-    { new: true },
+    [
+      {
+        $set: {
+          options: {
+            $map: {
+              input: "$options",
+              as: "o",
+              in: {
+                $mergeObjects: [
+                  "$$o",
+                  {
+                    votes: {
+                      $cond: [
+                        {
+                          $and: [
+                            { $eq: ["$$o._id", optionObjectId] },
+                            { $not: { $in: [userObjectId, "$$o.votes"] } },
+                          ],
+                        },
+                        { $concatArrays: [votesWithoutUser, [userObjectId]] },
+                        votesWithoutUser,
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    ],
+    { returnDocument: "after", updatePipeline: true },
   ).lean();
 
-  return updated;
+  if (updated) {
+    return updated;
+  }
+  return explainPollUpdateMiss(
+    tripObjectId,
+    pollObjectId,
+    "Cannot vote on a closed poll",
+  );
+}
+
+/**
+ * Called when a guarded poll update matched nothing: throws the error that
+ * says why (missing poll, closed poll, or unknown option).
+ */
+async function explainPollUpdateMiss(
+  tripId: mongoose.Types.ObjectId,
+  pollId: mongoose.Types.ObjectId,
+  closedMessage: string,
+): Promise<never> {
+  const poll = await Poll.findOne({ _id: pollId, tripId })
+    .select("status")
+    .lean();
+  if (!poll) {
+    throw new NotFoundError("Poll not found");
+  }
+  if (poll.status === "closed") {
+    throw new ValidationError(closedMessage);
+  }
+  throw new NotFoundError("Option not found");
 }
 
 /**
@@ -128,22 +165,29 @@ export async function closePoll(
   pollId: string,
   payload: ClosePollPayload,
 ) {
+  const tripObjectId = new mongoose.Types.ObjectId(tripId);
+  const pollObjectId = new mongoose.Types.ObjectId(pollId);
+  const winningOptionId = new mongoose.Types.ObjectId(payload.winningOptionId);
+
   const poll = await Poll.findOneAndUpdate(
     {
-      _id: new mongoose.Types.ObjectId(pollId),
-      tripId: new mongoose.Types.ObjectId(tripId),
+      _id: pollObjectId,
+      tripId: tripObjectId,
+      status: "open",
+      "options._id": winningOptionId,
     },
-    {
-      $set: {
-        status: "closed",
-        winningOptionId: new mongoose.Types.ObjectId(payload.winningOptionId),
-      },
-    },
-    { new: true },
+    { $set: { status: "closed", winningOptionId } },
+    { returnDocument: "after" },
   ).lean();
 
-  if (!poll) { throw new NotFoundError("Poll not found"); }
-  return poll;
+  if (poll) {
+    return poll;
+  }
+  return explainPollUpdateMiss(
+    tripObjectId,
+    pollObjectId,
+    "Poll is already closed",
+  );
 }
 
 /**
