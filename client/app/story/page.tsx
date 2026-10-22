@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HomeFooter } from "@/components/home/HomeFooter";
-import { generateOGImageUrl, createCanonicalUrl } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, createCanonicalUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "The Story of Tabi · 旅",
@@ -29,11 +29,7 @@ export const metadata: Metadata = {
     url: createCanonicalUrl("/story"),
     images: [
       {
-        url: generateOGImageUrl({
-          title: "The Story of Tabi · 旅",
-          description: "From WhatsApp chaos to collaborative trip planning",
-          forceGenerate: true,
-        }),
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: "The Story of Tabi",
@@ -46,11 +42,7 @@ export const metadata: Metadata = {
     description:
       "How a chaotic WhatsApp group and shared Google Sheets chaos led to building Tabi.",
     images: [
-      generateOGImageUrl({
-        title: "The Story of Tabi · 旅",
-        description: "From WhatsApp chaos to collaborative trip planning",
-        forceGenerate: true,
-      }),
+      DEFAULT_OG_IMAGE,
     ],
   },
 };

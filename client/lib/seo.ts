@@ -117,30 +117,6 @@ export function generateTripSchema(tripData: {
 }
 
 /**
- * Generate OpenGraph image URL using the dynamic OG route
- */
-export function generateOGImageUrl(params: {
-  title: string;
-  description?: string;
-  coverImage?: string;
-  forceGenerate?: boolean;
-}): string {
-  if (!params.coverImage && !params.forceGenerate) {
-    return DEFAULT_OG_IMAGE;
-  }
-
-  const searchParams = new URLSearchParams();
-  searchParams.set("title", params.title);
-  if (params.description) {
-    searchParams.set("description", params.description);
-  }
-  if (params.coverImage) {
-    searchParams.set("coverImage", params.coverImage);
-  }
-  return `${SITE_URL}/api/og?${searchParams.toString()}`;
-}
-
-/**
  * Create canonical URL
  */
 export function createCanonicalUrl(path: string): string {

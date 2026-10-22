@@ -7,7 +7,7 @@ import { FeaturesGrid } from "../components/home/FeaturesGrid";
 import { HowItWorks } from "../components/home/HowItWorks";
 import { CTASection } from "../components/home/CTASection";
 import { HomeFooter } from "../components/home/HomeFooter";
-import { generateOGImageUrl, createCanonicalUrl, SITE_NAME } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, createCanonicalUrl, SITE_NAME } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Tabi - Collaborative Trip Planning",
@@ -32,12 +32,7 @@ export const metadata: Metadata = {
     url: createCanonicalUrl("/"),
     images: [
       {
-        url: generateOGImageUrl({
-          title: "One trip plan for the whole group",
-          description:
-            "Build itineraries, track budgets, collaborate in real time",
-          forceGenerate: true,
-        }),
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: "Tabi - Collaborative Trip Planning",
@@ -50,12 +45,7 @@ export const metadata: Metadata = {
     description:
       "Plan trips together with your whole group. Build itineraries, split expenses, and collaborate in real time.",
     images: [
-      generateOGImageUrl({
-        title: "One trip plan for the whole group",
-        description:
-          "Build itineraries, track budgets, collaborate in real time",
-        forceGenerate: true,
-      }),
+      DEFAULT_OG_IMAGE,
     ],
   },
 };

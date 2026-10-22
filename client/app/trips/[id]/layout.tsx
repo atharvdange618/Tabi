@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
-import { generateOGImageUrl, SITE_NAME } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -40,11 +40,7 @@ export async function generateMetadata({
               description,
               images: [
                 {
-                  url: generateOGImageUrl({
-                    title: trip.title,
-                    description: trip.destination || description,
-                    coverImage: trip.coverImageUrl,
-                  }),
+                  url: DEFAULT_OG_IMAGE,
                   width: 1200,
                   height: 630,
                   alt: trip.title,
@@ -56,11 +52,7 @@ export async function generateMetadata({
               title: `${trip.title} | ${SITE_NAME}`,
               description,
               images: [
-                generateOGImageUrl({
-                  title: trip.title,
-                  description: trip.destination || description,
-                  coverImage: trip.coverImageUrl,
-                }),
+                DEFAULT_OG_IMAGE,
               ],
             },
           };

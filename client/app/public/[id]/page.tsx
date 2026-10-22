@@ -28,7 +28,7 @@ import { HomeFooter } from "@/components/home/HomeFooter";
 import { PublicTripNav } from "@/components/shared/PublicTripNav";
 import { PublicTripCTA } from "@/components/shared/PublicTripCTA";
 import {
-  generateOGImageUrl,
+  DEFAULT_OG_IMAGE,
   createCanonicalUrl,
   generateTripSchema,
   SITE_NAME,
@@ -78,12 +78,6 @@ export async function generateMetadata({
     trip.description ||
     `Explore the itinerary for ${trip.destination || "this trip"} on ${SITE_NAME}. View activities, timeline, and trip details.`;
 
-  const ogImageUrl = generateOGImageUrl({
-    title: trip.title,
-    description: trip.destination || description,
-    coverImage: trip.coverImageUrl,
-  });
-
   const tripUrl = createCanonicalUrl(`/public/${id}`);
 
   return {
@@ -99,7 +93,7 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: ogImageUrl,
+          url: DEFAULT_OG_IMAGE,
           width: 1200,
           height: 630,
           alt: trip.title,
@@ -110,7 +104,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${trip.title} | ${SITE_NAME}`,
       description,
-      images: [ogImageUrl],
+      images: [DEFAULT_OG_IMAGE],
     },
   };
 }

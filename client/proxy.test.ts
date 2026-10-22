@@ -6,7 +6,7 @@ const req = (path: string) =>
   new NextRequest(`https://tabi.atharvdange.com${path}`);
 
 describe("isPublicRoute", () => {
-  it.each(["/robots.txt", "/sitemap.xml", "/api/og", "/api/og?title=Kyoto"])(
+  it.each(["/robots.txt", "/sitemap.xml"])(
     "allows crawler asset %s",
     (path) => {
       expect(isPublicRoute(req(path))).toBe(true);

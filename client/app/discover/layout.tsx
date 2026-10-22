@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { generateOGImageUrl, createCanonicalUrl, SITE_NAME } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, createCanonicalUrl, SITE_NAME } from "@/lib/seo";
 import { DiscoverNav } from "@/components/discover/DiscoverNav";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
@@ -26,11 +26,7 @@ export const metadata: Metadata = {
     url: createCanonicalUrl("/discover"),
     images: [
       {
-        url: generateOGImageUrl({
-          title: "Discover Trips",
-          description: "Browse travel inspiration from around the world",
-          forceGenerate: true,
-        }),
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: "Tabi - Discover Trips",
