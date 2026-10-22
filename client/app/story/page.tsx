@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HomeFooter } from "@/components/home/HomeFooter";
-import { DEFAULT_OG_IMAGE, createCanonicalUrl } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, createCanonicalUrl, toJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "The Story of Tabi · 旅",
@@ -175,7 +175,7 @@ export default function StoryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
       />
       <style>{`
         @keyframes fadeUp {

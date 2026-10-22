@@ -32,6 +32,7 @@ import {
   createCanonicalUrl,
   generateTripSchema,
   SITE_NAME,
+  toJsonLd,
 } from "@/lib/seo";
 
 type FetchPublicTripResult =
@@ -235,11 +236,11 @@ export default async function PublicTripPage({
     <div className="min-h-screen bg-brand-cream font-body text-[#111]">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(tripSchema) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(tripSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbSchema) }}
       />
       <PublicTripNav />
 

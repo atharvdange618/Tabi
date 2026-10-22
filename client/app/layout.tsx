@@ -16,6 +16,7 @@ import {
   generateOrganizationSchema,
   generateWebSiteSchema,
   generateSoftwareApplicationSchema,
+  toJsonLd,
 } from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
@@ -124,19 +125,19 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
+            __html: toJsonLd(organizationSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema),
+            __html: toJsonLd(websiteSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(softwareApplicationSchema),
+            __html: toJsonLd(softwareApplicationSchema),
           }}
         />
       </head>

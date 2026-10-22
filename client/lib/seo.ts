@@ -117,6 +117,14 @@ export function generateTripSchema(tripData: {
 }
 
 /**
+ * Serialize JSON-LD for a <script> tag. JSON.stringify leaves "<" as is, so
+ * user text like "</script>" would close the tag early and inject markup.
+ */
+export function toJsonLd(schema: object): string {
+  return JSON.stringify(schema).replace(/</g, "\\u003c");
+}
+
+/**
  * Create canonical URL
  */
 export function createCanonicalUrl(path: string): string {
